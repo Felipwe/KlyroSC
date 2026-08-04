@@ -178,6 +178,10 @@ export const en = {
     offline: 'Connection lost. Check your network and try again.',
     loadFailed: 'Could not load this content'
   },
+  changelog: {
+    title: 'What’s new',
+    gotIt: 'Got it'
+  },
   auth: {
     promptTitle: 'Connect to SoundCloud',
     promptBody: 'Sign in with your SoundCloud account so your likes are saved to your real profile and your Go+ streams unlock.',

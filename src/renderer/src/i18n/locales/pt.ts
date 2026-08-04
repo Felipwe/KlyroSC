@@ -180,6 +180,10 @@ export const pt: Dict = {
     offline: 'Conexão perdida. Verifique sua rede e tente novamente.',
     loadFailed: 'Não foi possível carregar este conteúdo'
   },
+  changelog: {
+    title: 'O que há de novo',
+    gotIt: 'Entendi'
+  },
   auth: {
     promptTitle: 'Conecte-se ao SoundCloud',
     promptBody: 'Entre com sua conta do SoundCloud para salvar suas curtidas no seu perfil real e liberar seus streams Go+.',

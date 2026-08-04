@@ -129,6 +129,7 @@ export interface KlyroApi {
     onMedia(cb: (action: MediaAction) => void): Unsubscribe
     onPlayerCommand(cb: (action: MediaAction) => void): Unsubscribe
     onPluginToast(cb: (message: string) => void): Unsubscribe
+    onPluginsChanged(cb: (plugins: PluginInfo[]) => void): Unsubscribe
     onNav(cb: (payload: NavPayload) => void): Unsubscribe
   }
   log(level: 'info' | 'warn' | 'error', message: string): void
@@ -190,6 +191,7 @@ export const IPC = {
   pluginsInstall: 'plugins:install',
   pluginsUninstall: 'plugins:uninstall',
   pluginsPlayerEvent: 'plugins:player-event',
+  pluginsChanged: 'plugins:changed',
   pluginToast: 'plugin:toast',
   playerCommand: 'player:command',
   updatesStatus: 'updates:status',

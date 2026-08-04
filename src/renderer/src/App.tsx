@@ -23,6 +23,7 @@ import {
   ToastHost
 } from '@renderer/components/overlays'
 import { LoginPrompt } from '@renderer/components/LoginPrompt'
+import { ChangelogCard } from '@renderer/components/ChangelogCard'
 import { BootSplash } from '@renderer/components/BootSplash'
 import { useAuth } from '@renderer/stores/auth'
 import { HomePage } from '@renderer/pages/HomePage'
@@ -64,6 +65,7 @@ export default function App(): JSX.Element {
   useKeyboardShortcuts()
   const [booted, setBooted] = useState(false)
   const [splash, setSplash] = useState<'show' | 'leaving' | 'gone'>('show')
+  const [changelogVersion, setChangelogVersion] = useState<string | null>(null)
   const route = useNav((state) => state.route)
   const miniMode = useUi((state) => state.miniMode)
 
@@ -77,6 +79,13 @@ export default function App(): JSX.Element {
         initMediaSession()
         initPresenceSync()
         await useAuth.getState().load()
+        const info = await api.app.info()
+        const seen = useSettings.getState().settings.system.lastSeenVersion
+        if (seen === '') {
+          void useSettings.getState().update({ system: { lastSeenVersion: info.version } })
+        } else if (seen !== info.version && !cancelled) {
+          setChangelogVersion(info.version)
+        }
       } catch (error) {
         reportError('boot', error)
       }
@@ -149,6 +158,15 @@ export default function App(): JSX.Element {
       <QueuePanel />
       <LyricsOverlay />
       <LoginPrompt />
+      {changelogVersion && (
+        <ChangelogCard
+          version={changelogVersion}
+          onClose={() => {
+            setChangelogVersion(null)
+            void useSettings.getState().update({ system: { lastSeenVersion: changelogVersion } })
+          }}
+        />
+      )}
       <ContextMenuHost />
       <ModalHost />
       <AddToPlaylistHost />

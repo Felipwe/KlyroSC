@@ -157,7 +157,10 @@ export class LibraryService {
   addHistory(track: Track): LibraryData {
     return this.mutate((data) => {
       const last = data.history[0]
-      if (last && last.track.id === track.id && Date.now() - last.playedAt < 60_000) return
+      if (last && last.track.id === track.id && Date.now() - last.playedAt < 60_000) {
+        last.playedAt = Date.now()
+        return
+      }
       data.history.unshift({ track, playedAt: Date.now() })
       if (data.history.length > HISTORY_LIMIT) data.history.length = HISTORY_LIMIT
     })

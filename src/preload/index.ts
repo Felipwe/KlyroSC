@@ -4,6 +4,7 @@ import { type Settings } from '@shared/types/settings'
 import { type MediaAction } from '@shared/types/player'
 import { type UpdateStatus } from '@shared/types/update'
 import { type AuthState } from '@shared/types/auth'
+import { type PluginInfo } from '@shared/types/plugin'
 
 const invoke = <T>(channel: string, ...args: unknown[]): Promise<T> =>
   ipcRenderer.invoke(channel, ...args) as Promise<T>
@@ -110,6 +111,7 @@ const api: KlyroApi = {
     onMedia: (cb) => listen<MediaAction>(IPC.media, cb),
     onPlayerCommand: (cb) => listen<MediaAction>(IPC.playerCommand, cb),
     onPluginToast: (cb) => listen<string>(IPC.pluginToast, cb),
+    onPluginsChanged: (cb) => listen<PluginInfo[]>(IPC.pluginsChanged, cb),
     onNav: (cb) => listen<NavPayload>(IPC.nav, cb)
   },
   log: (level, message) => send(IPC.logRenderer, { level, message })

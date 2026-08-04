@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { type Track } from '../src/shared/types/track'
-import { dedupeAppend, nextIndex, previousIndex, shuffled, unshuffled } from '../src/renderer/src/player/queue-utils'
+import {
+  dedupeAppend,
+  nextIndex,
+  previousIndex,
+  shuffled,
+  smartShuffled,
+  unshuffled
+} from '../src/renderer/src/player/queue-utils'
 
 const track = (id: number): Track => ({
   id,
@@ -92,5 +99,54 @@ describe('dedupeAppend', () => {
 
   it('returns the same array when nothing to add', () => {
     expect(dedupeAppend(queue, [track(1)])).toBe(queue)
+  })
+})
+
+describe('smartShuffled', () => {
+  const withMeta = (id: number, artist: string, genre: string | null): Track => ({
+    ...track(id),
+    artist,
+    genre
+  })
+
+  it('keeps the current track first and preserves membership', () => {
+    const list = [
+      withMeta(1, 'A', 'rock'),
+      withMeta(2, 'B', 'pop'),
+      withMeta(3, 'C', 'rock'),
+      withMeta(4, 'D', 'pop')
+    ]
+    const result = smartShuffled(list, 2, () => 0.5)
+    expect(result.index).toBe(0)
+    expect(result.queue[0]?.id).toBe(3)
+    expect(result.queue.map((t) => t.id).sort()).toEqual([1, 2, 3, 4])
+  })
+
+  it('avoids playing the same artist back-to-back when alternatives exist', () => {
+    const list = [
+      withMeta(1, 'A', null),
+      withMeta(2, 'A', null),
+      withMeta(3, 'A', null),
+      withMeta(4, 'B', null),
+      withMeta(5, 'B', null),
+      withMeta(6, 'C', null)
+    ]
+    let seed = 0
+    const random = (): number => {
+      seed = (seed * 9301 + 49297) % 233280
+      return seed / 233280
+    }
+    const result = smartShuffled(list, 0, random)
+    let adjacentRepeats = 0
+    for (let i = 1; i < result.queue.length; i++) {
+      if (result.queue[i]?.artist === result.queue[i - 1]?.artist) adjacentRepeats++
+    }
+    expect(adjacentRepeats).toBeLessThanOrEqual(1)
+  })
+
+  it('handles empty and single-item queues', () => {
+    expect(smartShuffled([], 0)).toEqual({ queue: [], index: 0 })
+    const single = [withMeta(1, 'A', null)]
+    expect(smartShuffled(single, 0).queue.map((t) => t.id)).toEqual([1])
   })
 })
