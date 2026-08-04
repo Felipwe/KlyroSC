@@ -5,7 +5,7 @@
 # KlyroSC
 
 **O SoundCloud do jeito que ele deveria ser.**
-Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
+SoundCloud Modded by: Felipe and Yusuro
 
 [![Download](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20Baixar%20para%20Windows-KlyroSC--Setup.exe-c1121f?style=for-the-badge)](https://github.com/Felipwe/KlyroSC/releases/latest)
 
