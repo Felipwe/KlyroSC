@@ -18,7 +18,7 @@ Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
 
 ---
 
-## 📸 Prints
+## Prints
 
 | Início | Plugins |
 | :---: | :---: |
@@ -28,7 +28,7 @@ Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
 | :---: | :---: |
 | ![Instalador](assets/readme/installer.png) | ![Configurações](assets/readme/settings.png) |
 
-## ✅ O que tem
+## O que tem
 
 - [x] **Player nativo**  sem site embutido, sem anúncio de áudio, nunca
 - [x] **Tema Light Yagami**  preto profundo + vermelho, com a arte de fundo (e mais 5 temas)
@@ -44,7 +44,7 @@ Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
 - [x] **Instalador próprio**  animado, preto/vermelho, limpa versões antigas sozinho
 - [x] **PT-BR e inglês**  detecta o idioma do sistema
 
-## ⬇️ Como instalar
+## Como instalar
 
 1. Baixa o [`KlyroSC-Setup.exe`](https://github.com/Felipwe/KlyroSC/releases/latest)
 2. Roda. Ele instala em segundos e abre sozinho.
@@ -52,7 +52,7 @@ Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
 
 > Tinha o KlyroSC 1.x? O instalador remove a versão antiga sozinho, sem duplicar nada.
 
-## 🛠️ Stack
+## Stack
 
 ![Electron](https://img.shields.io/badge/Electron-43-2b2e3a?style=flat-square&logo=electron)
 ![TypeScript](https://img.shields.io/badge/TypeScript-estrito-3178c6?style=flat-square&logo=typescript&logoColor=white)
@@ -61,7 +61,7 @@ Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
 ![Zustand](https://img.shields.io/badge/Zustand-5-443e38?style=flat-square)
 ![Vitest](https://img.shields.io/badge/Vitest-62%20testes-6e9f18?style=flat-square&logo=vitest&logoColor=white)
 
-## 👨‍💻 Rodando do código
+## Rodando do código
 
 ```bash
 git clone https://github.com/Felipwe/KlyroSC.git
@@ -73,6 +73,6 @@ npm run dist:win   # gera o instalador em dist/
 
 Quer criar um plugin? A API tá documentada em [docs/PLUGINS.md](docs/PLUGINS.md).
 
-## 📄 Licença
+## Licença
 
 [MIT](LICENSE)  feito por [Felipwe](https://github.com/Felipwe)
