@@ -5,7 +5,7 @@
 # KlyroSC
 
 **O SoundCloud do jeito que ele deveria ser.**
-Cliente de música nativo, rápido e sem anúncio — com tema Light Yagami.
+Cliente de música nativo, rápido e sem anúncio  com tema Light Yagami.
 
 [![Download](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20Baixar%20para%20Windows-KlyroSC--Setup.exe-c1121f?style=for-the-badge)](https://github.com/Felipwe/KlyroSC/releases/latest)
 
@@ -30,19 +30,19 @@ Cliente de música nativo, rápido e sem anúncio — com tema Light Yagami.
 
 ## ✅ O que tem
 
-- [x] **Player nativo** — sem site embutido, sem anúncio de áudio, nunca
-- [x] **Tema Light Yagami** — preto profundo + vermelho, com a arte de fundo (e mais 5 temas)
-- [x] **AdBlock nativo** — bloqueia 40+ redes de anúncio/rastreio e conteúdo patrocinado
-- [x] **Region Unblock** — destrava faixas bloqueadas no seu país via rota de embed
-- [x] **Login com SoundCloud** — curtidas sincronizam com sua conta real (opcional)
-- [x] **Letras sincronizadas** — em tempo real, com busca inteligente que acha até título sujo
-- [x] **Discord Rich Presence** — mostra o que você está ouvindo, limpo e sem poluição
-- [x] **Biblioteca local** — favoritos, playlists com capa personalizada e histórico por dia
-- [x] **Fila completa** — shuffle, repeat, mini player flutuante e atalhos de teclado
-- [x] **Plugins** — liga/desliga tudo: Last.fm scrobbler, sleep timer, notificações e mais
-- [x] **Atualização automática** — já vem ativada, baixa e instala sozinho
-- [x] **Instalador próprio** — animado, preto/vermelho, limpa versões antigas sozinho
-- [x] **PT-BR e inglês** — detecta o idioma do sistema
+- [x] **Player nativo**  sem site embutido, sem anúncio de áudio, nunca
+- [x] **Tema Light Yagami**  preto profundo + vermelho, com a arte de fundo (e mais 5 temas)
+- [x] **AdBlock nativo**  bloqueia 40+ redes de anúncio/rastreio e conteúdo patrocinado
+- [x] **Region Unblock**  destrava faixas bloqueadas no seu país via rota de embed
+- [x] **Login com SoundCloud**  curtidas sincronizam com sua conta real (opcional)
+- [x] **Letras sincronizadas**  em tempo real, com busca inteligente que acha até título sujo
+- [x] **Discord Rich Presence**  mostra o que você está ouvindo, limpo e sem poluição
+- [x] **Biblioteca local**  favoritos, playlists com capa personalizada e histórico por dia
+- [x] **Fila completa**  shuffle, repeat, mini player flutuante e atalhos de teclado
+- [x] **Plugins**  liga/desliga tudo: Last.fm scrobbler, sleep timer, notificações e mais
+- [x] **Atualização automática**  já vem ativada, baixa e instala sozinho
+- [x] **Instalador próprio**  animado, preto/vermelho, limpa versões antigas sozinho
+- [x] **PT-BR e inglês**  detecta o idioma do sistema
 
 ## ⬇️ Como instalar
 
@@ -75,4 +75,4 @@ Quer criar um plugin? A API tá documentada em [docs/PLUGINS.md](docs/PLUGINS.md
 
 ## 📄 Licença
 
-[MIT](LICENSE) — feito por [Felipwe](https://github.com/Felipwe)
+[MIT](LICENSE)  feito por [Felipwe](https://github.com/Felipwe)
