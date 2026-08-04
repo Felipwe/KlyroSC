@@ -1,0 +1,11 @@
+{
+  "id": "region-unblock",
+  "name": "Region Unblock",
+  "version": "1.0.0",
+  "description": "Tries to unlock tracks that are geo-restricted in your country by routing playback through SoundCloud's embed endpoints.",
+  "author": "KlyroSC",
+  "main": "index.js",
+  "apiVersion": 1,
+  "enabledByDefault": true,
+  "permissions": []
+}

@@ -1,0 +1,11 @@
+{
+  "id": "adblock",
+  "name": "AdBlock",
+  "version": "1.0.0",
+  "description": "Blocks ads and trackers at the network level (40+ ad networks, including SoundCloud's audio-ad partners) and filters promoted content from feeds and search.",
+  "author": "KlyroSC",
+  "main": "index.js",
+  "apiVersion": 1,
+  "enabledByDefault": true,
+  "permissions": []
+}

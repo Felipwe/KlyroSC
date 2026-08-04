@@ -1,0 +1,18 @@
+{
+  "id": "track-notifier",
+  "name": "Track Notifier",
+  "version": "1.0.0",
+  "description": "Shows a subtle desktop notification whenever a new track starts playing.",
+  "author": "KlyroSC",
+  "main": "index.js",
+  "apiVersion": 1,
+  "permissions": ["notifications"],
+  "settings": [
+    {
+      "key": "onlyUnfocused",
+      "type": "boolean",
+      "label": "Only when KlyroSC is in the background",
+      "default": true
+    }
+  ]
+}

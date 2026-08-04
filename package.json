@@ -1,0 +1,74 @@
+{
+  "name": "klyrosc",
+  "productName": "KlyroSC",
+  "version": "2.0.0",
+  "description": "KlyroSC  a fast, elegant desktop music client powered by SoundCloud, with a native player, local library, plugins, synced lyrics and Discord Rich Presence.",
+  "main": "out/main/index.js",
+  "author": {
+    "name": "Felipwe",
+    "url": "https://github.com/Felipwe"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Felipwe/KlyroSC.git"
+  },
+  "homepage": "https://github.com/Felipwe/KlyroSC",
+  "keywords": [
+    "music",
+    "soundcloud",
+    "desktop",
+    "electron",
+    "player",
+    "klyrosc"
+  ],
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "smoke": "node scripts/smoke.mjs",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win && node scripts/make-setup.mjs",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "release": "npm run verify && electron-builder --publish always"
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.3.4",
+    "electron-updater": "^6.8.9",
+    "hls.js": "^1.6.16",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "semver": "^7.8.5",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/semver": "^7.8.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.66.0",
+    "vite": "^7.0.0",
+    "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "electron@43.3.0": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.1": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

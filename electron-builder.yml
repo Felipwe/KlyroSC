@@ -1,0 +1,60 @@
+appId: com.felipwe.klyrosc
+productName: KlyroSC
+copyright: Copyright © 2026 Felipwe
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - out/**
+  - package.json
+  - "!**/node_modules/**/{test,tests,__tests__,docs,example,examples}/**"
+  - "!**/*.map"
+
+extraResources:
+  - from: resources
+    to: .
+    filter:
+      - "**/*"
+
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  icon: build/icon.ico
+
+nsis:
+  oneClick: true
+  perMachine: false
+  deleteAppDataOnUninstall: false
+  shortcutName: KlyroSC
+  artifactName: KlyroSC-Update-${version}.${ext}
+  include: build/installer.nsh
+  installerHeaderIcon: build/icon.ico
+  runAfterFinish: true
+
+mac:
+  target:
+    - target: dmg
+    - target: zip
+  icon: build/icon.icns
+  category: public.app-category.music
+
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: build/icon.png
+  category: Audio
+  maintainer: Felipwe
+
+publish:
+  provider: github
+  owner: Felipwe
+  repo: KlyroSC
+  releaseType: release
