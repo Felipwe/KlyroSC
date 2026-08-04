@@ -43,6 +43,7 @@ export interface Settings {
   system: {
     closeToTray: boolean
     globalMediaKeys: boolean
+    lastSeenVersion: string
   }
 }
 
@@ -82,7 +83,8 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   system: {
     closeToTray: true,
-    globalMediaKeys: false
+    globalMediaKeys: false,
+    lastSeenVersion: ''
   }
 }
 
@@ -159,7 +161,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     },
     system: {
       closeToTray: bool(system.closeToTray, d.system.closeToTray),
-      globalMediaKeys: bool(system.globalMediaKeys, d.system.globalMediaKeys)
+      globalMediaKeys: bool(system.globalMediaKeys, d.system.globalMediaKeys),
+      lastSeenVersion: str(system.lastSeenVersion, d.system.lastSeenVersion, 20)
     }
   }
 }

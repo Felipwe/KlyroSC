@@ -17,17 +17,23 @@ export class AudioEngine {
   private hls: Hls | null = null
   private generation = 0
   private erroredGeneration = -1
+  private sourceReady = false
   private targetVolume = 0.8
   private fadeMs = 220
   private fadeTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(private events: EngineEvents) {
     this.audio.preload = 'auto'
-    this.audio.addEventListener('timeupdate', () => this.events.onTime(this.audio.currentTime))
-    this.audio.addEventListener('durationchange', () => {
-      if (Number.isFinite(this.audio.duration)) this.events.onDuration(this.audio.duration)
+    this.audio.addEventListener('timeupdate', () => {
+      if (this.sourceReady) this.events.onTime(this.audio.currentTime)
     })
-    this.audio.addEventListener('ended', () => this.events.onEnded())
+    this.audio.addEventListener('durationchange', () => {
+      if (this.sourceReady && Number.isFinite(this.audio.duration))
+        this.events.onDuration(this.audio.duration)
+    })
+    this.audio.addEventListener('ended', () => {
+      if (this.sourceReady) this.events.onEnded()
+    })
     this.audio.addEventListener('waiting', () => this.events.onBuffering(true))
     this.audio.addEventListener('canplay', () => this.events.onBuffering(false))
     this.audio.addEventListener('playing', () => {
@@ -48,9 +54,11 @@ export class AudioEngine {
 
   async load(trackId: number, autoplay: boolean, startAt = 0): Promise<void> {
     const generation = ++this.generation
+    this.sourceReady = false
     this.detachHls()
     this.audio.pause()
     this.audio.removeAttribute('src')
+    this.audio.load()
 
     const result = await api.sc.stream(trackId)
     if (generation !== this.generation) return
@@ -63,6 +71,7 @@ export class AudioEngine {
       if (source.protocol === 'hls') await this.attachHls(source, generation)
       else this.audio.src = source.url
       if (generation !== this.generation) return
+      this.sourceReady = true
       if (startAt > 0) this.audio.currentTime = startAt
       if (autoplay) await this.playWithFade()
       else this.applyVolume(this.targetVolume)
@@ -142,10 +151,12 @@ export class AudioEngine {
 
   stop(): void {
     this.generation++
+    this.sourceReady = false
     this.stopFade()
     this.detachHls()
     this.audio.pause()
     this.audio.removeAttribute('src')
+    this.audio.load()
   }
 
   seek(position: number): void {

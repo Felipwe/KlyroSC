@@ -8,7 +8,7 @@ import { toast } from '@renderer/stores/toasts'
 import { useLibrary } from '@renderer/stores/library'
 import { useSettings } from '@renderer/stores/settings'
 import { AudioEngine } from './engine'
-import { dedupeAppend, nextIndex, previousIndex, shuffled, unshuffled } from './queue-utils'
+import { dedupeAppend, nextIndex, previousIndex, shuffled, smartShuffled, unshuffled } from './queue-utils'
 
 interface PlayerState {
   queue: Track[]
@@ -46,6 +46,9 @@ let engine: AudioEngine | null = null
 let historyCounted = false
 let consecutiveErrors = 0
 let playerInitialized = false
+let smartShuffleEnabled = true
+
+const pickShuffle = (): typeof shuffled => (smartShuffleEnabled ? smartShuffled : shuffled)
 
 const getEngine = (): AudioEngine => {
   if (engine) return engine
@@ -130,7 +133,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     if (tracks.length === 0) return
     const shuffleOn = get().shuffle
     if (shuffleOn) {
-      const result = shuffled(tracks, startIndex)
+      const result = pickShuffle()(tracks, startIndex)
       set({ queue: result.queue, originalQueue: [...tracks] })
       startTrack(result.index)
     } else {
@@ -286,7 +289,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   toggleShuffle: () => {
     const state = get()
     if (!state.shuffle) {
-      const result = shuffled(state.queue, state.index)
+      const result = pickShuffle()(state.queue, state.index)
       set({
         shuffle: true,
         originalQueue: state.originalQueue ?? [...state.queue],
@@ -340,6 +343,12 @@ export async function initPlayer(): Promise<void> {
 
   api.events.onMedia((action) => handleMediaAction(action))
   api.events.onPlayerCommand((action) => handleMediaAction(action))
+
+  const syncSmartShuffle = (plugins: { manifest: { id: string }; enabled: boolean }[]): void => {
+    smartShuffleEnabled = plugins.find((plugin) => plugin.manifest.id === 'smart-shuffle')?.enabled ?? false
+  }
+  void api.plugins.list().then(syncSmartShuffle)
+  api.events.onPluginsChanged(syncSmartShuffle)
 
   startSnapshotPersistence()
 }

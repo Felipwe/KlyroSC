@@ -1,0 +1,11 @@
+{
+  "id": "smart-shuffle",
+  "name": "Smart Shuffle",
+  "version": "1.0.0",
+  "description": "Replaces plain random shuffle with a flow-aware order: avoids repeating the same artist back-to-back and keeps tracks with a similar vibe closer together.",
+  "author": "KlyroSC",
+  "main": "index.js",
+  "apiVersion": 1,
+  "enabledByDefault": true,
+  "permissions": []
+}

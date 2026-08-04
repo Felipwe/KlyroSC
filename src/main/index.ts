@@ -101,6 +101,7 @@ function bootstrap(): void {
         list.find((plugin) => plugin.manifest.id === id)?.enabled ?? false
       setAdBlockEnabled(isEnabled('adblock'))
       sc.setRegionUnblock(isEnabled('region-unblock'))
+      mainWindow.send(IPC.pluginsChanged, list)
     }
     applySystemPlugins()
     plugins.onChange(applySystemPlugins)
