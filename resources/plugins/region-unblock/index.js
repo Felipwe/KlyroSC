@@ -1,6 +1,6 @@
 module.exports = {
   activate(klyro) {
-    klyro.log('geo-restriction fallback active')
+    klyro.log('region-unblock active: widget-api bypass + reupload fallback enabled')
   },
   deactivate() {}
 }

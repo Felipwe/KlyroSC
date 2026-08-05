@@ -39,14 +39,15 @@ export function pickAlternative(original: AltOriginal, candidates: AltCandidate[
     if (candidate.snipped || candidate.policy === 'SNIP') continue
     if (candidate.fullDurationMs <= 0) continue
 
+    // Allow 8% duration variance (covers different padding/fades in reuploads)
     const durDiff = Math.abs(candidate.fullDurationMs - original.fullDurationMs) / original.fullDurationMs
-    if (durDiff > 0.06) continue
+    if (durDiff > 0.08) continue
 
     const normTitle = normalizeText(candidate.title)
     if (!normTitle.includes(coreTitle)) continue
     if (EDIT_RE.test(candidate.title)) continue
 
-    // the artist must show up somewhere so we don't grab a same-named different song
+    // Artist must appear in the reupload title or uploader name to avoid same-name songs
     const artistHit =
       coreArtist.length > 0 &&
       (normTitle.includes(coreArtist) || stripArtist(candidate.artist).includes(coreArtist))

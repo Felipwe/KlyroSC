@@ -1,9 +1,9 @@
 {
   "id": "region-unblock",
   "name": "Region Unblock",
-  "version": "1.0.0",
-  "description": "Plays tracks that show up as unavailable or preview-only in your country — full length.",
-  "descriptionPt": "Toca inteiras aquelas músicas que aparecem como indisponíveis ou só prévia no seu país.",
+  "version": "2.0.0",
+  "description": "Plays tracks unavailable or preview-only in your region. Uses the SoundCloud embeddable-player API (different CDN token) as a bypass, then searches for a full-length clean reupload if the bypass also fails.",
+  "descriptionPt": "Toca músicas indisponíveis ou só prévia no seu país. Usa a API do player embarcado do SoundCloud (token CDN diferente) como bypass; se ainda falhar, busca um reupload completo da mesma faixa.",
   "author": "KlyroSC",
   "main": "index.js",
   "apiVersion": 1,

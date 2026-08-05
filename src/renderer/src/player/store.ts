@@ -74,7 +74,11 @@ const getEngine = (): AudioEngine => {
     },
     onEnded: () => usePlayer.getState().next(true),
     onBuffering: (buffering) => usePlayer.setState({ buffering }),
-    onPlayingChange: (playing) => usePlayer.setState({ playing }),
+    onPlayingChange: (playing) => {
+      // Audio confirmed playing → clear the error streak so unrelated future errors start fresh.
+      if (playing && consecutiveErrors > 0) consecutiveErrors = 0
+      usePlayer.setState({ playing })
+    },
     onStreamInfo: ({ preview, substituted }) => {
       forcedPreview = preview
       usePlayer.setState({ previewActive: preview })
@@ -131,7 +135,9 @@ function startTrack(index: number, autoplay = true, startAt = 0, fresh = false):
   void getEngine()
     .load(track.id, autoplay, startAt, fresh)
     .then((ok) => {
-      if (ok) consecutiveErrors = 0
+      // Source-setup failure (e.g. IPC error) counts as an error immediately.
+      // Successful setup does NOT reset the counter — that only happens on real playback.
+      if (!ok) consecutiveErrors++
     })
 }
 

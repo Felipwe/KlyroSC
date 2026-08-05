@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.0',
+    pt: [
+      'Reprodução reconstruída: falhas de carregamento agora são detectadas em segundos e o app se recupera sozinho — chega de música carregando para sempre',
+      'Bypass de região definitivo: faixas bloqueadas no seu país passam automaticamente pela rota do player embarcado do SoundCloud, que destrava a versão completa',
+      'Músicas Go+ e indisponíveis: o app busca um reupload completo e limpo da mesma faixa antes de aceitar a prévia de 30s',
+      'Se o áudio travar no meio da música, o KlyroSC pega um novo link e continua de onde parou automaticamente'
+    ],
+    en: [
+      'Playback rebuilt: loading failures are now detected within seconds and the app recovers on its own — no more tracks loading forever',
+      'Definitive region bypass: tracks blocked in your country automatically go through the SoundCloud embedded-player route, which unlocks the full version',
+      'Go+ and unavailable songs: the app searches for a clean full-length reupload of the same track before settling for the 30s preview',
+      'If audio stalls mid-song, KlyroSC grabs a fresh link and resumes right where it stopped automatically'
+    ]
+  },
+  {
     version: '2.5.5',
     pt: [
       'A tela de login do SoundCloud agora abre maximizada, sem o formulário apertado e cortado',

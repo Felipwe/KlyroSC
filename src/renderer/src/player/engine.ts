@@ -161,7 +161,7 @@ export class AudioEngine {
       if (this.audio.paused && this.pendingSeeks === 0) return
       const progressed = Math.abs(this.audio.currentTime - startPos)
       if (progressed < 0.5 && this.audio.readyState < 3) this.emitError('stalled while buffering')
-    }, 12000)
+    }, 8000)
   }
 
   private armWatchdog(generation: number): void {
@@ -171,7 +171,7 @@ export class AudioEngine {
       if (generation !== this.generation) return
       const progressed = this.audio.currentTime - startPos
       if (progressed < 0.5 && this.audio.readyState < 3) this.emitError('stream stalled')
-    }, 15000)
+    }, 8000)
   }
 
   async load(trackId: number, autoplay: boolean, startAt = 0, fresh = false): Promise<boolean> {
@@ -230,12 +230,27 @@ export class AudioEngine {
     }
     const hls = new HlsCtor({ enableWorker: true, maxBufferLength: 30, backBufferLength: 30 })
     this.hls = hls
-    let networkRetries = 0
+    let fatalNetworkRetries = 0
+    let nonFatalNetErrors = 0
     hls.on(HlsCtor.Events.ERROR, (_event, data) => {
-      if (!data.fatal) return
-      if (data.type === 'networkError' && ++networkRetries <= 2) hls.startLoad()
-      else if (data.type === 'mediaError') hls.recoverMediaError()
-      else this.emitError(`stream error: ${data.details}`)
+      if (!data.fatal) {
+        // Non-fatal network errors = individual segment failures (geo-block, CDN expiry).
+        // Accumulating 5+ means the CDN is systematically refusing us — trigger retry chain.
+        if (data.type === 'networkError' && ++nonFatalNetErrors >= 5) {
+          if (generation === this.generation)
+            this.emitError(`hls segment failure: ${data.details}`)
+        }
+        return
+      }
+      // Fatal errors: let the store retry with a fresh URL (+ widget bypass on next attempt).
+      if (data.type === 'mediaError') {
+        hls.recoverMediaError()
+      } else if (data.type === 'networkError' && ++fatalNetworkRetries <= 1) {
+        // One transient-network retry; if it fails again, give up.
+        hls.startLoad()
+      } else {
+        this.emitError(`stream error: ${data.details}`)
+      }
     })
     hls.loadSource(source.url)
     hls.attachMedia(this.audio)

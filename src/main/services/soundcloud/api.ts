@@ -332,28 +332,45 @@ export class SoundCloudApi {
 
     const raw = await this.client.api(`/tracks/${trackId}`)
     const snippedOnly = this.isSnippedOnly(raw)
-    let source = snippedOnly ? null : await this.resolveFrom(raw, quality)
+    let source: StreamSource | null = null
 
-    // region-degraded tracks come back as 30s previews; the widget api serves the full stream
-    if (!source && this.regionUnblock) {
+    // On first load only: try the primary API for non-snipped tracks.
+    // On retries (fresh=true) the primary CDN has already failed (geo-block or expiry) — skip it
+    // and go straight to the widget bypass which uses a different CDN auth token.
+    if (!fresh && !snippedOnly) {
+      source = await this.resolveFrom(raw, quality)
+    }
+
+    // Widget API bypass: the embedded-player endpoint issues different CDN tokens that bypass
+    // most geo-restrictions. Tried unconditionally on retries and whenever primary gave nothing.
+    if ((!source || fresh) && this.regionUnblock) {
       try {
         const widgetRaw = await this.client.absolute(
           `https://api-widget.soundcloud.com/tracks/${trackId}`
         )
-        source = await this.resolveFrom(widgetRaw, quality, snippedOnly)
-        if (source) log.info(`track ${trackId} unlocked full stream via widget api`)
+        const widgetSource = await this.resolveFrom(widgetRaw, quality, snippedOnly)
+        if (widgetSource) {
+          source = widgetSource
+          log.info(`track ${trackId} resolved via widget api (${fresh ? 'retry' : 'geo-bypass'})`)
+        }
       } catch (error) {
-        log.warn(`widget fallback failed for ${trackId}: ${String(error)}`)
+        log.warn(`widget bypass failed for ${trackId}: ${String(error)}`)
       }
     }
 
-    // Go+ tracks stay snipped everywhere; try a clean full-length reupload of the same song
-    if (!source && snippedOnly && this.regionUnblock) {
-      source = await this.findFullAlternative(raw, quality)
-      if (source) log.info(`track ${trackId} served full via a clean reupload`)
+    // Widget gave nothing and this was a retry of a non-snipped track → try primary as last-resort
+    // (could be a transient network hiccup rather than a geo-block).
+    if (!source && fresh && !snippedOnly) {
+      source = await this.resolveFrom(raw, quality)
     }
 
-    // last resort: accept the official 30s preview and flag it for the UI
+    // Track is snipped everywhere (Go+ / hard geo-block) → search for a clean full-length reupload.
+    if (!source && this.regionUnblock) {
+      source = await this.findFullAlternative(raw, quality)
+      if (source) log.info(`track ${trackId} served via clean reupload`)
+    }
+
+    // Last resort: accept the official 30s preview and flag it for the UI
     if (!source && snippedOnly) {
       source = await this.resolveFrom(raw, quality)
       if (source) source = { ...source, preview: true }
@@ -375,39 +392,67 @@ export class SoundCloudApi {
   ): Promise<StreamSource | null> {
     if (!isRecord(raw) || typeof raw.title !== 'string') return null
     const user = isRecord(raw.user) ? raw.user : {}
-    const artist = typeof user.username === 'string' ? user.username : ''
+    const publisher = isRecord(raw.publisher_metadata) ? raw.publisher_metadata : {}
+    // Prefer the publisher artist (real artist name) over the uploader's username
+    const artist =
+      (typeof publisher.artist === 'string' && publisher.artist.length > 0
+        ? publisher.artist
+        : typeof user.username === 'string'
+          ? user.username
+          : '')
     const original: AltOriginal = {
       id: typeof raw.id === 'number' ? raw.id : -1,
       title: raw.title,
       artist,
       fullDurationMs: typeof raw.full_duration === 'number' ? raw.full_duration : 0
     }
-    const query = `${artist} ${cleanTitle(raw.title)}`.trim().slice(0, 100)
-    let results: unknown
-    try {
-      results = await this.client.api('/search/tracks', { q: query, limit: 40 })
-    } catch {
-      return null
-    }
-    const entries = collectionOf(results).filter(isRecord)
-    const candidates: AltCandidate[] = entries.map((entry) => {
-      const u = isRecord(entry.user) ? entry.user : {}
-      const transcodings = mapTranscodings(entry.media)
-      return {
-        id: typeof entry.id === 'number' ? entry.id : -1,
-        title: typeof entry.title === 'string' ? entry.title : '',
-        artist: typeof u.username === 'string' ? u.username : '',
-        fullDurationMs: typeof entry.full_duration === 'number' ? entry.full_duration : 0,
-        snipped: transcodings.length > 0 && transcodings.every((t) => t.snipped),
-        policy: typeof entry.policy === 'string' ? entry.policy : '',
-        playbackCount: typeof entry.playback_count === 'number' ? entry.playback_count : 0
+    if (original.fullDurationMs <= 0) return null
+
+    const cleanedTitle = cleanTitle(raw.title).trim().slice(0, 80)
+    // Multiple search queries in order of specificity: artist+title first, then title-only fallback
+    const queries = [
+      `${artist} ${cleanedTitle}`.trim().slice(0, 100),
+      cleanedTitle
+    ].filter((q, i, arr) => q.length >= 3 && arr.indexOf(q) === i)
+
+    const seenIds = new Set<number>()
+    for (const q of queries) {
+      let results: unknown
+      try {
+        results = await this.client.api('/search/tracks', { q, limit: 50 })
+      } catch {
+        continue
       }
-    })
-    const pickedId = pickAlternative(original, candidates)
-    if (pickedId === null) return null
-    const pickedRaw = entries.find((entry) => entry.id === pickedId)
-    const source = await this.resolveFrom(pickedRaw, quality, true)
-    return source ? { ...source, substituted: true } : null
+      const entries = collectionOf(results).filter(isRecord)
+      const candidates: AltCandidate[] = entries
+        .filter((entry) => {
+          const id = typeof entry.id === 'number' ? entry.id : -1
+          if (seenIds.has(id)) return false
+          seenIds.add(id)
+          return true
+        })
+        .map((entry) => {
+          const u = isRecord(entry.user) ? entry.user : {}
+          const transcodings = mapTranscodings(entry.media)
+          return {
+            id: typeof entry.id === 'number' ? entry.id : -1,
+            title: typeof entry.title === 'string' ? entry.title : '',
+            artist: typeof u.username === 'string' ? u.username : '',
+            fullDurationMs: typeof entry.full_duration === 'number' ? entry.full_duration : 0,
+            snipped: transcodings.length > 0 && transcodings.every((t) => t.snipped),
+            policy: typeof entry.policy === 'string' ? entry.policy : '',
+            playbackCount: typeof entry.playback_count === 'number' ? entry.playback_count : 0
+          }
+        })
+
+      const pickedId = pickAlternative(original, candidates)
+      if (pickedId !== null) {
+        const pickedRaw = entries.find((entry) => entry.id === pickedId)
+        const source = await this.resolveFrom(pickedRaw, quality, true)
+        if (source) return { ...source, substituted: true }
+      }
+    }
+    return null
   }
 
   private isSnippedOnly(raw: unknown): boolean {
