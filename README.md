@@ -70,7 +70,7 @@ SoundCloud Modded by: Felipe and Yusuro
 
 ## Assinatura de código
 
-O KlyroSC não coleta nenhum dado do usuário — tudo fica salvo localmente no seu computador.
+O KlyroSC não coleta nenhum dado do usuário tudo fica salvo localmente no seu computador.
 
 Free code signing on Windows provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 
