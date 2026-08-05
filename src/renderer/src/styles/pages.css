@@ -1,11 +1,7 @@
 .home-hero {
   margin-bottom: 34px;
-  padding: 30px 32px;
-  border-radius: var(--radius-xl);
+  padding: 26px 6px;
   position: relative;
-  overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--stroke);
   display: flex;
   align-items: stretch;
   gap: 30px;
@@ -119,20 +115,12 @@
   }
 }
 
-.home-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent-gradient);
-  opacity: 0.14;
-  pointer-events: none;
-}
-
 .home-hero .hh-main h1 {
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   position: relative;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
 }
 
 .home-hero .hh-main p {
@@ -1081,14 +1069,19 @@ kbd {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.tc-canvas.blurred {
+  background: #0b0c12;
+}
+
 .tc-canvas.blurred::before {
   content: '';
   position: absolute;
-  inset: -20px;
-  background: inherit;
+  inset: -30%;
+  background-image: var(--tcbg, none);
   background-size: cover;
   background-position: center;
-  filter: blur(11px) saturate(1.15);
+  filter: blur(10px) saturate(1.15) brightness(0.95);
+  transform: scale(1.12);
 }
 
 .tc-veil {

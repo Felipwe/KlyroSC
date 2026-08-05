@@ -61,7 +61,7 @@ function ThemePicker(): JSX.Element {
   const canvasStyle = (id: AccentId): CSSProperties => {
     if (id === 'art') {
       return artwork
-        ? { backgroundImage: `url("${artwork}")` }
+        ? ({ '--tcbg': `url("${artwork}")` } as CSSProperties)
         : { background: 'linear-gradient(135deg, #241543, #0b2436 70%, #0a1a2c)' }
     }
     if (id === 'yagami') return { backgroundImage: `url(${yagamiBg})`, backgroundPosition: 'center 30%' }

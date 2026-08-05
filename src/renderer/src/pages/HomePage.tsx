@@ -16,6 +16,7 @@ import { Icon } from '@renderer/components/Icon'
 
 function greeting(): string {
   const hour = new Date().getHours()
+  if (hour < 5) return t('home.greetingLateNight')
   if (hour < 12) return t('home.greetingMorning')
   if (hour < 18) return t('home.greetingAfternoon')
   return t('home.greetingEvening')

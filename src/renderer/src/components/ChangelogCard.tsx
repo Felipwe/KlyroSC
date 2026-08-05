@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.1',
+    pt: [
+      'Início mais limpa: a saudação agora fica direto sobre o fundo, sem caixa',
+      '“Boa madrugada” entre meia-noite e 5h — chega de “bom dia” às 3 da manhã',
+      'Bordas da miniatura do tema “Capa da música” corrigidas no seletor de temas'
+    ],
+    en: [
+      'Cleaner Home: the greeting now sits directly on the background, no box',
+      '“Up late” greeting between midnight and 5am — no more “good morning” at 3am',
+      'Fixed the blurred edges of the “Album art” theme preview in the theme picker'
+    ]
+  },
+  {
     version: '2.5.0',
     pt: [
       'Novo tema padrão “Capa da música”: o fundo e as cores do app seguem ao vivo a capa do que está tocando (troque nas Configurações se preferir)',

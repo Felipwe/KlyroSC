@@ -49,6 +49,7 @@ export const pt: Dict = {
     greetingMorning: 'Bom dia',
     greetingAfternoon: 'Boa tarde',
     greetingEvening: 'Boa noite',
+    greetingLateNight: 'Boa madrugada',
     anonymous: 'Anônimo',
     tagline: 'O que vamos ouvir hoje?',
     continueListening: 'Continue de onde parou',

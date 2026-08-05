@@ -47,6 +47,7 @@ export const en = {
     greetingMorning: 'Good morning',
     greetingAfternoon: 'Good afternoon',
     greetingEvening: 'Good evening',
+    greetingLateNight: 'Up late',
     anonymous: 'Anonymous',
     tagline: 'What are we listening to today?',
     continueListening: 'Pick up where you left off',
