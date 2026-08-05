@@ -78,9 +78,12 @@
   );
 }
 
-/* the bar stays frosted glass so the cover glows through it */
+/* fully invisible bar: the artwork shows through untouched */
 :root[data-accent='art'] .player-bar.glass {
-  background: color-mix(in srgb, var(--bg-raised) 26%, transparent);
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 :root[data-accent='art'] .sidebar,
