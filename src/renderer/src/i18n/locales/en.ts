@@ -98,7 +98,8 @@ export const en = {
     all: 'All tracks',
     about: 'About',
     verified: 'Verified artist',
-    empty: 'This artist has no public tracks'
+    empty: 'This artist has no public tracks',
+    reposts: 'Reposts'
   },
   trackPage: {
     plays: 'Plays',
@@ -108,7 +109,16 @@ export const en = {
     commentsEmpty: 'No comments yet',
     related: 'Similar tracks',
     loadMore: 'Load more',
-    jumpTo: 'Jump to this moment'
+    jumpTo: 'Jump to this moment',
+    commentPlaceholder: 'Write a comment…',
+    send: 'Send',
+    commentPosted: 'Comment posted',
+    commentFailed: 'Could not post your comment',
+    repost: 'Repost',
+    reposted: 'Reposted',
+    repostDone: 'Reposted to your profile',
+    repostRemoved: 'Repost removed',
+    repostFailed: 'Could not repost'
   },
   player: {
     play: 'Play',
@@ -207,7 +217,8 @@ export const en = {
     syncNote: 'Your favorites sync with your SoundCloud likes.',
     logout: 'Sign out',
     viewProfile: 'View profile',
-    notLoggedIn: 'You are not signed in'
+    notLoggedIn: 'You are not signed in',
+    required: 'Log in with SoundCloud to get the full experience'
   },
   settings: {
     title: 'Settings',

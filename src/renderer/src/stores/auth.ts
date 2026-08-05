@@ -14,6 +14,8 @@ interface AuthStore {
   login(): Promise<boolean>
   logout(): Promise<void>
   dismissPrompt(): void
+  /** Returns true when logged in; otherwise nudges the user to log in. */
+  requireLogin(): boolean
 }
 
 export const useAuth = create<AuthStore>((set, get) => ({
@@ -50,5 +52,12 @@ export const useAuth = create<AuthStore>((set, get) => ({
     set({ state })
   },
 
-  dismissPrompt: () => set({ promptDismissed: true })
+  dismissPrompt: () => set({ promptDismissed: true }),
+
+  requireLogin: () => {
+    if (get().state.loggedIn) return true
+    toast(t('auth.required'))
+    set({ promptDismissed: false })
+    return false
+  }
 }))

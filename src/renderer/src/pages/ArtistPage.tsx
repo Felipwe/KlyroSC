@@ -13,6 +13,7 @@ import { formatCount } from '@renderer/utils/format'
 export function ArtistPage({ id }: { id: number }): JSX.Element {
   useLanguage()
   const artist = useAsyncResult(() => api.sc.user(id), [id])
+  const reposts = useAsyncResult(() => api.sc.userReposts(id), [id])
   const [tracksPage, setTracksPage] = useState<Page<Track> | null>(null)
   const [loadingTracks, setLoadingTracks] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -127,6 +128,15 @@ export function ArtistPage({ id }: { id: number }): JSX.Element {
           </>
         )}
       </section>
+
+      {reposts.data && reposts.data.length > 0 && (
+        <section className="rail">
+          <div className="rail-head">
+            <h2 className="rail-title">{t('artist.reposts')}</h2>
+          </div>
+          <TrackList tracks={reposts.data} />
+        </section>
+      )}
     </div>
   )
 }

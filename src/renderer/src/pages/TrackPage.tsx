@@ -4,13 +4,15 @@ import { t, useLanguage, getLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
 import { usePlayer } from '@renderer/player/store'
 import { useLibrary } from '@renderer/stores/library'
+import { useAuth } from '@renderer/stores/auth'
 import { useNav } from '@renderer/stores/nav'
+import { toast } from '@renderer/stores/toasts'
 import { useAsyncResult } from '@renderer/hooks/async'
 import { Empty, ErrorState, Loading } from '@renderer/components/Status'
 import { TrackList } from '@renderer/components/TrackList'
 import { Artwork } from '@renderer/components/Artwork'
 import { Icon } from '@renderer/components/Icon'
-import { formatCount, formatDate, formatTime } from '@renderer/utils/format'
+import { cx, formatCount, formatDate, formatTime } from '@renderer/utils/format'
 
 export function TrackPage({ id }: { id: number }): JSX.Element {
   useLanguage()
@@ -19,14 +21,21 @@ export function TrackPage({ id }: { id: number }): JSX.Element {
   const [comments, setComments] = useState<Page<TrackComment> | null>(null)
   const [loadingComments, setLoadingComments] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [sending, setSending] = useState(false)
+  const [reposted, setReposted] = useState(false)
+  const [repostBusy, setRepostBusy] = useState(false)
 
   const playing = usePlayer((state) => state.playing && state.current?.id === id)
   const isFavorite = useLibrary((state) => state.favoriteIds.has(id))
+  const loggedUser = useAuth((state) => state.state.user)
 
   useEffect(() => {
     let cancelled = false
     setLoadingComments(true)
     setComments(null)
+    setDraft('')
+    setReposted(false)
     void api.sc.comments(id).then((result) => {
       if (cancelled) return
       setLoadingComments(false)
@@ -52,6 +61,44 @@ export function TrackPage({ id }: { id: number }): JSX.Element {
     setLoadingMore(false)
     if (result.ok)
       setComments({ items: [...comments.items, ...result.data.items], nextHref: result.data.nextHref })
+  }
+
+  const openProfile = (userId: number): void => {
+    if (userId > 0) useNav.getState().push({ name: 'artist', id: userId })
+  }
+
+  const submitComment = async (): Promise<void> => {
+    const body = draft.trim()
+    if (!body || sending) return
+    if (!useAuth.getState().requireLogin()) return
+    setSending(true)
+    const player = usePlayer.getState()
+    const timestampMs = player.current?.id === id ? Math.round(player.position * 1000) : null
+    const result = await api.sc.addComment(id, body, timestampMs)
+    setSending(false)
+    if (!result.ok) {
+      toast(t('trackPage.commentFailed'), 'error')
+      return
+    }
+    setDraft('')
+    toast(t('trackPage.commentPosted'), 'success')
+    const fresh = await api.sc.comments(id)
+    if (fresh.ok) setComments(fresh.data)
+  }
+
+  const toggleRepost = async (): Promise<void> => {
+    if (repostBusy) return
+    if (!useAuth.getState().requireLogin()) return
+    setRepostBusy(true)
+    const next = !reposted
+    const result = await api.sc.setRepost(id, next)
+    setRepostBusy(false)
+    if (!result.ok) {
+      toast(t('trackPage.repostFailed'), 'error')
+      return
+    }
+    setReposted(next)
+    toast(next ? t('trackPage.repostDone') : t('trackPage.repostRemoved'), 'success')
   }
 
   return (
@@ -105,6 +152,14 @@ export function TrackPage({ id }: { id: number }): JSX.Element {
               <Icon name="queue" size={15} />
               {t('menu.addToQueue')}
             </button>
+            <button
+              className={cx('btn', reposted && 'primary')}
+              disabled={repostBusy}
+              onClick={() => void toggleRepost()}
+            >
+              <Icon name="repost" size={15} />
+              {reposted ? t('trackPage.reposted') : t('trackPage.repost')}
+            </button>
             {data.url && (
               <button className="btn" onClick={() => api.app.openExternal(data.url)}>
                 <Icon name="external" size={15} />
@@ -135,6 +190,34 @@ export function TrackPage({ id }: { id: number }): JSX.Element {
             )}
           </h2>
         </div>
+        <div className="comment-composer">
+          <Artwork
+            src={loggedUser?.avatar ?? null}
+            alt=""
+            round
+            fallbackIcon="user"
+            iconSize={14}
+            className="cc-avatar"
+          />
+          <input
+            className="text-input"
+            type="text"
+            maxLength={500}
+            value={draft}
+            placeholder={t('trackPage.commentPlaceholder')}
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') void submitComment()
+            }}
+          />
+          <button
+            className="btn primary small"
+            disabled={sending || draft.trim().length === 0}
+            onClick={() => void submitComment()}
+          >
+            {sending ? <div className="spinner small" style={{ borderTopColor: '#fff' }} /> : t('trackPage.send')}
+          </button>
+        </div>
         {loadingComments ? (
           <Loading />
         ) : !comments || comments.items.length === 0 ? (
@@ -143,10 +226,19 @@ export function TrackPage({ id }: { id: number }): JSX.Element {
           <div className="comment-list">
             {comments.items.map((comment) => (
               <div key={comment.id} className="comment-row">
-                <Artwork src={comment.userAvatar} alt="" round fallbackIcon="user" iconSize={14} />
+                <Artwork
+                  src={comment.userAvatar}
+                  alt={comment.userName}
+                  round
+                  fallbackIcon="user"
+                  iconSize={14}
+                  onClick={() => openProfile(comment.userId)}
+                />
                 <div className="cm-main">
                   <div className="cm-head">
-                    <span className="cm-name">{comment.userName}</span>
+                    <span className="cm-name" onClick={() => openProfile(comment.userId)}>
+                      {comment.userName}
+                    </span>
                     {comment.timestamp !== null && (
                       <button
                         className="badge accent cm-time"

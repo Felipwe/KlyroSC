@@ -766,8 +766,27 @@ kbd {
   gap: 4px;
 }
 
+.comment-composer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.comment-composer .cc-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.comment-composer .text-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .comment-row {
   display: flex;
+  align-items: flex-start;
   gap: 12px;
   padding: 11px 12px;
   border-radius: var(--radius-m);
@@ -780,7 +799,9 @@ kbd {
 
 .comment-row > .artwork {
   width: 34px;
+  height: 34px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .cm-main {
@@ -798,6 +819,12 @@ kbd {
 .cm-name {
   font-size: 0.8rem;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.cm-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .cm-time {

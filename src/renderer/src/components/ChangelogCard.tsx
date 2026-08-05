@@ -11,6 +11,23 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.0',
+    pt: [
+      'Region Unblock agora toca a faixa INTEIRA: músicas que viravam prévia de 30s no seu país tocam completas com o plugin ativo',
+      'Comente e republique direto do app quando estiver logado — republicações aparecem no seu perfil',
+      'Perfis clicáveis nos comentários e seção Republicadas nos perfis',
+      'Comentários com visual corrigido (fotos de perfil redondinhas de novo)',
+      'Sem login, as ações sociais convidam você a entrar para a experiência completa'
+    ],
+    en: [
+      'Region Unblock now plays the FULL track: songs degraded to 30s previews in your country play complete with the plugin on',
+      'Comment and repost right from the app when signed in — reposts show on your profile',
+      'Clickable profiles in comments and a Reposts section on profiles',
+      'Comments visual fixed (round avatars again)',
+      'Logged-out social actions invite you to sign in for the full experience'
+    ]
+  },
+  {
     version: '2.1.0',
     pt: [
       'Página da faixa: clique na capa ou no nome da música para ver curtidas, comentários, republicações e faixas parecidas',

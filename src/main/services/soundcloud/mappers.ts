@@ -25,7 +25,8 @@ export function mapTranscodings(raw: unknown): Transcoding[] {
       url: t.url,
       protocol,
       mimeType: str(format.mime_type) ?? 'audio/mpeg',
-      quality: str(t.quality) ?? 'sq'
+      quality: str(t.quality) ?? 'sq',
+      snipped: t.snipped === true
     })
   }
   return out

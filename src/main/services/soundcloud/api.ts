@@ -180,6 +180,36 @@ export class SoundCloudApi {
     return { items, nextHref: nextHrefOf(raw) }
   }
 
+  async addComment(trackId: number, body: string, timestampMs: number | null): Promise<TrackComment | null> {
+    const comment: Record<string, unknown> = { body }
+    if (timestampMs !== null) comment.timestamp = timestampMs
+    const raw = await this.client.api(
+      `/tracks/${trackId}/comments`,
+      {},
+      { method: 'POST', body: { comment } }
+    )
+    return mapComment(raw)
+  }
+
+  async setRepost(trackId: number, on: boolean): Promise<void> {
+    await this.client.api(`/me/track_reposts/${trackId}`, {}, { method: on ? 'PUT' : 'DELETE' })
+  }
+
+  async userReposts(id: number): Promise<Track[]> {
+    const raw = await this.client.api(`/stream/users/${id}`, { limit: 30 })
+    const tracks: Track[] = []
+    const seen = new Set<number>()
+    for (const entry of collectionOf(raw)) {
+      if (!isRecord(entry) || typeof entry.type !== 'string' || !entry.type.includes('repost')) continue
+      const track = mapTrack(entry.track)
+      if (track && !seen.has(track.id)) {
+        seen.add(track.id)
+        tracks.push(track)
+      }
+    }
+    return tracks
+  }
+
   async setLike(userId: number, trackId: number, liked: boolean): Promise<void> {
     await this.client.api(
       `/users/${userId}/track_likes/${trackId}`,
@@ -231,19 +261,24 @@ export class SoundCloudApi {
     if (cached && Date.now() - cached.at < 2 * 60 * 1000) return cached.source
 
     const raw = await this.client.api(`/tracks/${trackId}`)
-    let source = await this.resolveFrom(raw, quality)
+    const snippedOnly = this.isSnippedOnly(raw)
+    let source = snippedOnly ? null : await this.resolveFrom(raw, quality)
 
+    // region-degraded tracks come back as 30s previews; the widget api serves the full stream
     if (!source && this.regionUnblock) {
       try {
         const widgetRaw = await this.client.absolute(
           `https://api-widget.soundcloud.com/tracks/${trackId}`
         )
-        source = await this.resolveFrom(widgetRaw, quality)
-        if (source) log.info(`track ${trackId} unlocked via widget api`)
+        source = await this.resolveFrom(widgetRaw, quality, snippedOnly)
+        if (source) log.info(`track ${trackId} unlocked full stream via widget api`)
       } catch (error) {
         log.warn(`widget fallback failed for ${trackId}: ${String(error)}`)
       }
     }
+
+    // last resort: accept the preview (Go+ tracks are snipped everywhere)
+    if (!source && snippedOnly) source = await this.resolveFrom(raw, quality)
 
     if (!source) throw new Error('track is not playable in your region')
 
@@ -255,9 +290,20 @@ export class SoundCloudApi {
     return source
   }
 
-  private async resolveFrom(raw: unknown, quality: StreamQuality): Promise<StreamSource | null> {
-    if (!isRecord(raw)) return null
+  private isSnippedOnly(raw: unknown): boolean {
+    if (!isRecord(raw)) return false
     const transcodings = mapTranscodings(raw.media)
+    return transcodings.length > 0 && transcodings.every((t) => t.snipped)
+  }
+
+  private async resolveFrom(
+    raw: unknown,
+    quality: StreamQuality,
+    fullOnly = false
+  ): Promise<StreamSource | null> {
+    if (!isRecord(raw)) return null
+    let transcodings = mapTranscodings(raw.media)
+    if (fullOnly) transcodings = transcodings.filter((t) => !t.snipped)
     if (transcodings.length === 0) return null
     const auth = typeof raw.track_authorization === 'string' ? raw.track_authorization : ''
 

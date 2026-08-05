@@ -60,6 +60,27 @@ export function registerSoundCloudIpc(ctx: AppContext): void {
     return ctx.sc.comments(p.id, typeof p.nextHref === 'string' ? p.nextHref : null)
   })
 
+  handleResult(IPC.scCommentAdd, (payload) => {
+    const p = payload as { id?: unknown; body?: unknown; timestampMs?: unknown }
+    if (typeof p?.id !== 'number') throw new Error('invalid track id')
+    const body = typeof p.body === 'string' ? p.body.trim().slice(0, 500) : ''
+    if (!body) throw new Error('empty comment')
+    if (!ctx.auth.state().loggedIn) throw new Error('not logged in')
+    return ctx.sc.addComment(p.id, body, typeof p.timestampMs === 'number' ? p.timestampMs : null)
+  })
+
+  handleResult(IPC.scRepostSet, (payload) => {
+    const p = payload as { id?: unknown; on?: unknown }
+    if (typeof p?.id !== 'number') throw new Error('invalid track id')
+    if (!ctx.auth.state().loggedIn) throw new Error('not logged in')
+    return ctx.sc.setRepost(p.id, p.on === true)
+  })
+
+  handleResult(IPC.scUserReposts, (id) => {
+    if (typeof id !== 'number') throw new Error('invalid user id')
+    return ctx.sc.userReposts(id)
+  })
+
   handleResult(IPC.scResolve, (url) => {
     if (typeof url !== 'string') throw new Error('invalid url')
     return ctx.sc.resolve(url)

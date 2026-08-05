@@ -19,6 +19,7 @@ export function setScAuthToken(token: string | null): void {
 
 export interface RequestInitLite {
   method?: 'GET' | 'PUT' | 'DELETE' | 'POST'
+  body?: unknown
 }
 
 const CLIENT_ID_TTL = 12 * 60 * 60 * 1000
@@ -97,9 +98,11 @@ export class ScClient {
   private async request(url: string, init?: RequestInitLite): Promise<unknown> {
     const headers: Record<string, string> = { 'User-Agent': UA, Accept: 'application/json' }
     if (authToken) headers.Authorization = `OAuth ${authToken}`
+    if (init?.body !== undefined) headers['Content-Type'] = 'application/json'
     const res = await fetch(url, {
       method: init?.method ?? 'GET',
       headers,
+      body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
       signal: AbortSignal.timeout(15000)
     })
     if (res.status === 401 || res.status === 403) throw new UnauthorizedError()

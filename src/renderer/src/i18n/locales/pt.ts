@@ -100,7 +100,8 @@ export const pt: Dict = {
     all: 'Todas as faixas',
     about: 'Sobre',
     verified: 'Artista verificado',
-    empty: 'Este artista não tem faixas públicas'
+    empty: 'Este artista não tem faixas públicas',
+    reposts: 'Republicadas'
   },
   trackPage: {
     plays: 'Reproduções',
@@ -110,7 +111,16 @@ export const pt: Dict = {
     commentsEmpty: 'Ainda sem comentários',
     related: 'Faixas parecidas',
     loadMore: 'Carregar mais',
-    jumpTo: 'Ir para este momento'
+    jumpTo: 'Ir para este momento',
+    commentPlaceholder: 'Escreva um comentário…',
+    send: 'Enviar',
+    commentPosted: 'Comentário publicado',
+    commentFailed: 'Não deu para publicar seu comentário',
+    repost: 'Republicar',
+    reposted: 'Republicada',
+    repostDone: 'Republicada no seu perfil',
+    repostRemoved: 'Republicação removida',
+    repostFailed: 'Não deu para republicar'
   },
   player: {
     play: 'Tocar',
@@ -209,7 +219,8 @@ export const pt: Dict = {
     syncNote: 'Seus favoritos sincronizam com as curtidas do SoundCloud.',
     logout: 'Sair da conta',
     viewProfile: 'Ver perfil',
-    notLoggedIn: 'Você não está conectado'
+    notLoggedIn: 'Você não está conectado',
+    required: 'Entre com o SoundCloud para ter a experiência completa'
   },
   settings: {
     title: 'Configurações',

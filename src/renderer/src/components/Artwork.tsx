@@ -9,6 +9,7 @@ interface ArtworkProps {
   className?: string
   fallbackIcon?: IconName
   iconSize?: number
+  onClick?: () => void
 }
 
 export function Artwork({
@@ -17,12 +18,13 @@ export function Artwork({
   round = false,
   className,
   fallbackIcon = 'music',
-  iconSize = 20
+  iconSize = 20,
+  onClick
 }: ArtworkProps): JSX.Element {
   const [failed, setFailed] = useState(false)
   const showImage = src && !failed
   return (
-    <div className={cx('artwork', round && 'round', className)}>
+    <div className={cx('artwork', round && 'round', className)} onClick={onClick}>
       {showImage ? (
         <img src={src} alt={alt} loading="lazy" draggable={false} onError={() => setFailed(true)} />
       ) : (

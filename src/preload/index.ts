@@ -57,8 +57,11 @@ const api: KlyroApi = {
     playlist: (ref) => invoke(IPC.scPlaylist, ref),
     user: (id) => invoke(IPC.scUser, id),
     userTracks: (id, nextHref) => invoke(IPC.scUserTracks, { id, nextHref }),
+    userReposts: (id) => invoke(IPC.scUserReposts, id),
     related: (id) => invoke(IPC.scRelated, id),
     comments: (id, nextHref) => invoke(IPC.scComments, { id, nextHref }),
+    addComment: (id, body, timestampMs) => invoke(IPC.scCommentAdd, { id, body, timestampMs }),
+    setRepost: (id, on) => invoke(IPC.scRepostSet, { id, on }),
     resolve: (url) => invoke(IPC.scResolve, url),
     stream: (trackId, fresh) => invoke(IPC.scStream, { id: trackId, fresh: fresh === true })
   },

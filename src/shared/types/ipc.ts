@@ -77,8 +77,11 @@ export interface KlyroApi {
     playlist(ref: string): Promise<Result<RemotePlaylist>>
     user(id: number): Promise<Result<Artist>>
     userTracks(id: number, nextHref?: string | null): Promise<Result<Page<Track>>>
+    userReposts(id: number): Promise<Result<Track[]>>
     related(id: number): Promise<Result<Track[]>>
     comments(id: number, nextHref?: string | null): Promise<Result<Page<TrackComment>>>
+    addComment(id: number, body: string, timestampMs: number | null): Promise<Result<TrackComment | null>>
+    setRepost(id: number, on: boolean): Promise<Result<void>>
     resolve(url: string): Promise<Result<ResolvedItem>>
     stream(trackId: number, fresh?: boolean): Promise<Result<StreamSource>>
   }
@@ -166,8 +169,11 @@ export const IPC = {
   scPlaylist: 'sc:playlist',
   scUser: 'sc:user',
   scUserTracks: 'sc:user-tracks',
+  scUserReposts: 'sc:user-reposts',
   scRelated: 'sc:related',
   scComments: 'sc:comments',
+  scCommentAdd: 'sc:comment-add',
+  scRepostSet: 'sc:repost-set',
   scResolve: 'sc:resolve',
   scStream: 'sc:stream',
   libraryGet: 'library:get',

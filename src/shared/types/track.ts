@@ -3,6 +3,7 @@ export interface Transcoding {
   protocol: 'progressive' | 'hls'
   mimeType: string
   quality: string
+  snipped: boolean
 }
 
 export interface Track {
