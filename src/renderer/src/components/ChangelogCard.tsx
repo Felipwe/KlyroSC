@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.3.1',
+    pt: [
+      'Menus de seleção corrigidos: abriam no canto esquerdo por cima da barra lateral — agora abrem colados no botão, em todos os lugares',
+      'Histórico de buscas no Pesquisar: suas buscas recentes aparecem quando o campo está vazio — clique para repetir ou remova uma no X'
+    ],
+    en: [
+      'Select menus fixed: they opened at the left corner over the sidebar — now they open attached to the button, everywhere',
+      'Search history in Search: your recent searches show when the field is empty — click to repeat or remove one with the X'
+    ]
+  },
+  {
     version: '2.3.0',
     pt: [
       'Equalizador profissional de 10 bandas nas Configurações: presets prontos (Rock, Grave, Agudos…), presets seus ilimitados com nome, tudo com efeito ao vivo na música',
