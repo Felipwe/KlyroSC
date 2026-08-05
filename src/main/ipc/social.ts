@@ -76,6 +76,9 @@ export function registerSocialIpc(ctx: AppContext): void {
   on(IPC.socialChatTyping, (friendId) => {
     if (typeof friendId === 'string') social.chatTyping(friendId)
   })
+  on(IPC.socialJamChatSend, (text) => {
+    if (typeof text === 'string') social.sendJamChat(text)
+  })
   on(IPC.socialJamPlaybackSend, (payload) => {
     const p = payload as { track?: unknown; playing?: unknown; position?: unknown }
     if (!p || typeof p.playing !== 'boolean' || typeof p.position !== 'number') return

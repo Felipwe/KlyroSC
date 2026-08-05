@@ -11,6 +11,27 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.8.0',
+    pt: [
+      'Chat da Jam: converse com todo mundo da jam em grupo, com aviso de não lidas',
+      'A jam não morre mais: se o dono fechar o app, a posse passa para o membro mais antigo',
+      'Fila da jam sincronizada com a sua fila e mostrando quem adicionou cada música',
+      'Discord mostra a jam no seu perfil (Jam 2/8)',
+      'Barra lateral ajustável: arraste a borda — bem estreita vira só ícones; duplo clique volta ao padrão',
+      'Chats abrem no canto inferior direito, empilhando organizados',
+      'Anti-spam leve nos chats para manter a conversa saudável'
+    ],
+    en: [
+      'Jam chat: talk with everyone in the jam as a group, with unread badges',
+      'Jams no longer die: if the host closes the app, ownership passes to the oldest member',
+      'Jam queue synced with your local queue and showing who added each track',
+      'Discord shows the jam on your profile (Jam 2/8)',
+      'Resizable sidebar: drag the edge — very narrow becomes icons-only; double-click resets',
+      'Chats open at the bottom-right corner, stacking neatly',
+      'Light anti-spam on chats to keep conversations healthy'
+    ]
+  },
+  {
     version: '2.7.1',
     pt: [
       'Chats em janelas flutuantes: arraste pelo cabeçalho, redimensione pelo canto e abra várias conversas ao mesmo tempo',

@@ -27,6 +27,8 @@ export interface Track {
   repostCount?: number
   commentCount?: number
   description?: string | null
+  /** who queued this track in the current jam (display only) */
+  jamAddedBy?: string
 }
 
 export interface TrackComment {

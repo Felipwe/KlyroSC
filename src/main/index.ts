@@ -93,11 +93,15 @@ function bootstrap(): void {
     }
   )
   const social = new SocialService(
-    (snapshot) => mainWindow.send(IPC.socialState, snapshot),
+    (snapshot) => {
+      mainWindow.send(IPC.socialState, snapshot)
+      presence.setJamInfo(snapshot.jam ? `Jam ${snapshot.jam.members.length}/8` : null)
+    },
     (playback) => mainWindow.send(IPC.socialJamPlayback, playback),
     (payload) => mainWindow.send(IPC.socialChatMessage, payload),
     (payload) => mainWindow.send(IPC.socialChatSent, payload),
-    (payload) => mainWindow.send(IPC.socialChatTypingEvent, payload)
+    (payload) => mainWindow.send(IPC.socialChatTypingEvent, payload),
+    (payload) => mainWindow.send(IPC.socialChatRejected, payload)
   )
 
   const ctx: AppContext = {

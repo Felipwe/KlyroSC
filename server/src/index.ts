@@ -15,25 +15,31 @@ async function main(): Promise<void> {
   await initDb()
 
   const hub = new Hub()
-  const jams = new JamService((event: JamEvent) => {
-    switch (event.kind) {
-      case 'sync':
-        hub.sendMany(event.userIds, { t: 'sync' })
-        break
-      case 'playback':
-        hub.sendMany(event.userIds, { t: 'jam:playback', playback: event.playback })
-        break
-      case 'queue':
-        hub.sendMany(event.userIds, { t: 'jam:queue', queue: event.queue })
-        break
-      case 'invite':
-        hub.sendMany([event.invite.toId], { t: 'sync' })
-        break
-      case 'ended':
-        hub.sendMany(event.userIds, { t: 'jam:ended', jamId: event.jamId })
-        break
-    }
-  })
+  const jams = new JamService(
+    (event: JamEvent) => {
+      switch (event.kind) {
+        case 'sync':
+          hub.sendMany(event.userIds, { t: 'sync' })
+          break
+        case 'playback':
+          hub.sendMany(event.userIds, { t: 'jam:playback', playback: event.playback })
+          break
+        case 'queue':
+          hub.sendMany(event.userIds, { t: 'jam:queue', queue: event.queue })
+          break
+        case 'invite':
+          hub.sendMany([event.invite.toId], { t: 'sync' })
+          break
+        case 'ended':
+          hub.sendMany(event.userIds, { t: 'jam:ended', jamId: event.jamId })
+          break
+        case 'chat':
+          hub.sendMany(event.userIds, { t: 'jam:chat', message: event.message })
+          break
+      }
+    },
+    (userId) => hub.isOnline(userId)
+  )
 
   const app = express()
   app.disable('x-powered-by')

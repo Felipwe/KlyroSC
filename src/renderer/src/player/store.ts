@@ -46,6 +46,7 @@ interface PlayerState {
   cycleRepeat(): void
   setJamLock(locked: boolean): void
   jamApplyTrack(track: Track, position: number, playing: boolean): void
+  jamApplyQueue(tracks: Track[]): void
   jamApplyTransport(playing: boolean, position: number | null): void
 }
 
@@ -403,6 +404,17 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   jamApplyTrack: (track, position, playing) => {
     set({ queue: [track], originalQueue: null, shuffle: false })
     startTrack(0, playing, Math.max(0, position))
+  },
+
+  jamApplyQueue: (tracks) => {
+    const { current } = get()
+    // mirror the jam queue after the current track so the queue panel matches the jam
+    set({
+      queue: current ? [current, ...tracks.filter((track) => track.id !== current.id)] : [...tracks],
+      index: 0,
+      originalQueue: null,
+      shuffle: false
+    })
   },
 
   jamApplyTransport: (playing, position) => {

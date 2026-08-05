@@ -18,6 +18,8 @@ import { Icon } from '@renderer/components/Icon'
 import { Artwork } from '@renderer/components/Artwork'
 import { Switch } from '@renderer/components/controls'
 import { ChatPanel } from '@renderer/components/ChatPanel'
+import { JamChatPanel } from '@renderer/components/JamChatPanel'
+import { JAM_CHAT_KEY } from '@renderer/stores/social'
 
 export function SocialAvatar({
   name,
@@ -249,6 +251,7 @@ function Onboarding(): JSX.Element {
 
 function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends: Friend[] }): JSX.Element {
   const [inviteOpen, setInviteOpen] = useState(false)
+  const jamUnread = useSocial((state) => state.jamUnread)
   const isOwner = jam.ownerId === meId
   const playback = jam.playback
   const onlineFriends = friends.filter(
@@ -277,6 +280,15 @@ function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends:
           </span>
         )}
         <div className="social-jam-head-actions">
+          <button
+            className="icon-btn social-jam-chat-btn"
+            title={t('social.jam.chatTitle')}
+            aria-label={t('social.jam.chatTitle')}
+            onClick={() => useSocial.getState().openJamChat()}
+          >
+            <Icon name="comment" size={16} />
+            {jamUnread > 0 && <span className="social-unread">{jamUnread > 9 ? '9+' : jamUnread}</span>}
+          </button>
           {isOwner ? (
             <button className="btn small danger" onClick={endJam}>
               <Icon name="power" size={13} />
@@ -365,6 +377,12 @@ function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends:
             <div key={`${track.trackId}-${index}`} className="social-jam-queue-row">
               <span className="social-queue-num">{index + 1}</span>
               <span className="social-queue-title">{track.title}</span>
+              {track.addedByName && (
+                <span className="social-queue-added" title={t('social.jam.addedBy', { name: track.addedByName })}>
+                  <Icon name="user" size={10} />
+                  {track.addedByName}
+                </span>
+              )}
               <span className="social-queue-artist">{track.artist}</span>
             </div>
           ))}
@@ -722,9 +740,13 @@ function Hub(): JSX.Element {
         )}
       </section>
 
-      {openChats.map((id, index) => (
-        <ChatPanel key={id} friendId={id} zIndex={index} />
-      ))}
+      {openChats.map((id, index) =>
+        id === JAM_CHAT_KEY ? (
+          <JamChatPanel key={id} zIndex={index} />
+        ) : (
+          <ChatPanel key={id} friendId={id} zIndex={index} />
+        )
+      )}
     </>
   )
 }

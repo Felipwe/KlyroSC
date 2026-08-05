@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import {
+  type JamChatEntry,
   type JamDto,
   type JamInviteDto,
   type JamPlayback,
@@ -12,6 +13,10 @@ const INVITE_TTL_MS = 10 * 60 * 1000
 /** a jam with nobody playing anything for this long is shut down */
 const IDLE_TTL_MS = 20 * 60 * 1000
 const QUEUE_LIMIT = 30
+const CHAT_KEEP = 50
+const CHAT_DTO = 30
+/** owner offline grace before the crown moves to the oldest member */
+const OWNER_OFFLINE_GRACE_MS = 60 * 1000
 
 interface Invite {
   id: string
@@ -25,10 +30,14 @@ interface Jam {
   id: string
   ownerId: string
   allowGuestControl: boolean
-  members: Set<string>
+  /** userId → joinedAt epoch ms (insertion kept, timestamps decide seniority) */
+  members: Map<string, number>
   queue: JamTrackRef[]
   playback: JamPlayback
+  chat: JamChatEntry[]
+  chatCounter: number
   lastActivity: number
+  ownerOfflineTimer: NodeJS.Timeout | null
 }
 
 export type JamEvent =
@@ -37,6 +46,7 @@ export type JamEvent =
   | { kind: 'queue'; userIds: string[]; queue: JamTrackRef[] }
   | { kind: 'invite'; userIds: string[]; invite: Invite }
   | { kind: 'ended'; userIds: string[]; jamId: string }
+  | { kind: 'chat'; userIds: string[]; message: JamChatEntry }
 
 export class JamService {
   private jams = new Map<string, Jam>()
@@ -44,7 +54,10 @@ export class JamService {
   private invites = new Map<string, Invite>()
   private sweeper: NodeJS.Timeout
 
-  constructor(private emit: (event: JamEvent) => void) {
+  constructor(
+    private emit: (event: JamEvent) => void,
+    private isOnline: (userId: string) => boolean = () => true
+  ) {
     this.sweeper = setInterval(() => this.sweep(), 60_000)
     this.sweeper.unref()
   }
@@ -59,16 +72,19 @@ export class JamService {
   }
 
   toDto(jam: Jam, resolveUser: (id: string) => SocialUser | null): JamDto {
+    // oldest first so clients can show seniority naturally
+    const ordered = [...jam.members.entries()].sort((a, b) => a[1] - b[1])
     return {
       id: jam.id,
       ownerId: jam.ownerId,
       allowGuestControl: jam.allowGuestControl,
-      members: [...jam.members].map((id) => {
+      members: ordered.map(([id]) => {
         const user = resolveUser(id) ?? { id, name: 'Unknown', publicId: 0, avatar: null }
         return { ...user, owner: id === jam.ownerId }
       }),
       queue: jam.queue,
-      playback: jam.playback
+      playback: jam.playback,
+      chat: jam.chat.slice(-CHAT_DTO)
     }
   }
 
@@ -87,10 +103,13 @@ export class JamService {
       id: randomUUID(),
       ownerId: userId,
       allowGuestControl: false,
-      members: new Set([userId]),
+      members: new Map([[userId, Date.now()]]),
       queue: [],
       playback: { track: null, playing: false, position: 0, at: Date.now() },
-      lastActivity: Date.now()
+      chat: [],
+      chatCounter: 0,
+      lastActivity: Date.now(),
+      ownerOfflineTimer: null
     }
     this.jams.set(jam.id, jam)
     this.memberIndex.set(userId, jam.id)
@@ -128,10 +147,10 @@ export class JamService {
     if (!jam) return { ok: false, error: 'jam_gone' }
     if (jam.members.size >= JAM_MAX_MEMBERS) return { ok: false, error: 'jam_full' }
     this.leave(userId)
-    jam.members.add(userId)
+    jam.members.set(userId, Date.now())
     this.memberIndex.set(userId, jam.id)
     jam.lastActivity = Date.now()
-    this.emit({ kind: 'sync', userIds: [...jam.members] })
+    this.emit({ kind: 'sync', userIds: [...jam.members.keys()] })
     return { ok: true, jam }
   }
 
@@ -142,24 +161,31 @@ export class JamService {
     this.emit({ kind: 'sync', userIds: [userId, invite.fromId] })
   }
 
-  /** Member walks out. Owner leaving ends the jam for everyone. */
+  /** Member walks out. Owner leaving hands the jam to the oldest member (or ends it alone). */
   leave(userId: string): void {
     const jam = this.jamOf(userId)
     if (!jam) return
     if (jam.ownerId === userId) {
-      this.end(jam.id)
+      if (jam.members.size <= 1) {
+        this.end(jam.id)
+        return
+      }
+      jam.members.delete(userId)
+      this.memberIndex.delete(userId)
+      this.transferOwnership(jam)
       return
     }
     jam.members.delete(userId)
     this.memberIndex.delete(userId)
     jam.lastActivity = Date.now()
-    this.emit({ kind: 'sync', userIds: [userId, ...jam.members] })
+    this.emit({ kind: 'sync', userIds: [userId, ...jam.members.keys()] })
   }
 
   end(jamId: string): void {
     const jam = this.jams.get(jamId)
     if (!jam) return
-    const memberIds = [...jam.members]
+    if (jam.ownerOfflineTimer) clearTimeout(jam.ownerOfflineTimer)
+    const memberIds = [...jam.members.keys()]
     this.jams.delete(jamId)
     for (const id of memberIds) this.memberIndex.delete(id)
     for (const [id, invite] of this.invites) if (invite.jamId === jamId) this.invites.delete(id)
@@ -171,7 +197,7 @@ export class JamService {
     if (!jam || jam.ownerId !== userId) return false
     jam.allowGuestControl = allow
     jam.lastActivity = Date.now()
-    this.emit({ kind: 'sync', userIds: [...jam.members] })
+    this.emit({ kind: 'sync', userIds: [...jam.members.keys()] })
     return true
   }
 
@@ -192,7 +218,7 @@ export class JamService {
       at: Date.now()
     }
     jam.lastActivity = Date.now()
-    const others = [...jam.members].filter((id) => id !== userId)
+    const others = [...jam.members.keys()].filter((id) => id !== userId)
     if (others.length > 0) this.emit({ kind: 'playback', userIds: others, playback: jam.playback })
   }
 
@@ -201,13 +227,73 @@ export class JamService {
     if (!jam || !this.canControl(jam, userId)) return
     jam.queue = queue.slice(0, QUEUE_LIMIT)
     jam.lastActivity = Date.now()
-    const others = [...jam.members].filter((id) => id !== userId)
+    const others = [...jam.members.keys()].filter((id) => id !== userId)
     if (others.length > 0) this.emit({ kind: 'queue', userIds: others, queue: jam.queue })
+  }
+
+  /** Group chat: any member can talk; broadcast to everyone (sender included, for ordering). */
+  addChat(userId: string, userName: string, text: string): boolean {
+    const jam = this.jamOf(userId)
+    if (!jam) return false
+    const message: JamChatEntry = {
+      id: ++jam.chatCounter,
+      fromId: userId,
+      fromName: userName,
+      text,
+      at: Date.now()
+    }
+    jam.chat = [...jam.chat, message].slice(-CHAT_KEEP)
+    jam.lastActivity = Date.now()
+    this.emit({ kind: 'chat', userIds: [...jam.members.keys()], message })
+    return true
   }
 
   heartbeat(userId: string): void {
     const jam = this.jamOf(userId)
     if (jam) jam.lastActivity = Date.now()
+  }
+
+  /** Owner went offline (app closed / connection lost): after a grace period the
+   *  crown moves to the oldest member still online, so the jam survives. */
+  memberOffline(userId: string): void {
+    const jam = this.jamOf(userId)
+    if (!jam || jam.ownerId !== userId || jam.ownerOfflineTimer) return
+    jam.ownerOfflineTimer = setTimeout(() => {
+      jam.ownerOfflineTimer = null
+      if (!this.jams.has(jam.id) || jam.ownerId !== userId) return
+      if (this.isOnline(userId)) return // came back in time
+      jam.members.delete(userId)
+      this.memberIndex.delete(userId)
+      if (jam.members.size === 0) {
+        this.end(jam.id)
+        return
+      }
+      this.transferOwnership(jam, userId)
+    }, OWNER_OFFLINE_GRACE_MS)
+    jam.ownerOfflineTimer.unref?.()
+  }
+
+  /** Owner reconnected before the grace ran out. */
+  memberOnline(userId: string): void {
+    const jam = this.jamOf(userId)
+    if (jam && jam.ownerId === userId && jam.ownerOfflineTimer) {
+      clearTimeout(jam.ownerOfflineTimer)
+      jam.ownerOfflineTimer = null
+    }
+  }
+
+  /** Oldest online member first; falls back to oldest member overall. */
+  private transferOwnership(jam: Jam, previousOwner?: string): void {
+    const ordered = [...jam.members.entries()].sort((a, b) => a[1] - b[1]).map(([id]) => id)
+    const next = ordered.find((id) => this.isOnline(id)) ?? ordered[0]
+    if (!next) {
+      this.end(jam.id)
+      return
+    }
+    jam.ownerId = next
+    jam.lastActivity = Date.now()
+    const notify = previousOwner ? [previousOwner, ...jam.members.keys()] : [...jam.members.keys()]
+    this.emit({ kind: 'sync', userIds: notify })
   }
 
   /** Removes a deleted account from any jam and drops its invites. */

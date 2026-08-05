@@ -9,6 +9,8 @@ interface Client {
   lastSeen: number
   msgWindowStart: number
   msgCount: number
+  chatWindowStart: number
+  chatCount: number
 }
 
 /** Live connection registry: one socket per user, presence fan-out to friends only. */
@@ -31,7 +33,9 @@ export class Hub {
       listening: existing?.listening ?? null,
       lastSeen: Date.now(),
       msgWindowStart: Date.now(),
-      msgCount: 0
+      msgCount: 0,
+      chatWindowStart: Date.now(),
+      chatCount: 0
     })
     this.broadcastPresence(user.id)
   }
@@ -87,6 +91,19 @@ export class Hub {
     }
     client.msgCount++
     return client.msgCount <= 80
+  }
+
+  /** Anti-spam for human chat (1:1 and jam): max 8 messages per 10s. */
+  allowChat(userId: string): boolean {
+    const client = this.clients.get(userId)
+    if (!client) return false
+    const now = Date.now()
+    if (now - client.chatWindowStart > 10_000) {
+      client.chatWindowStart = now
+      client.chatCount = 0
+    }
+    client.chatCount++
+    return client.chatCount <= 8
   }
 
   /** Friendship caches must follow accepted/removed friendships for presence routing. */

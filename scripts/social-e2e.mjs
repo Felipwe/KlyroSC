@@ -275,10 +275,35 @@ async function main() {
   const queuePromise = waitFor(wsB, (m) => m.t === 'jam:queue', 8000, 'queue at B')
   wsA.send({
     t: 'jam:queue',
-    queue: [{ trackId: 900, title: 'Next Up', artist: 'A', artwork: null, duration: 120 }]
+    queue: [{ trackId: 900, title: 'Next Up', artist: 'A', artwork: null, duration: 120, addedById: a.user.id, addedByName: a.user.name }]
   })
   const queue = await queuePromise
   check('queue propagated', queue.queue.length === 1 && queue.queue[0].trackId === 900)
+  check('queue keeps addedBy', queue.queue[0].addedByName === a.user.name)
+
+  // ————— jam group chat —————
+  const jamChatPromiseB = waitFor(wsB, (m) => m.t === 'jam:chat', 8000, 'jam chat at B')
+  const jamChatPromiseA = waitFor(wsA, (m) => m.t === 'jam:chat', 8000, 'jam chat echo at A')
+  wsA.send({ t: 'jam:chat', text: 'salve jam!' })
+  const jamChatB = await jamChatPromiseB
+  const jamChatA = await jamChatPromiseA
+  check('jam chat broadcast to member', jamChatB.message.text === 'salve jam!' && jamChatB.message.fromId === a.user.id)
+  check('jam chat echoed to sender', jamChatA.message.text === 'salve jam!')
+  const guestChatPromise = waitFor(wsA, (m) => m.t === 'jam:chat' && m.message.fromId === b.user.id, 8000, 'guest jam chat at A')
+  wsB.send({ t: 'jam:chat', text: 'oi galera' })
+  const guestChat = await guestChatPromise
+  check('guest can talk in jam chat', guestChat.message.fromName === b.user.name)
+  const stateA2b = (await api('GET', '/state', { token: tokenA })).data
+  check('jam chat kept in state', stateA2b.jam.chat.length >= 2)
+
+  // ————— chat anti-spam rate limit —————
+  const rejectedPromise = waitFor(wsA, (m) => m.t === 'chat:rejected' && m.code === 'rate_limited', 10000, 'rate limit rejection')
+  for (let i = 0; i < 12; i++) wsA.send({ t: 'jam:chat', text: `spam ${i}` })
+  const rejected = await rejectedPromise
+  check('chat rate limit kicks in', rejected.code === 'rate_limited')
+  await sleep(400)
+  const stateA2c = (await api('GET', '/state', { token: tokenA })).data
+  check('spam capped in history', stateA2c.jam.chat.filter((m) => m.text.startsWith('spam')).length <= 8)
 
   // B leaves, owner ends
   const leave = await api('POST', '/jams/current/leave', { token: tokenB })

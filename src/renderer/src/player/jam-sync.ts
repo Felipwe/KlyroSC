@@ -16,6 +16,7 @@ let releaseTimer: ReturnType<typeof setTimeout> | null = null
 let queueTimer: ReturnType<typeof setTimeout> | null = null
 let lastJamId: string | null = null
 let lastQueueSig = ''
+let lastAppliedQueueSig = ''
 
 const toRef = (track: Track): JamTrackRef => ({
   trackId: track.id,
@@ -40,7 +41,8 @@ const trackFromRef = (ref: JamTrackRef): Track => ({
   playCount: 0,
   likeCount: 0,
   createdAt: new Date().toISOString(),
-  snippet: false
+  snippet: false,
+  jamAddedBy: ref.addedByName ?? undefined
 })
 
 function role(): { inJam: boolean; control: boolean } {
@@ -72,7 +74,20 @@ function emitQueue(immediate = false): void {
     () => {
       queueTimer = null
       const state = usePlayer.getState()
-      const refs = state.queue.slice(state.index + 1, state.index + 1 + QUEUE_PREVIEW).map(toRef)
+      const social = useSocial.getState().snapshot
+      const me = social.account
+      const known = new Map(
+        (social.jam?.queue ?? []).map((ref) => [ref.trackId, ref] as const)
+      )
+      // keep the original "added by" tag; new tracks are attributed to us
+      const refs = state.queue.slice(state.index + 1, state.index + 1 + QUEUE_PREVIEW).map((track) => {
+        const existing = known.get(track.id)
+        return {
+          ...toRef(track),
+          addedById: existing?.addedById ?? me?.id ?? null,
+          addedByName: existing?.addedByName ?? me?.name ?? null
+        }
+      })
       const sig = refs.map((ref) => ref.trackId).join(',')
       if (sig === lastQueueSig) return
       lastQueueSig = sig
@@ -80,6 +95,18 @@ function emitQueue(immediate = false): void {
     },
     immediate ? 0 : 800
   )
+}
+
+/** Followers mirror the jam queue locally so the queue panel matches what everyone sees. */
+function applyQueueToLocal(): void {
+  const player = usePlayer.getState()
+  if (!player.jamLocked) return
+  const queue = useSocial.getState().snapshot.jam?.queue ?? []
+  const sig = queue.map((ref) => `${ref.trackId}:${ref.addedByName ?? ''}`).join(',')
+  if (sig === lastAppliedQueueSig) return
+  lastAppliedQueueSig = sig
+  markApplying()
+  player.jamApplyQueue(queue.map(trackFromRef))
 }
 
 async function applyPlayback(playback: JamPlayback): Promise<void> {
@@ -101,6 +128,9 @@ async function applyPlayback(playback: JamPlayback): Promise<void> {
     markApplying()
     const track = result.ok ? result.data : trackFromRef(ref)
     usePlayer.getState().jamApplyTrack(track, expectedJamPosition(latest, Date.now()), latest.playing)
+    // the track swap reset the local queue — mirror the jam queue again
+    lastAppliedQueueSig = ''
+    applyQueueToLocal()
   } else {
     const drift = Math.abs(player.position - expected)
     player.jamApplyTransport(playback.playing, drift > DRIFT_TOLERANCE ? expected : null)
@@ -138,6 +168,7 @@ export function initJamSync(): void {
     if (jam && jam.id !== lastJamId) {
       lastJamId = jam.id
       lastQueueSig = ''
+      lastAppliedQueueSig = ''
       const me = state.snapshot.account?.id
       if (jam.ownerId === me) {
         // owner opening their own jam → seed it with what's playing locally
@@ -148,10 +179,14 @@ export function initJamSync(): void {
         }
       } else {
         void applyPlayback(jam.playback)
+        applyQueueToLocal()
       }
     } else if (!jam) {
       lastJamId = null
+      lastAppliedQueueSig = ''
       if (prevJam) toast(t('social.jam.endedToast'))
+    } else if (jam.queue !== prevJam?.queue) {
+      applyQueueToLocal()
     }
   })
 

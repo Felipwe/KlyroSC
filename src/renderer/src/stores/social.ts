@@ -41,6 +41,9 @@ export function socialError(code: string): string {
 const TYPING_TTL = 3_500
 let tempCounter = 0
 
+/** reserved key so the jam group chat shares the floating-window machinery */
+export const JAM_CHAT_KEY = '~jam'
+
 export interface ChatWindowRect {
   x: number
   y: number
@@ -64,15 +67,26 @@ export const clampChatRect = (rect: ChatWindowRect): ChatWindowRect => {
   }
 }
 
+/** docked bottom-right above the player bar, cascading up-left per open window */
 const defaultChatRect = (index: number): ChatWindowRect => {
   const w = 330
-  const h = Math.min(520, Math.max(CHAT_MIN_H, window.innerHeight - 170))
+  const h = Math.min(480, Math.max(CHAT_MIN_H, window.innerHeight - 220))
   return clampChatRect({
-    x: window.innerWidth - w - 16 - index * 40,
-    y: 58 + index * 30,
+    x: window.innerWidth - w - 20 - index * 46,
+    y: window.innerHeight - 102 - h - 10 - index * 24,
     w,
     h
   })
+}
+
+// light client-side antispam: 6 messages per 5s window
+const chatSendTimes: number[] = []
+const chatSendAllowed = (): boolean => {
+  const now = Date.now()
+  while (chatSendTimes.length > 0 && now - (chatSendTimes[0] ?? 0) > 5_000) chatSendTimes.shift()
+  if (chatSendTimes.length >= 6) return false
+  chatSendTimes.push(now)
+  return true
 }
 
 interface SocialStore {
@@ -104,13 +118,17 @@ interface SocialStore {
   endJam(): Promise<void>
   setJamControl(allow: boolean): Promise<void>
   openChat(friendId: string): Promise<void>
+  openJamChat(): void
   closeChat(friendId: string): void
   focusChat(friendId: string): void
   setChatRect(friendId: string, rect: ChatWindowRect): void
   sendChat(friendId: string, text: string): Promise<void>
+  sendJamChat(text: string): void
   notifyTyping(friendId: string): void
   setAvatar(): Promise<void>
   removeAvatar(): Promise<void>
+  /** unread jam-chat messages while the jam chat window is closed */
+  jamUnread: number
 }
 
 export const useSocial = create<SocialStore>((set, get) => ({
@@ -123,16 +141,47 @@ export const useSocial = create<SocialStore>((set, get) => ({
   chatLoading: {},
   unread: {},
   typing: {},
+  jamUnread: 0,
 
   load: async () => {
     if (get().loaded) return
     set({ loaded: true })
+    let lastJamId: string | null = null
+    let lastSeenJamChatId = 0
     api.social.onState((snapshot) => {
       // drop chat state for people no longer in the friend list
       const validIds = new Set(snapshot.friends.map((friend) => friend.id))
       const state = get()
-      set({ snapshot, openChats: state.openChats.filter((id) => validIds.has(id)) })
-      if (!snapshot.account) set({ chats: {}, unread: {}, typing: {}, openChats: [], chatWindows: {} })
+      let openChats = state.openChats.filter((id) => id === JAM_CHAT_KEY || validIds.has(id))
+      let jamUnread: number
+
+      const jam = snapshot.jam
+      if (!jam) {
+        openChats = openChats.filter((id) => id !== JAM_CHAT_KEY)
+        lastJamId = null
+        lastSeenJamChatId = 0
+        jamUnread = 0
+      } else {
+        const lastId = jam.chat.length > 0 ? (jam.chat[jam.chat.length - 1]?.id ?? 0) : 0
+        if (jam.id !== lastJamId) {
+          // joining a jam: history starts read
+          lastJamId = jam.id
+          lastSeenJamChatId = lastId
+          jamUnread = 0
+        } else if (openChats.includes(JAM_CHAT_KEY)) {
+          lastSeenJamChatId = lastId
+          jamUnread = 0
+        } else {
+          const me = snapshot.account?.id
+          jamUnread = jam.chat.filter(
+            (message) => message.id > lastSeenJamChatId && message.fromId !== me
+          ).length
+        }
+      }
+
+      set({ snapshot, openChats, jamUnread })
+      if (!snapshot.account)
+        set({ chats: {}, unread: {}, typing: {}, openChats: [], chatWindows: {}, jamUnread: 0 })
     })
     api.social.onChatMessage(({ friendId, message }) => {
       const state = get()
@@ -166,6 +215,18 @@ export const useSocial = create<SocialStore>((set, get) => ({
         if ((state.typing[friendId] ?? 0) <= Date.now())
           set({ typing: { ...state.typing, [friendId]: 0 } })
       }, TYPING_TTL + 100)
+    })
+    api.social.onChatRejected(({ friendId, tempId }) => {
+      if (friendId && tempId) {
+        // drop the optimistic bubble that the server refused
+        set({
+          chats: {
+            ...get().chats,
+            [friendId]: (get().chats[friendId] ?? []).filter((message) => String(message.id) !== tempId)
+          }
+        })
+      }
+      toast(socialError('rate_limited'), 'error')
     })
     const snapshot = await api.social.status()
     set({ snapshot })
@@ -311,6 +372,24 @@ export const useSocial = create<SocialStore>((set, get) => ({
     }
   },
 
+  openJamChat: () => {
+    const state = get()
+    if (!state.snapshot.jam) return
+    if (state.openChats.includes(JAM_CHAT_KEY)) {
+      get().focusChat(JAM_CHAT_KEY)
+      set({ jamUnread: 0 })
+      return
+    }
+    set({
+      openChats: [...state.openChats, JAM_CHAT_KEY],
+      chatWindows: {
+        ...state.chatWindows,
+        [JAM_CHAT_KEY]: state.chatWindows[JAM_CHAT_KEY] ?? defaultChatRect(state.openChats.length)
+      },
+      jamUnread: 0
+    })
+  },
+
   closeChat: (friendId) =>
     set({ openChats: get().openChats.filter((id) => id !== friendId) }),
 
@@ -326,6 +405,10 @@ export const useSocial = create<SocialStore>((set, get) => ({
   sendChat: async (friendId, text) => {
     const trimmed = text.trim()
     if (!friendId || trimmed.length === 0) return
+    if (!chatSendAllowed()) {
+      toast(socialError('rate_limited'), 'error')
+      return
+    }
     const tempId = `t${Date.now()}-${tempCounter++}`
     const optimistic = {
       id: tempId as unknown as number,
@@ -352,6 +435,16 @@ export const useSocial = create<SocialStore>((set, get) => ({
 
   notifyTyping: (friendId) => {
     if (friendId) api.social.chatTyping(friendId)
+  },
+
+  sendJamChat: (text) => {
+    const trimmed = text.trim()
+    if (trimmed.length === 0 || !get().snapshot.jam) return
+    if (!chatSendAllowed()) {
+      toast(socialError('rate_limited'), 'error')
+      return
+    }
+    api.social.sendJamChat(trimmed)
   },
 
   setAvatar: async () => {

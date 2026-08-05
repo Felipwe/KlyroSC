@@ -92,6 +92,7 @@ function QueueRow({ index, active = false }: { index: number; active?: boolean }
         <div className="tr-title">{track.title}</div>
         <div className="tr-artist" style={{ cursor: 'default', textDecoration: 'none' }}>
           {track.artist}
+          {track.jamAddedBy && <span className="q-added-by">· {track.jamAddedBy}</span>}
         </div>
       </div>
       <div className="tr-actions">

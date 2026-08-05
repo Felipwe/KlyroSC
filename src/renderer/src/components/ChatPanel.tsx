@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState, type JSX, type PointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react'
 import { type ChatMessage } from '@shared/types/social'
 import { avatarHue, initialsOf } from '@shared/utils/social'
 import { t, useLanguage } from '@renderer/i18n'
-import { clampChatRect, useSocial } from '@renderer/stores/social'
+import { useSocial } from '@renderer/stores/social'
+import { useFloatingWindow } from '@renderer/hooks/floating-window'
 import { cx } from '@renderer/utils/format'
 import { Icon } from './Icon'
 
@@ -25,14 +26,10 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
   const loading = useSocial((state) => state.chatLoading[friendId] ?? false)
   // store clears the flag via timeout, so non-zero means "typing right now"
   const typing = useSocial((state) => (state.typing[friendId] ?? 0) > 0)
-  const rect = useSocial((state) => state.chatWindows[friendId])
+  const { rect, focus, headHandlers, resizeHandlers } = useFloatingWindow(friendId)
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null)
-  const resizeRef = useRef<{ pointerId: number; startX: number; startY: number; startW: number; startH: number } | null>(
-    null
-  )
 
   useLayoutEffect(() => {
     const body = bodyRef.current
@@ -53,68 +50,6 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
     inputRef.current?.focus()
   }
 
-  const focus = (): void => useSocial.getState().focusChat(friendId)
-
-  const onHeadPointerDown = (event: PointerEvent<HTMLDivElement>): void => {
-    if ((event.target as HTMLElement).closest('button')) return
-    dragRef.current = {
-      pointerId: event.pointerId,
-      offsetX: event.clientX - rect.x,
-      offsetY: event.clientY - rect.y
-    }
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId)
-    } catch {
-      /* synthetic events have no active pointer */
-    }
-  }
-
-  const onHeadPointerMove = (event: PointerEvent<HTMLDivElement>): void => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-    useSocial.getState().setChatRect(
-      friendId,
-      clampChatRect({ ...rect, x: event.clientX - drag.offsetX, y: event.clientY - drag.offsetY })
-    )
-  }
-
-  const onHeadPointerUp = (event: PointerEvent<HTMLDivElement>): void => {
-    if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
-  }
-
-  const onResizePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
-    event.stopPropagation()
-    resizeRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startW: rect.w,
-      startH: rect.h
-    }
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId)
-    } catch {
-      /* synthetic events have no active pointer */
-    }
-  }
-
-  const onResizePointerMove = (event: PointerEvent<HTMLDivElement>): void => {
-    const resize = resizeRef.current
-    if (!resize || resize.pointerId !== event.pointerId) return
-    useSocial.getState().setChatRect(
-      friendId,
-      clampChatRect({
-        ...rect,
-        w: resize.startW + (event.clientX - resize.startX),
-        h: resize.startH + (event.clientY - resize.startY)
-      })
-    )
-  }
-
-  const onResizePointerUp = (event: PointerEvent<HTMLDivElement>): void => {
-    if (resizeRef.current?.pointerId === event.pointerId) resizeRef.current = null
-  }
-
   return (
     <div
       className="chat-panel glass"
@@ -123,13 +58,7 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
       style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 30 + zIndex }}
       onPointerDown={focus}
     >
-      <div
-        className="chat-head"
-        onPointerDown={onHeadPointerDown}
-        onPointerMove={onHeadPointerMove}
-        onPointerUp={onHeadPointerUp}
-        onPointerCancel={onHeadPointerUp}
-      >
+      <div className="chat-head" {...headHandlers}>
         <span
           className="social-avatar"
           style={{
@@ -232,10 +161,7 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
       <div
         className="chat-resize"
         aria-hidden="true"
-        onPointerDown={onResizePointerDown}
-        onPointerMove={onResizePointerMove}
-        onPointerUp={onResizePointerUp}
-        onPointerCancel={onResizePointerUp}
+        {...resizeHandlers}
       />
     </div>
   )

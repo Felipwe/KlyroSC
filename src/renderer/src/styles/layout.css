@@ -99,6 +99,67 @@
   border-right: 1px solid var(--stroke);
 }
 
+.side-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* fixed rail between sidebar and content — drag to resize, double-click to reset */
+.sidebar-resize {
+  position: fixed;
+  top: var(--titlebar-h);
+  bottom: var(--player-h);
+  left: calc(var(--sidebar-w) - 3px);
+  width: 7px;
+  cursor: col-resize;
+  z-index: 20;
+  touch-action: none;
+}
+
+.sidebar-resize::after {
+  content: '';
+  position: absolute;
+  inset: 0 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background var(--t-fast);
+}
+
+.sidebar-resize:hover::after,
+.sidebar-resize.active::after {
+  background: var(--accent-soft);
+}
+
+.sidebar-resize.active::after {
+  background: color-mix(in srgb, var(--accent-a) 45%, transparent);
+}
+
+/* icons-only rail when dragged small */
+.sidebar.compact {
+  padding: 10px 8px 14px;
+  align-items: stretch;
+}
+
+.sidebar.compact .side-item {
+  justify-content: center;
+  gap: 0;
+  padding: 10px 0;
+}
+
+.sidebar.compact .side-label {
+  display: none;
+}
+
+.sidebar.compact .side-playlist {
+  padding: 6px 0;
+}
+
+.sidebar.compact .side-playlist .pl-dot {
+  margin: 0 auto;
+}
+
 .side-item {
   display: flex;
   align-items: center;

@@ -35,7 +35,8 @@ export const en = {
     playlists: 'Playlists',
     history: 'History',
     settings: 'Settings',
-    library: 'Library'
+    library: 'Library',
+    resizeSidebar: 'Resize sidebar'
   },
   window: {
     minimize: 'Minimize',
@@ -336,7 +337,10 @@ export const en = {
       host: 'Host',
       youAreHost: 'You are hosting this Jam',
       queueNext: 'Coming up',
-      nothingPlaying: 'Nothing is playing in this Jam yet  start a track!'
+      nothingPlaying: 'Nothing is playing in this Jam yet — start a track!',
+      chatTitle: 'Jam chat',
+      chatEmpty: 'Talk with everyone in the Jam — messages live only while it lasts.',
+      addedBy: 'Added by {name}'
     },
     errors: {
       generic: 'Something went wrong. Try again.',

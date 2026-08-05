@@ -85,6 +85,7 @@ export function attachWebSocket(wss: WebSocketServer, services: Services): void 
           clearTimeout(helloTimer)
           const friends = await friendIdsOf(user.id)
           hub.connect(user, socket, friends)
+          jams.memberOnline(user.id)
           socket.send(JSON.stringify({ t: 'ready', serverNow: Date.now() }))
           return
         }
@@ -137,6 +138,10 @@ export function attachWebSocket(wss: WebSocketServer, services: Services): void 
             if (typeof iv !== 'string' || iv.length < 12 || iv.length > 32) break
             if (typeof ct !== 'string' || ct.length < 4 || ct.length > MAX_CT) break
             if (!/^[A-Za-z0-9+/=]+$/.test(iv) || !/^[A-Za-z0-9+/=]+$/.test(ct)) break
+            if (!hub.allowChat(user.id)) {
+              socket.send(JSON.stringify({ t: 'chat:rejected', tempId, to, code: 'rate_limited' }))
+              break
+            }
             if (!(await areFriends(user.id, to))) break
             const inserted = await pool.query<{ id: string; created_at: string }>(
               'INSERT INTO messages(from_id, to_id, iv, ct) VALUES ($1, $2, $3, $4) RETURNING id, created_at',
@@ -169,6 +174,16 @@ export function attachWebSocket(wss: WebSocketServer, services: Services): void 
             hub.send(to, { t: 'chat:typing', from: user.id })
             break
           }
+          case 'jam:chat': {
+            const text = typeof message.text === 'string' ? message.text.trim() : ''
+            if (text.length === 0 || text.length > 500) break
+            if (!hub.allowChat(user.id)) {
+              socket.send(JSON.stringify({ t: 'chat:rejected', code: 'rate_limited' }))
+              break
+            }
+            jams.addChat(user.id, user.name, text)
+            break
+          }
           default:
             break
         }
@@ -178,7 +193,11 @@ export function attachWebSocket(wss: WebSocketServer, services: Services): void 
     socket.on('close', () => {
       clearTimeout(helloTimer)
       clearInterval(pinger)
-      if (user) hub.disconnect(user.id, socket)
+      if (user) {
+        hub.disconnect(user.id, socket)
+        // hub no longer tracks them → owner-offline grace may start
+        if (!hub.isOnline(user.id)) jams.memberOffline(user.id)
+      }
     })
     socket.on('error', () => {
       /* close handler does the cleanup */

@@ -1975,6 +1975,37 @@ kbd {
   white-space: nowrap;
 }
 
+.social-queue-added {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-text);
+  font-size: 0.64rem;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 1px 7px;
+  flex: 0 0 auto;
+  max-width: 30%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.q-added-by {
+  color: var(--accent-text);
+  font-size: 0.7rem;
+  margin-left: 6px;
+}
+
+.social-jam-chat-btn {
+  position: relative;
+}
+
+.social-jam-chat-btn .social-unread {
+  top: -4px;
+  right: -4px;
+}
+
 .social-queue-artist {
   color: var(--text-faint);
   font-size: 0.68rem;
@@ -2404,6 +2435,13 @@ kbd {
 
 .chat-msg.pending {
   opacity: 0.6;
+}
+
+.chat-sender {
+  font-size: 0.66rem;
+  font-weight: 700;
+  margin: 0 6px 2px;
+  letter-spacing: 0.02em;
 }
 
 .chat-bubble {

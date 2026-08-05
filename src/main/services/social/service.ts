@@ -94,7 +94,8 @@ export class SocialService {
     private emitJamPlayback: (playback: JamPlayback) => void,
     private emitChatMessage: (payload: ChatEventPayload) => void,
     private emitChatSent: (payload: { friendId: string; tempId: string; id: number; at: number }) => void,
-    private emitChatTyping: (payload: { friendId: string }) => void
+    private emitChatTyping: (payload: { friendId: string }) => void,
+    private emitChatRejected: (payload: { friendId?: string; tempId?: string; code: string }) => void
   ) {}
 
   private get baseUrl(): string {
@@ -407,6 +408,12 @@ export class SocialService {
     this.sendWs({ t: 'chat:typing', to: friendId })
   }
 
+  sendJamChat(text: string): void {
+    const trimmed = text.trim()
+    if (trimmed.length === 0 || trimmed.length > 500 || !this.snapshot.jam) return
+    this.sendWs({ t: 'jam:chat', text: trimmed })
+  }
+
   // ————— profile avatar —————
 
   async setAvatar(dataUrl: string | null): Promise<void> {
@@ -566,6 +573,32 @@ export class SocialService {
       case 'chat:typing': {
         const from = typeof message.from === 'string' ? message.from : null
         if (from) this.emitChatTyping({ friendId: from })
+        break
+      }
+      case 'chat:rejected': {
+        this.emitChatRejected({
+          friendId: typeof message.to === 'string' ? message.to : undefined,
+          tempId: typeof message.tempId === 'string' ? message.tempId : undefined,
+          code: typeof message.code === 'string' ? message.code : 'generic'
+        })
+        break
+      }
+      case 'jam:chat': {
+        const raw = message.message as Record<string, unknown> | undefined
+        if (!this.snapshot.jam || !isRecord(raw)) break
+        if (typeof raw.id !== 'number' || typeof raw.fromId !== 'string' || typeof raw.text !== 'string') break
+        const entry = {
+          id: raw.id,
+          fromId: raw.fromId,
+          fromName: typeof raw.fromName === 'string' ? raw.fromName : 'Unknown',
+          text: raw.text,
+          at: typeof raw.at === 'number' ? raw.at : Date.now()
+        }
+        this.snapshot = {
+          ...this.snapshot,
+          jam: { ...this.snapshot.jam, chat: [...this.snapshot.jam.chat, entry].slice(-100) }
+        }
+        this.emit()
         break
       }
       default:

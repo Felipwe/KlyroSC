@@ -36,6 +36,17 @@ export interface JamTrackRef {
   artist: string
   artwork: string | null
   duration: number
+  /** who queued this track in the jam (client-attributed, validated for size) */
+  addedById?: string | null
+  addedByName?: string | null
+}
+
+export interface JamChatEntry {
+  id: number
+  fromId: string
+  fromName: string
+  text: string
+  at: number
 }
 
 export interface JamPlayback {
@@ -57,6 +68,7 @@ export interface JamDto {
   members: JamMemberDto[]
   queue: JamTrackRef[]
   playback: JamPlayback
+  chat: JamChatEntry[]
 }
 
 export interface JamInviteDto {
@@ -84,7 +96,13 @@ export function isListeningInfo(value: unknown): value is ListeningInfo {
 export function isJamTrackRef(value: unknown): value is JamTrackRef {
   if (typeof value !== 'object' || value === null) return false
   const v = value as Record<string, unknown>
+  const addedByOk =
+    (v.addedById === undefined || v.addedById === null || (typeof v.addedById === 'string' && v.addedById.length <= 40)) &&
+    (v.addedByName === undefined ||
+      v.addedByName === null ||
+      (typeof v.addedByName === 'string' && v.addedByName.length <= 50))
   return (
+    addedByOk &&
     typeof v.trackId === 'number' &&
     Number.isFinite(v.trackId) &&
     v.trackId > 0 &&

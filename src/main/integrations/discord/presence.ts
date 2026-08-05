@@ -27,6 +27,7 @@ export class PresenceManager {
   private pushTimer: NodeJS.Timeout | null = null
   private lastPushAt = 0
   private payload: PresencePayload | null = null
+  private jamLabel: string | null = null
   private cleared = true
   private config: PresenceConfig = { enabled: false, showButtons: true, clientId: '' }
 
@@ -47,6 +48,13 @@ export class PresenceManager {
 
   update(payload: PresencePayload | null): void {
     this.payload = payload
+    this.schedulePush()
+  }
+
+  /** Shown next to the artist while in a jam (e.g. "Jam 2/8"). */
+  setJamInfo(label: string | null): void {
+    if (label === this.jamLabel) return
+    this.jamLabel = label
     this.schedulePush()
   }
 
@@ -112,10 +120,11 @@ export class PresenceManager {
         return
       }
       const now = Date.now()
+      const state = this.jamLabel ? `${p.artist} · ${this.jamLabel}` : p.artist
       const activity: Parameters<NonNullable<Client['user']>['setActivity']>[0] = {
         type: ACTIVITY_LISTENING,
         details: p.title.slice(0, 128),
-        state: p.artist.slice(0, 128),
+        state: state.slice(0, 128),
         largeImageKey: p.artworkUrl ?? APP_ICON_URL,
         instance: false
       }

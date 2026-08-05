@@ -40,6 +40,17 @@ export interface JamTrackRef {
   artist: string
   artwork: string | null
   duration: number
+  /** who queued this track in the jam */
+  addedById?: string | null
+  addedByName?: string | null
+}
+
+export interface JamChatMessage {
+  id: number
+  fromId: string
+  fromName: string
+  text: string
+  at: number
 }
 
 export interface JamPlayback {
@@ -61,6 +72,7 @@ export interface JamState {
   members: JamMember[]
   queue: JamTrackRef[]
   playback: JamPlayback
+  chat: JamChatMessage[]
 }
 
 export interface JamInvite {

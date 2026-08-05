@@ -37,7 +37,8 @@ export const pt: Dict = {
     playlists: 'Playlists',
     history: 'Histórico',
     settings: 'Configurações',
-    library: 'Biblioteca'
+    library: 'Biblioteca',
+    resizeSidebar: 'Redimensionar barra lateral'
   },
   window: {
     minimize: 'Minimizar',
@@ -338,7 +339,10 @@ export const pt: Dict = {
       host: 'Dono',
       youAreHost: 'Você é quem manda nesta Jam',
       queueNext: 'A seguir',
-      nothingPlaying: 'Nada tocando nesta Jam ainda  toque alguma coisa!'
+      nothingPlaying: 'Nada tocando nesta Jam ainda — toque alguma coisa!',
+      chatTitle: 'Chat da Jam',
+      chatEmpty: 'Converse com todo mundo da Jam — as mensagens duram só enquanto ela existir.',
+      addedBy: 'Adicionada por {name}'
     },
     errors: {
       generic: 'Algo deu errado. Tente de novo.',

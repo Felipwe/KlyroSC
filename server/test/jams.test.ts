@@ -10,9 +10,12 @@ const track = (id: number) => ({
   duration: 200
 })
 
-function makeService(): { service: JamService; events: JamEvent[] } {
+function makeService(isOnline: (id: string) => boolean = () => true): {
+  service: JamService
+  events: JamEvent[]
+} {
   const events: JamEvent[] = []
-  const service = new JamService((event) => events.push(event))
+  const service = new JamService((event) => events.push(event), isOnline)
   return { service, events }
 }
 
@@ -21,7 +24,7 @@ describe('JamService', () => {
     const { service } = makeService()
     const jam = service.create('owner')
     expect(jam.ownerId).toBe('owner')
-    expect([...jam.members]).toEqual(['owner'])
+    expect([...jam.members.keys()]).toEqual(['owner'])
     expect(service.jamOf('owner')?.id).toBe(jam.id)
   })
 
@@ -61,15 +64,32 @@ describe('JamService', () => {
     expect(service.invite('owner', 'one-too-many')).toEqual({ ok: false, error: 'jam_full' })
   })
 
-  it('owner leaving ends the jam for everyone', () => {
+  it('owner leaving alone ends the jam; with members it hands over to the oldest', () => {
     const { service, events } = makeService()
-    service.create('owner')
-    service.invite('owner', 'guest')
-    service.acceptInvite('guest', service.invitesFor('guest')[0]!.id)
-    service.leave('owner')
-    expect(service.jamOf('owner')).toBeNull()
-    expect(service.jamOf('guest')).toBeNull()
+    // alone → end
+    service.create('solo')
+    service.leave('solo')
+    expect(service.jamOf('solo')).toBeNull()
     expect(events.some((event) => event.kind === 'ended')).toBe(true)
+
+    // with members → transfer to the oldest
+    vi.useFakeTimers()
+    try {
+      service.create('owner')
+      service.invite('owner', 'first')
+      service.acceptInvite('first', service.invitesFor('first')[0]!.id)
+      vi.advanceTimersByTime(1000) // second joins later
+      service.invite('owner', 'second')
+      service.acceptInvite('second', service.invitesFor('second')[0]!.id)
+      service.leave('owner')
+      const jam = service.jamOf('first')
+      expect(jam).not.toBeNull()
+      expect(jam?.ownerId).toBe('first')
+      expect(service.jamOf('owner')).toBeNull()
+      expect(jam?.members.size).toBe(2)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('guest leaving keeps the jam alive', () => {
@@ -123,6 +143,76 @@ describe('JamService', () => {
     }
   })
 
+  it('owner going offline transfers to the oldest ONLINE member after the grace', () => {
+    vi.useFakeTimers()
+    try {
+      const online = new Set(['owner', 'first', 'second'])
+      const { service, events } = makeService((id) => online.has(id))
+      service.create('owner')
+      service.invite('owner', 'first')
+      service.acceptInvite('first', service.invitesFor('first')[0]!.id)
+      vi.advanceTimersByTime(500)
+      service.invite('owner', 'second')
+      service.acceptInvite('second', service.invitesFor('second')[0]!.id)
+
+      online.delete('owner')
+      online.delete('first') // oldest is ALSO offline → crown goes to second
+      service.memberOffline('owner')
+      expect(service.jamOf('owner')?.ownerId).toBe('owner') // grace not elapsed yet
+      vi.advanceTimersByTime(61_000)
+      const jam = service.jamOf('second')
+      expect(jam?.ownerId).toBe('second')
+      expect(service.jamOf('owner')).toBeNull()
+      expect(events.some((event) => event.kind === 'sync')).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('owner reconnecting within the grace keeps the crown', () => {
+    vi.useFakeTimers()
+    try {
+      const online = new Set(['owner', 'guest'])
+      const { service } = makeService((id) => online.has(id))
+      service.create('owner')
+      service.invite('owner', 'guest')
+      service.acceptInvite('guest', service.invitesFor('guest')[0]!.id)
+      online.delete('owner')
+      service.memberOffline('owner')
+      vi.advanceTimersByTime(30_000)
+      online.add('owner')
+      service.memberOnline('owner')
+      vi.advanceTimersByTime(40_000)
+      expect(service.jamOf('owner')?.ownerId).toBe('owner')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('jam chat broadcasts to all members and keeps a bounded history', () => {
+    const { service, events } = makeService()
+    service.create('owner')
+    service.invite('owner', 'guest')
+    service.acceptInvite('guest', service.invitesFor('guest')[0]!.id)
+    events.length = 0
+    expect(service.addChat('guest', 'Guest Name', 'oi pessoal')).toBe(true)
+    const chat = events.find((event) => event.kind === 'chat')
+    expect(chat?.kind === 'chat' && chat.message.text).toBe('oi pessoal')
+    expect(chat?.kind === 'chat' && chat.userIds.sort()).toEqual(['guest', 'owner'])
+    expect(service.addChat('stranger', 'X', 'invadindo')).toBe(false)
+    for (let i = 0; i < 60; i++) service.addChat('owner', 'Owner', `m${i}`)
+    expect(service.jamOf('owner')?.chat.length).toBeLessThanOrEqual(50)
+    const dto = service.toDto(service.jamOf('owner')!, () => null)
+    expect(dto.chat.length).toBeLessThanOrEqual(30)
+  })
+
+  it('queue keeps addedBy attribution', () => {
+    const { service } = makeService()
+    service.create('owner')
+    service.updateQueue('owner', [{ ...track(1), addedById: 'owner', addedByName: 'Bold Zebra' }])
+    expect(service.jamOf('owner')?.queue[0]?.addedByName).toBe('Bold Zebra')
+  })
+
   it('idle jams are swept, active ones survive', () => {
     vi.useFakeTimers()
     try {
@@ -163,6 +253,8 @@ describe('wire validation', () => {
 
   it('validates jam track refs', () => {
     expect(isJamTrackRef(track(1))).toBe(true)
+    expect(isJamTrackRef({ ...track(1), addedById: 'abc', addedByName: 'Bold Zebra' })).toBe(true)
+    expect(isJamTrackRef({ ...track(1), addedByName: 'x'.repeat(60) })).toBe(false)
     expect(isJamTrackRef({ ...track(1), duration: -5 })).toBe(false)
     expect(isJamTrackRef({ ...track(1), trackId: 0 })).toBe(false)
     expect(isJamTrackRef({ ...track(1), title: '' })).toBe(false)
