@@ -24,7 +24,11 @@ const parsePresence = (raw: unknown): PresencePayload | null => {
 }
 
 export function registerFeatureIpc(ctx: AppContext): void {
-  on(IPC.presenceUpdate, (payload) => ctx.presence.update(parsePresence(payload)))
+  on(IPC.presenceUpdate, (payload) => {
+    const parsed = parsePresence(payload)
+    ctx.presence.update(parsed)
+    ctx.trayPopup.setNowPlaying(parsed)
+  })
 
   handle(IPC.authStatus, () => ctx.auth.state())
   handleResult(IPC.authLogin, async () => {

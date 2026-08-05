@@ -18,6 +18,9 @@ export class AudioEngine {
   private generation = 0
   private erroredGeneration = -1
   private sourceReady = false
+  private pendingSeeks = 0
+  private seekSettleTimer: ReturnType<typeof setTimeout> | null = null
+  private watchdogTimer: ReturnType<typeof setTimeout> | null = null
   private targetVolume = 0.8
   private fadeMs = 220
   private fadeTimer: ReturnType<typeof setInterval> | null = null
@@ -25,7 +28,15 @@ export class AudioEngine {
   constructor(private events: EngineEvents) {
     this.audio.preload = 'auto'
     this.audio.addEventListener('timeupdate', () => {
-      if (this.sourceReady) this.events.onTime(this.audio.currentTime)
+      // ignore echoes from before a pending seek completed
+      if (this.sourceReady && this.pendingSeeks === 0) this.events.onTime(this.audio.currentTime)
+    })
+    this.audio.addEventListener('seeked', () => {
+      if (this.pendingSeeks > 0) this.pendingSeeks--
+      if (this.pendingSeeks === 0) {
+        this.clearSeekSettle()
+        if (this.sourceReady) this.events.onTime(this.audio.currentTime)
+      }
     })
     this.audio.addEventListener('durationchange', () => {
       if (this.sourceReady && Number.isFinite(this.audio.duration))
@@ -37,6 +48,7 @@ export class AudioEngine {
     this.audio.addEventListener('waiting', () => this.events.onBuffering(true))
     this.audio.addEventListener('canplay', () => this.events.onBuffering(false))
     this.audio.addEventListener('playing', () => {
+      this.clearWatchdog()
       this.events.onBuffering(false)
       this.events.onPlayingChange(true)
     })
@@ -49,37 +61,71 @@ export class AudioEngine {
   private emitError(message: string): void {
     if (this.erroredGeneration === this.generation) return
     this.erroredGeneration = this.generation
+    this.clearWatchdog()
     this.events.onError(message)
   }
 
-  async load(trackId: number, autoplay: boolean, startAt = 0): Promise<void> {
+  private clearSeekSettle(): void {
+    if (this.seekSettleTimer) {
+      clearTimeout(this.seekSettleTimer)
+      this.seekSettleTimer = null
+    }
+  }
+
+  private clearWatchdog(): void {
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer)
+      this.watchdogTimer = null
+    }
+  }
+
+  private armWatchdog(generation: number): void {
+    this.clearWatchdog()
+    const startPos = this.audio.currentTime
+    this.watchdogTimer = setTimeout(() => {
+      if (generation !== this.generation) return
+      const progressed = this.audio.currentTime - startPos
+      if (progressed < 0.5 && this.audio.readyState < 3) this.emitError('stream stalled')
+    }, 15000)
+  }
+
+  async load(trackId: number, autoplay: boolean, startAt = 0, fresh = false): Promise<boolean> {
     const generation = ++this.generation
     this.sourceReady = false
+    this.pendingSeeks = 0
+    this.clearSeekSettle()
+    this.clearWatchdog()
     this.detachHls()
     this.audio.pause()
     this.audio.removeAttribute('src')
     this.audio.load()
 
-    const result = await api.sc.stream(trackId)
-    if (generation !== this.generation) return
+    const result = await api.sc.stream(trackId, fresh)
+    if (generation !== this.generation) return false
     if (!result.ok) {
       this.emitError(result.error)
-      return
+      return false
     }
     const source = result.data
     try {
       if (source.protocol === 'hls') await this.attachHls(source, generation)
       else this.audio.src = source.url
-      if (generation !== this.generation) return
+      if (generation !== this.generation) return false
       this.sourceReady = true
       if (startAt > 0) this.audio.currentTime = startAt
-      if (autoplay) await this.playWithFade()
-      else this.applyVolume(this.targetVolume)
+      if (autoplay) {
+        this.armWatchdog(generation)
+        await this.playWithFade()
+      } else {
+        this.applyVolume(this.targetVolume)
+      }
+      return generation === this.generation
     } catch (error) {
       if (generation === this.generation) {
         reportError('engine', error)
         this.emitError(error instanceof Error ? error.message : String(error))
       }
+      return false
     }
   }
 
@@ -93,9 +139,10 @@ export class AudioEngine {
     }
     const hls = new HlsCtor({ enableWorker: true, maxBufferLength: 30, backBufferLength: 30 })
     this.hls = hls
+    let networkRetries = 0
     hls.on(HlsCtor.Events.ERROR, (_event, data) => {
       if (!data.fatal) return
-      if (data.type === 'networkError') hls.startLoad()
+      if (data.type === 'networkError' && ++networkRetries <= 2) hls.startLoad()
       else if (data.type === 'mediaError') hls.recoverMediaError()
       else this.emitError(`stream error: ${data.details}`)
     })
@@ -152,6 +199,9 @@ export class AudioEngine {
   stop(): void {
     this.generation++
     this.sourceReady = false
+    this.pendingSeeks = 0
+    this.clearSeekSettle()
+    this.clearWatchdog()
     this.stopFade()
     this.detachHls()
     this.audio.pause()
@@ -160,7 +210,16 @@ export class AudioEngine {
   }
 
   seek(position: number): void {
-    if (Number.isFinite(position)) this.audio.currentTime = Math.max(0, position)
+    if (!this.sourceReady || !Number.isFinite(position)) return
+    const duration = this.audio.duration
+    const max = Number.isFinite(duration) && duration > 0 ? Math.max(0, duration - 0.4) : Infinity
+    this.pendingSeeks++
+    this.clearSeekSettle()
+    // safety: never let a lost 'seeked' event mute time updates forever
+    this.seekSettleTimer = setTimeout(() => {
+      this.pendingSeeks = 0
+    }, 2500)
+    this.audio.currentTime = Math.min(Math.max(0, position), max)
   }
 
   setVolume(volume: number): void {

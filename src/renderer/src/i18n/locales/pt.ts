@@ -102,6 +102,16 @@ export const pt: Dict = {
     verified: 'Artista verificado',
     empty: 'Este artista não tem faixas públicas'
   },
+  trackPage: {
+    plays: 'Reproduções',
+    likes: 'Curtidas',
+    reposts: 'Republicações',
+    comments: 'Comentários',
+    commentsEmpty: 'Ainda sem comentários',
+    related: 'Faixas parecidas',
+    loadMore: 'Carregar mais',
+    jumpTo: 'Ir para este momento'
+  },
   player: {
     play: 'Tocar',
     pause: 'Pausar',

@@ -680,3 +680,149 @@ kbd {
   border-bottom-width: 2px;
   color: var(--text-dim);
 }
+
+/* track page */
+.track-hero {
+  display: flex;
+  gap: 26px;
+  align-items: flex-end;
+  margin-bottom: 30px;
+}
+
+.track-hero > .artwork {
+  width: 200px;
+  border-radius: var(--radius-l);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-2);
+}
+
+.th-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.th-info h1 {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.th-artist {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.th-artist:hover {
+  color: var(--text);
+}
+
+.th-artist .artwork {
+  width: 26px;
+}
+
+.th-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+}
+
+.th-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.stat-chip svg {
+  color: var(--accent-text);
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comment-row {
+  display: flex;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: var(--radius-m);
+  transition: background var(--t-fast);
+}
+
+.comment-row:hover {
+  background: var(--surface);
+}
+
+.comment-row > .artwork {
+  width: 34px;
+  flex-shrink: 0;
+}
+
+.cm-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.cm-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 3px;
+}
+
+.cm-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.cm-time {
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.cm-date {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+}
+
+.cm-body {
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .track-hero {
+    align-items: flex-start;
+  }
+
+  .track-hero > .artwork {
+    width: 140px;
+  }
+}

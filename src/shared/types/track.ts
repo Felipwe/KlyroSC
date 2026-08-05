@@ -21,6 +21,20 @@ export interface Track {
   likeCount: number
   createdAt: string
   snippet: boolean
+  repostCount?: number
+  commentCount?: number
+  description?: string | null
+}
+
+export interface TrackComment {
+  id: number
+  body: string
+  createdAt: string
+  /** seconds into the track, or null for untimed comments */
+  timestamp: number | null
+  userId: number
+  userName: string
+  userAvatar: string | null
 }
 
 export interface Artist {

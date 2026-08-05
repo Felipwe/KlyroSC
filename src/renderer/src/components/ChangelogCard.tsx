@@ -11,6 +11,23 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.1.0',
+    pt: [
+      'Página da faixa: clique na capa ou no nome da música para ver curtidas, comentários, republicações e faixas parecidas',
+      'Novo menu do tray: clique direito no ícone mostra um painel com o que está tocando, controles e atalhos',
+      'Reprodução mais confiável: fim do loading infinito a faixa tenta de novo sozinha com um link novo',
+      'Letras: cliques repetidos numa frase não dessincronizam mais',
+      'Visual: removido o traço vermelho lateral do tema Light Yagami'
+    ],
+    en: [
+      'Track page: click the artwork or title to see likes, comments, reposts and similar tracks',
+      'New tray menu: right-click the icon for a panel with now playing, controls and shortcuts',
+      'More reliable playback: no more infinite loading tracks retry themselves with a fresh link',
+      'Lyrics: repeated clicks on a line no longer desync',
+      'Visual: removed the red side stripe from the Light Yagami theme'
+    ]
+  },
+  {
     version: '2.0.2',
     pt: [
       'Em alta agora personalizado: segue seu país e o seu gosto musical',

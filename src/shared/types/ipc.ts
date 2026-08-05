@@ -8,7 +8,8 @@ import {
   type RemotePlaylist,
   type ResolvedItem,
   type SearchKind,
-  type Track
+  type Track,
+  type TrackComment
 } from './track'
 import {
   type Lyrics,
@@ -77,8 +78,9 @@ export interface KlyroApi {
     user(id: number): Promise<Result<Artist>>
     userTracks(id: number, nextHref?: string | null): Promise<Result<Page<Track>>>
     related(id: number): Promise<Result<Track[]>>
+    comments(id: number, nextHref?: string | null): Promise<Result<Page<TrackComment>>>
     resolve(url: string): Promise<Result<ResolvedItem>>
-    stream(trackId: number): Promise<Result<StreamSource>>
+    stream(trackId: number, fresh?: boolean): Promise<Result<StreamSource>>
   }
   library: {
     get(): Promise<LibraryData>
@@ -165,6 +167,7 @@ export const IPC = {
   scUser: 'sc:user',
   scUserTracks: 'sc:user-tracks',
   scRelated: 'sc:related',
+  scComments: 'sc:comments',
   scResolve: 'sc:resolve',
   scStream: 'sc:stream',
   libraryGet: 'library:get',
@@ -204,5 +207,7 @@ export const IPC = {
   downloadsOpenFolder: 'downloads:open-folder',
   media: 'media',
   nav: 'nav',
+  trayState: 'tray:state',
+  trayAction: 'tray:action',
   logRenderer: 'log:renderer'
 } as const

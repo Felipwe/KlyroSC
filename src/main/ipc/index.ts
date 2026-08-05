@@ -1,4 +1,5 @@
 import { type MainWindow } from '../app/window'
+import { type TrayPopup } from '../app/tray-popup'
 import { type SettingsService } from '../services/settings'
 import { type LibraryService } from '../services/library'
 import { type SoundCloudApi } from '../services/soundcloud/api'
@@ -13,6 +14,7 @@ import { registerFeatureIpc } from './features'
 
 export interface AppContext {
   mainWindow: MainWindow
+  trayPopup: TrayPopup
   settings: SettingsService
   library: LibraryService
   sc: SoundCloudApi

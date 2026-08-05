@@ -30,11 +30,22 @@ export function PlayerBar(): JSX.Element {
       <div className="pb-now">
         {player.current ? (
           <>
-            <Artwork src={player.current.artwork} alt="" />
+            <button
+              className="pb-art-link"
+              aria-label={player.current.title}
+              onClick={() =>
+                player.current && useNav.getState().push({ name: 'track', id: player.current.id })
+              }
+            >
+              <Artwork src={player.current.artwork} alt="" />
+            </button>
             <div className="pb-info">
               <div
                 className="pb-title"
                 title={player.current.title}
+                onClick={() =>
+                  player.current && useNav.getState().push({ name: 'track', id: player.current.id })
+                }
                 onContextMenu={(event) => player.current && openTrackMenuAt(event, player.current)}
               >
                 {player.current.title}

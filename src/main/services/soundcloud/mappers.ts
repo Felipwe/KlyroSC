@@ -3,7 +3,8 @@ import {
   type Artist,
   type PlaylistLite,
   type RemotePlaylist,
-  type Track
+  type Track,
+  type TrackComment
 } from '@shared/types/track'
 import { type Transcoding } from '@shared/types/track'
 
@@ -52,7 +53,25 @@ export function mapTrack(raw: unknown): Track | null {
     createdAt: str(raw.created_at) ?? '',
     snippet:
       raw.policy === 'SNIP' ||
-      (int(raw.duration) > 0 && int(raw.full_duration) > int(raw.duration) * 1.5)
+      (int(raw.duration) > 0 && int(raw.full_duration) > int(raw.duration) * 1.5),
+    repostCount: int(raw.reposts_count),
+    commentCount: int(raw.comment_count),
+    description: str(raw.description)
+  }
+}
+
+export function mapComment(raw: unknown): TrackComment | null {
+  if (!isRecord(raw) || typeof raw.id !== 'number' || typeof raw.body !== 'string') return null
+  const user = isRecord(raw.user) ? raw.user : {}
+  return {
+    id: raw.id,
+    body: raw.body.slice(0, 1000),
+    createdAt: str(raw.created_at) ?? '',
+    timestamp:
+      typeof raw.timestamp === 'number' && raw.timestamp > 0 ? Math.round(raw.timestamp / 1000) : null,
+    userId: int(user.id),
+    userName: str(user.username) ?? 'Anonymous',
+    userAvatar: artworkUrl(str(user.avatar_url), 't120x120')
   }
 }
 

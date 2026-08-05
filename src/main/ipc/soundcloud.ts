@@ -54,13 +54,21 @@ export function registerSoundCloudIpc(ctx: AppContext): void {
     return ctx.sc.related(id)
   })
 
+  handleResult(IPC.scComments, (payload) => {
+    const p = payload as { id?: unknown; nextHref?: unknown }
+    if (typeof p?.id !== 'number') throw new Error('invalid track id')
+    return ctx.sc.comments(p.id, typeof p.nextHref === 'string' ? p.nextHref : null)
+  })
+
   handleResult(IPC.scResolve, (url) => {
     if (typeof url !== 'string') throw new Error('invalid url')
     return ctx.sc.resolve(url)
   })
 
-  handleResult(IPC.scStream, (trackId) => {
-    if (typeof trackId !== 'number') throw new Error('invalid track id')
-    return ctx.sc.stream(trackId, ctx.settings.get().playback.quality)
+  handleResult(IPC.scStream, (payload) => {
+    const p = payload as { id?: unknown; fresh?: unknown }
+    const trackId = typeof p === 'number' ? p : typeof p?.id === 'number' ? p.id : null
+    if (trackId === null) throw new Error('invalid track id')
+    return ctx.sc.stream(trackId, ctx.settings.get().playback.quality, p?.fresh === true)
   })
 }

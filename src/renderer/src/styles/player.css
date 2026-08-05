@@ -22,6 +22,17 @@
   box-shadow: var(--shadow-1);
 }
 
+.pb-art-link {
+  flex-shrink: 0;
+  border-radius: var(--radius-s);
+  transition: transform var(--t-fast), filter var(--t-fast);
+}
+
+.pb-art-link:hover {
+  transform: scale(1.04);
+  filter: brightness(1.1);
+}
+
 .pb-now .pb-info {
   min-width: 0;
 }
@@ -32,6 +43,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.pb-now .pb-title:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .pb-now .pb-preview {

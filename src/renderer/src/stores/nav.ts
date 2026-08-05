@@ -8,6 +8,7 @@ export type Route =
   | { name: 'playlists' }
   | { name: 'playlist'; ref: string; local: boolean }
   | { name: 'artist'; id: number }
+  | { name: 'track'; id: number }
   | { name: 'settings'; section?: string }
 
 interface NavState {

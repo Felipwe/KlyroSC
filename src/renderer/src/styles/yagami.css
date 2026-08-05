@@ -32,11 +32,6 @@
   border-color: rgba(179, 20, 35, 0.14);
 }
 
-:root[data-accent='yagami'] .track-row.active,
-:root[data-accent='yagami'] .side-item.active {
-  box-shadow: inset 2px 0 0 var(--accent-a);
-}
-
 :root[data-accent='yagami'] ::-webkit-scrollbar-thumb {
   background: rgba(179, 20, 35, 0.28);
   border: 3px solid transparent;

@@ -31,6 +31,7 @@ import { SearchPage } from '@renderer/pages/SearchPage'
 import { FavoritesPage, HistoryPage } from '@renderer/pages/LibraryPages'
 import { PlaylistsPage, LocalPlaylistPage, RemotePlaylistPage } from '@renderer/pages/PlaylistPages'
 import { ArtistPage } from '@renderer/pages/ArtistPage'
+import { TrackPage } from '@renderer/pages/TrackPage'
 import { SettingsPage } from '@renderer/pages/SettingsPage'
 
 function PageRouter({ route }: { route: Route }): JSX.Element {
@@ -53,6 +54,8 @@ function PageRouter({ route }: { route: Route }): JSX.Element {
       )
     case 'artist':
       return <ArtistPage id={route.id} />
+    case 'track':
+      return <TrackPage id={route.id} />
     case 'settings':
       return <SettingsPage initialSection={route.section} />
   }

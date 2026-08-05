@@ -71,7 +71,12 @@ const getEngine = (): AudioEngine => {
       const title = state.current?.title ?? ''
       consecutiveErrors++
       api.log('warn', `playback error on "${title}": ${message}`)
-      if (consecutiveErrors >= 3 || state.queue.length <= 1) {
+      if (consecutiveErrors === 1 && state.current) {
+        api.log('info', `retrying "${title}" with a fresh stream url`)
+        startTrack(state.index, true, state.position > 2 ? state.position : 0, true)
+        return
+      }
+      if (consecutiveErrors >= 4 || state.queue.length <= 1) {
         toast(t('toast.playbackError', { title }), 'error')
         usePlayer.setState({ playing: false, buffering: false })
       } else {
@@ -93,7 +98,7 @@ function maybeCountHistory(position: number): void {
   }
 }
 
-function startTrack(index: number, autoplay = true, startAt = 0): void {
+function startTrack(index: number, autoplay = true, startAt = 0, fresh = false): void {
   const { queue } = usePlayer.getState()
   const track = queue[index]
   if (!track) return
@@ -108,9 +113,9 @@ function startTrack(index: number, autoplay = true, startAt = 0): void {
     previewActive: false
   })
   void getEngine()
-    .load(track.id, autoplay, startAt)
-    .then(() => {
-      consecutiveErrors = 0
+    .load(track.id, autoplay, startAt, fresh)
+    .then((ok) => {
+      if (ok) consecutiveErrors = 0
     })
 }
 

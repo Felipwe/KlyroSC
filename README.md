@@ -9,10 +9,13 @@ SoundCloud Modded by: Felipe and Yusuro
 
 [![Download](https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20Baixar%20para%20Windows-KlyroSC--Setup.exe-c1121f?style=for-the-badge)](https://github.com/Felipwe/KlyroSC/releases/latest)
 
+[![macOS](https://img.shields.io/badge/%F0%9F%8D%8E%20macOS-.dmg%20(Apple%20Silicon)-1f1f1f?style=for-the-badge&logo=apple)](https://github.com/Felipwe/KlyroSC/releases/latest)
+[![Linux](https://img.shields.io/badge/%F0%9F%90%A7%20Linux-.AppImage%20%2F%20.deb-e0a010?style=for-the-badge&logo=linux&logoColor=white)](https://github.com/Felipwe/KlyroSC/releases/latest)
+
 [![Versão](https://img.shields.io/github/v/release/Felipwe/KlyroSC?style=flat-square&color=e5484d&label=vers%C3%A3o)](https://github.com/Felipwe/KlyroSC/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Felipwe/KlyroSC/total?style=flat-square&color=b31423&label=downloads)](https://github.com/Felipwe/KlyroSC/releases)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-2ea043?style=flat-square)](LICENSE)
-[![Plataforma](https://img.shields.io/badge/plataforma-Windows-0078d4?style=flat-square&logo=windows)](https://github.com/Felipwe/KlyroSC/releases/latest)
+[![Plataforma](https://img.shields.io/badge/plataforma-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-0078d4?style=flat-square)](https://github.com/Felipwe/KlyroSC/releases/latest)
 
 </div>
 
@@ -31,7 +34,6 @@ SoundCloud Modded by: Felipe and Yusuro
 ## O que tem
 
 - [x] **Player nativo**  sem site embutido, sem anúncio de áudio, nunca
-- [x] **Tema Light Yagami**  preto profundo + vermelho, com a arte de fundo (e mais 5 temas)
 - [x] **AdBlock nativo**  bloqueia 40+ redes de anúncio/rastreio e conteúdo patrocinado
 - [x] **Region Unblock**  destrava faixas bloqueadas no seu país via rota de embed
 - [x] **Login com SoundCloud**  curtidas sincronizam com sua conta real (opcional)
@@ -46,11 +48,25 @@ SoundCloud Modded by: Felipe and Yusuro
 
 ## Como instalar
 
+**Windows**
+
 1. Baixa o [`KlyroSC-Setup.exe`](https://github.com/Felipwe/KlyroSC/releases/latest)
 2. Roda. Ele instala em segundos e abre sozinho.
 3. Só isso. Atualizações chegam automaticamente.
 
+> Se o Windows mostrar “fornecedor desconhecido”, clique em **Mais informações → Executar assim mesmo** — é só porque o app ainda não tem assinatura digital paga.
+>
 > Tinha o KlyroSC 1.x? O instalador remove a versão antiga sozinho, sem duplicar nada.
+
+**macOS** (Apple Silicon)
+
+1. Baixa o `.dmg` na [última release](https://github.com/Felipwe/KlyroSC/releases/latest) e arrasta para Aplicativos
+2. Na primeira vez: clique com o botão direito no app → **Abrir** (necessário porque o app não é assinado)
+
+**Linux**
+
+- **AppImage**: baixa, dá permissão (`chmod +x KlyroSC-*.AppImage`) e executa
+- **Debian/Ubuntu**: baixa o `.deb` e instala com `sudo dpkg -i klyrosc_*.deb`
 
 ## Stack
 

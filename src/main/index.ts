@@ -9,6 +9,7 @@ import { cleanupLegacyData } from './core/cleanup'
 import { initAdBlock, setAdBlockEnabled } from './core/adblock'
 import { MainWindow } from './app/window'
 import { AppTray } from './app/tray'
+import { TrayPopup, type TrayPopupLabels } from './app/tray-popup'
 import { applyGlobalMediaKeys } from './app/shortcuts'
 import { SettingsService } from './services/settings'
 import { LibraryService } from './services/library'
@@ -49,6 +50,32 @@ function bootstrap(): void {
     (message) => mainWindow.send(IPC.pluginToast, message),
     () => mainWindow.get()?.isFocused() ?? false
   )
+  const trayPopup = new TrayPopup(
+    () => {
+      const s = settings.get()
+      const lib = library.get()
+      return {
+        version: app.getVersion(),
+        accent: s.appearance.accent,
+        labels: trayPopupLabels(resolveLanguage(s)),
+        stats: {
+          plugins: plugins.list().filter((plugin) => plugin.enabled).length,
+          favorites: lib.favorites.length,
+          history: lib.history.length
+        }
+      }
+    },
+    (action) => {
+      if (action === 'open') {
+        mainWindow.show()
+      } else if (action === 'quit') {
+        mainWindow.isQuitting = true
+        app.quit()
+      } else {
+        mainWindow.send(IPC.media, action)
+      }
+    }
+  )
   const updater = new UpdaterService(
     (status) => mainWindow.send(IPC.updateStatusEvent, status),
     settings.get().updates.autoDownload
@@ -56,6 +83,7 @@ function bootstrap(): void {
 
   const ctx: AppContext = {
     mainWindow,
+    trayPopup,
     settings,
     library,
     sc,
@@ -83,14 +111,11 @@ function bootstrap(): void {
       startMinimized: current.startup.startMinimized
     })
 
-    const createTray = (s: Settings): void => {
+    const createTray = (): void => {
       tray.destroy()
-      tray.create(mainWindow, trayLabels(resolveLanguage(s)), () => {
-        mainWindow.isQuitting = true
-        app.quit()
-      })
+      tray.create(mainWindow, (bounds) => trayPopup.toggle(bounds))
     }
-    createTray(current)
+    createTray()
 
     applyGlobalMediaKeys(mainWindow, current.system.globalMediaKeys)
     presence.configure(current.discord)
@@ -102,6 +127,7 @@ function bootstrap(): void {
       setAdBlockEnabled(isEnabled('adblock'))
       sc.setRegionUnblock(isEnabled('region-unblock'))
       mainWindow.send(IPC.pluginsChanged, list)
+      trayPopup.refresh()
     }
     applySystemPlugins()
     plugins.onChange(applySystemPlugins)
@@ -115,7 +141,7 @@ function bootstrap(): void {
       updater.setAutoDownload(next.updates.autoDownload)
       if (next.system.globalMediaKeys !== previous.system.globalMediaKeys)
         applyGlobalMediaKeys(mainWindow, next.system.globalMediaKeys)
-      if (next.language !== previous.language) createTray(next)
+      trayPopup.refresh()
     })
 
     if (current.updates.autoCheck && app.isPackaged) {
@@ -149,6 +175,7 @@ function bootstrap(): void {
   app.on('will-quit', () => {
     presence.destroy()
     plugins.stopAll()
+    trayPopup.destroy()
     settings.flush()
     library.flush()
     for (const flush of ctx.flushers) flush()
@@ -169,16 +196,26 @@ function resolveLanguage(settings: Settings): 'en' | 'pt' {
   return locale.startsWith('pt') ? 'pt' : 'en'
 }
 
-function trayLabels(lang: 'en' | 'pt'): {
-  open: string
-  playPause: string
-  next: string
-  previous: string
-  quit: string
-} {
+function trayPopupLabels(lang: 'en' | 'pt'): TrayPopupLabels {
   return lang === 'pt'
-    ? { open: 'Abrir o KlyroSC', playPause: 'Tocar/Pausar', next: 'Próxima faixa', previous: 'Faixa anterior', quit: 'Sair' }
-    : { open: 'Open KlyroSC', playPause: 'Play/Pause', next: 'Next track', previous: 'Previous track', quit: 'Quit' }
+    ? {
+        nowPlaying: 'Tocando agora',
+        nothing: 'Nada tocando',
+        plugins: 'Plugins',
+        favorites: 'Favoritos',
+        history: 'Histórico',
+        open: 'Abrir o KlyroSC',
+        quit: 'Sair'
+      }
+    : {
+        nowPlaying: 'Now playing',
+        nothing: 'Nothing playing',
+        plugins: 'Plugins',
+        favorites: 'Favorites',
+        history: 'History',
+        open: 'Open KlyroSC',
+        quit: 'Quit'
+      }
 }
 
 function loadDotEnv(): void {

@@ -100,6 +100,16 @@ export const en = {
     verified: 'Verified artist',
     empty: 'This artist has no public tracks'
   },
+  trackPage: {
+    plays: 'Plays',
+    likes: 'Likes',
+    reposts: 'Reposts',
+    comments: 'Comments',
+    commentsEmpty: 'No comments yet',
+    related: 'Similar tracks',
+    loadMore: 'Load more',
+    jumpTo: 'Jump to this moment'
+  },
   player: {
     play: 'Play',
     pause: 'Pause',

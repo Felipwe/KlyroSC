@@ -7,7 +7,8 @@ import {
   type RemotePlaylist,
   type ResolvedItem,
   type SearchKind,
-  type Track
+  type Track,
+  type TrackComment
 } from '@shared/types/track'
 import { type StreamSource } from '@shared/types/player'
 import { type StreamQuality } from '@shared/types/settings'
@@ -15,6 +16,7 @@ import { ScClient } from './client'
 import {
   collectionOf,
   mapArtist,
+  mapComment,
   mapPlaylist,
   mapPlaylistLite,
   mapTrack,
@@ -164,6 +166,20 @@ export class SoundCloudApi {
       .filter((t): t is Track => !!t)
   }
 
+  async comments(trackId: number, nextHref?: string | null): Promise<Page<TrackComment>> {
+    const raw = nextHref
+      ? await this.client.absolute(nextHref)
+      : await this.client.api(`/tracks/${trackId}/comments`, {
+          limit: 30,
+          threaded: 0,
+          filter_replies: 0
+        })
+    const items = collectionOf(raw)
+      .map(mapComment)
+      .filter((c): c is TrackComment => !!c)
+    return { items, nextHref: nextHrefOf(raw) }
+  }
+
   async setLike(userId: number, trackId: number, liked: boolean): Promise<void> {
     await this.client.api(
       `/users/${userId}/track_likes/${trackId}`,
@@ -208,9 +224,11 @@ export class SoundCloudApi {
     return { kind: 'unknown' }
   }
 
-  async stream(trackId: number, quality: StreamQuality): Promise<StreamSource> {
+  async stream(trackId: number, quality: StreamQuality, fresh = false): Promise<StreamSource> {
+    if (fresh) this.streamCache.delete(trackId)
     const cached = this.streamCache.get(trackId)
-    if (cached && Date.now() - cached.at < 10 * 60 * 1000) return cached.source
+    // SoundCloud CDN urls expire fast; a short TTL only covers rapid prev/next
+    if (cached && Date.now() - cached.at < 2 * 60 * 1000) return cached.source
 
     const raw = await this.client.api(`/tracks/${trackId}`)
     let source = await this.resolveFrom(raw, quality)

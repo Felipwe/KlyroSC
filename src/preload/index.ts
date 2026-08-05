@@ -58,8 +58,9 @@ const api: KlyroApi = {
     user: (id) => invoke(IPC.scUser, id),
     userTracks: (id, nextHref) => invoke(IPC.scUserTracks, { id, nextHref }),
     related: (id) => invoke(IPC.scRelated, id),
+    comments: (id, nextHref) => invoke(IPC.scComments, { id, nextHref }),
     resolve: (url) => invoke(IPC.scResolve, url),
-    stream: (trackId) => invoke(IPC.scStream, trackId)
+    stream: (trackId, fresh) => invoke(IPC.scStream, { id: trackId, fresh: fresh === true })
   },
   library: {
     get: () => invoke(IPC.libraryGet),

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src file: data:; script-src 'unsafe-inline'" />
+<style>
+  :root {
+    --bg: rgba(13, 13, 17, 0.97);
+    --stroke: rgba(255, 255, 255, 0.08);
+    --text: #eceef6;
+    --dim: #9aa0b5;
+    --faint: #62687e;
+    --surface: rgba(255, 255, 255, 0.05);
+    --hover: rgba(255, 255, 255, 0.09);
+    --a: #8b5cf6;
+    --b: #22d3ee;
+    --soft: rgba(139, 92, 246, 0.15);
+    --atext: #b9a5fb;
+  }
+  [data-accent='yagami'] { --bg: rgba(11, 9, 11, 0.97); --a: #b31423; --b: #e5484d; --soft: rgba(179, 20, 35, 0.16); --atext: #ef7d84; }
+  [data-accent='ember']  { --a: #fb7847; --b: #f43f7e; --soft: rgba(251, 120, 71, 0.16); --atext: #ffab8e; }
+  [data-accent='ocean']  { --a: #0ea5e9; --b: #34d399; --soft: rgba(14, 165, 233, 0.16); --atext: #7cd4fb; }
+  [data-accent='orchid'] { --a: #e254e0; --b: #7c6cfc; --soft: rgba(226, 84, 224, 0.15); --atext: #f0a3ef; }
+  [data-accent='mint']   { --a: #10b981; --b: #a3e635; --soft: rgba(16, 185, 129, 0.16); --atext: #6ee7b7; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: transparent; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: var(--text);
+    font-size: 13px;
+    user-select: none;
+    cursor: default;
+    padding: 6px;
+  }
+  .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border: 1px solid var(--stroke);
+    border-radius: 14px;
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--soft);
+    overflow: hidden;
+    animation: pop 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px 10px;
+  }
+  .head img { width: 26px; height: 26px; border-radius: 7px; }
+  .head .name { font-weight: 700; font-size: 0.95em; flex: 1; white-space: nowrap; overflow: hidden; }
+  .ver {
+    font-size: 0.72em;
+    font-weight: 600;
+    color: var(--atext);
+    background: var(--soft);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-top: 1px solid var(--stroke);
+    border-bottom: 1px solid var(--stroke);
+  }
+  .cell { padding: 9px 4px 8px; text-align: center; }
+  .cell + .cell { border-left: 1px solid var(--stroke); }
+  .cell b { display: block; font-size: 1.12em; font-weight: 800; color: var(--atext); }
+  .cell span {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.62em;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    color: var(--faint);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .now { padding: 10px 14px; flex: 1; min-height: 0; }
+  .now label {
+    display: block;
+    font-size: 0.64em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--faint);
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .now .track { font-weight: 600; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now .artist { color: var(--dim); font-size: 0.78em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now .idle { color: var(--faint); font-size: 0.85em; text-align: center; padding: 12px 0; }
+
+  .controls { display: flex; justify-content: center; gap: 6px; margin-top: 9px; }
+  .cbtn {
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border: none; background: var(--surface); color: var(--dim);
+    border-radius: 9px; cursor: pointer;
+    transition: background 120ms, color 120ms;
+  }
+  .cbtn:hover { background: var(--hover); color: var(--text); }
+  .cbtn.main { background: linear-gradient(135deg, var(--a), var(--b)); color: #fff; }
+  .cbtn svg { width: 14px; height: 14px; }
+
+  .items { border-top: 1px solid var(--stroke); padding: 6px; }
+  .item {
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px;
+    border: none; background: none; color: var(--text);
+    font: inherit; font-weight: 600; font-size: 0.92em;
+    border-radius: 9px; cursor: pointer; text-align: left;
+    transition: background 120ms;
+  }
+  .item:hover { background: var(--hover); }
+  .item svg { width: 15px; height: 15px; color: var(--dim); }
+  .item:hover svg { color: var(--atext); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <img src="icon.png" alt="" />
+      <div class="name">KlyroSC</div>
+      <span class="ver" id="ver">v0.0.0</span>
+    </div>
+    <div class="stats">
+      <div class="cell"><b id="st-plugins">0</b><span id="lb-plugins">Plugins</span></div>
+      <div class="cell"><b id="st-favorites">0</b><span id="lb-favorites">Favoritos</span></div>
+      <div class="cell"><b id="st-history">0</b><span id="lb-history">Histórico</span></div>
+    </div>
+    <div class="now">
+      <label id="lb-now">Tocando agora</label>
+      <div id="now-body"></div>
+    </div>
+    <div class="items">
+      <button class="item" id="bt-open">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5" /><path d="M5 11v9h14v-9" /></svg>
+        <span id="lb-open">Abrir</span>
+      </button>
+      <button class="item" id="bt-quit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+        <span id="lb-quit">Sair</span>
+      </button>
+    </div>
+  </div>
+<script>
+  const $ = (id) => document.getElementById(id)
+  const svg = (paths) =>
+    '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">' + paths + '</svg>'
+  const icons = {
+    prev: svg('<path d="M18.5 6.11v11.78c0 .86-.96 1.37-1.68.9l-8.9-5.89a1.08 1.08 0 0 1 0-1.8l8.9-5.9a1.08 1.08 0 0 1 1.68.9ZM5.4 5H7a.9.9 0 0 1 .9.9v12.2A.9.9 0 0 1 7 19H5.4a.9.9 0 0 1-.9-.9V5.9a.9.9 0 0 1 .9-.9Z"/>'),
+    next: svg('<path d="M5.5 6.11v11.78c0 .86.96 1.37 1.68.9l8.9-5.89a1.08 1.08 0 0 0 0-1.8l-8.9-5.9a1.08 1.08 0 0 0-1.68.9ZM17 5h1.6a.9.9 0 0 1 .9.9v12.2a.9.9 0 0 1-.9.9H17a.9.9 0 0 1-.9-.9V5.9A.9.9 0 0 1 17 5Z"/>'),
+    play: svg('<path d="M8 5.14v13.72c0 .8.87 1.3 1.56.88l10.54-6.86a1.05 1.05 0 0 0 0-1.76L9.56 4.26A1.04 1.04 0 0 0 8 5.14Z"/>'),
+    pause: svg('<path d="M7 4.5h3.2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Zm6.8 0H17a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-3.2a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"/>')
+  }
+  const act = (name) => window.trayApi.action(name)
+  $('bt-open').addEventListener('click', () => act('open'))
+  $('bt-quit').addEventListener('click', () => act('quit'))
+
+  window.trayApi.onState((state) => {
+    document.body.dataset.accent = state.accent
+    $('ver').textContent = 'v' + state.version
+    $('st-plugins').textContent = String(state.stats.plugins)
+    $('st-favorites').textContent = String(state.stats.favorites)
+    $('st-history').textContent = String(state.stats.history)
+    $('lb-plugins').textContent = state.labels.plugins
+    $('lb-favorites').textContent = state.labels.favorites
+    $('lb-history').textContent = state.labels.history
+    $('lb-now').textContent = state.labels.nowPlaying
+    $('lb-open').textContent = state.labels.open
+    $('lb-quit').textContent = state.labels.quit
+
+    const body = $('now-body')
+    if (state.now) {
+      body.innerHTML =
+        '<div class="track"></div><div class="artist"></div>' +
+        '<div class="controls">' +
+        '<button class="cbtn" id="c-prev">' + icons.prev + '</button>' +
+        '<button class="cbtn main" id="c-play">' + (state.now.playing ? icons.pause : icons.play) + '</button>' +
+        '<button class="cbtn" id="c-next">' + icons.next + '</button>' +
+        '</div>'
+      body.querySelector('.track').textContent = state.now.title
+      body.querySelector('.artist').textContent = state.now.artist
+      $('c-prev').addEventListener('click', () => act('previous'))
+      $('c-play').addEventListener('click', () => act('play-pause'))
+      $('c-next').addEventListener('click', () => act('next'))
+    } else {
+      body.innerHTML = '<div class="idle"></div>'
+      body.querySelector('.idle').textContent = state.labels.nothing
+    }
+  })
+</script>
+</body>
+</html>
