@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.1',
+    pt: [
+      'Fim do inglês perdido: as seções da Início (“Mais do que você curte”, “Em alta por gênero”…) agora aparecem em português',
+      'Setas de navegação nas prateleiras da Início para rolar as seções sem arrastar'
+    ],
+    en: [
+      'No more stray language mixing: Home sections (“More of what you like”, “Trending by genre”…) now follow your app language',
+      'Navigation arrows on Home shelves to scroll sections without dragging'
+    ]
+  },
+  {
     version: '2.4.0',
     pt: [
       'Em alta do seu país de verdade: o ranking agora vem das músicas mais tocadas do dia no Brasil (fonte real, atualizada diariamente), casadas com o SoundCloud',
