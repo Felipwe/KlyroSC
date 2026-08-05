@@ -63,7 +63,9 @@ export function setAdBlockEnabled(value: boolean): void {
 
 export function initAdBlock(initialEnabled: boolean): void {
   enabled = initialEnabled
-  const sessions = [session.defaultSession, session.fromPartition('persist:sc-auth')]
+  // never touch the sc-auth login partition: blocking page scripts there trips
+  // SoundCloud's DataDome ("JavaScript disabled") and breaks sign-in
+  const sessions = [session.defaultSession]
   for (const ses of sessions) {
     ses.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
       if (!enabled) {

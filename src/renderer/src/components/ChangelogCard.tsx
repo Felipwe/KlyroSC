@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.3',
+    pt: [
+      'Login com SoundCloud corrigido: quem via a tela “You have been blocked” agora consegue entrar normalmente',
+      'A proteção anti-bô do SoundCloud reprovava a identidade desatualizada do app e o bloqueador de anúncios dentro da janela de login — os dois foram corrigidos'
+    ],
+    en: [
+      'SoundCloud sign-in fixed: if you saw the “You have been blocked” screen, you can now log in normally',
+      'SoundCloud’s bot protection rejected the app’s outdated identity and the ad blocker inside the login window — both fixed'
+    ]
+  },
+  {
     version: '2.5.2',
     pt: [
       'Player 100% transparente no tema Capa da música: sem linha e sem vidro — os controles flutuam direto sobre a capa'

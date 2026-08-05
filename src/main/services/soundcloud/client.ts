@@ -9,8 +9,19 @@ const log = logger.scope('sc-client')
 
 const AUTH_PARTITION = 'persist:sc-auth'
 
-export const SC_UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+// UA must match the real engine: Chromium sends Sec-CH-UA client hints with the true
+// version/platform, and DataDome flags any mismatch with the User-Agent header
+const UA_PLATFORM =
+  process.platform === 'darwin'
+    ? 'Macintosh; Intel Mac OS X 10_15_7'
+    : process.platform === 'linux'
+      ? 'X11; Linux x86_64'
+      : 'Windows NT 10.0; Win64; x64'
+
+// real browsers ship the reduced UA (major.0.0.0), matching the client-hints major
+const CHROME_MAJOR = process.versions.chrome.split('.')[0] ?? '142'
+
+export const SC_UA = `Mozilla/5.0 (${UA_PLATFORM}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Safari/537.36`
 
 const UA = SC_UA
 
