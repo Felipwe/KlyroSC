@@ -29,6 +29,7 @@ export interface AppInfo {
   electron: string
   chrome: string
   arch: string
+  country: string
 }
 
 export type OpenPathKind = 'userData' | 'logs' | 'downloads' | 'plugins'

@@ -174,11 +174,6 @@
   margin-bottom: 4px;
 }
 
-.changelog-card .cl-close {
-  margin-left: auto;
-  align-self: flex-start;
-}
-
 .changelog-card .cl-list {
   display: flex;
   flex-direction: column;

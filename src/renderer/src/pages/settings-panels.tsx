@@ -3,7 +3,7 @@ import { type PluginConfigValue, type PluginInfo, type PluginSettingField } from
 import { type UpdateStatus } from '@shared/types/update'
 import { type AppInfo } from '@shared/types/ipc'
 import { APP_REPO_URL } from '@shared/constants'
-import { t, useLanguage } from '@renderer/i18n'
+import { getLanguage, t, useLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
 import { toast } from '@renderer/stores/toasts'
 import { useUi } from '@renderer/stores/ui'
@@ -79,6 +79,7 @@ export function AccountPanel(): JSX.Element {
 export function PluginsPanel(): JSX.Element {
   useLanguage()
   const [plugins, setPlugins] = useState<PluginInfo[] | null>(null)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     void api.plugins.list().then(setPlugins)
@@ -95,6 +96,16 @@ export function PluginsPanel(): JSX.Element {
   }
 
   if (!plugins) return <Loading />
+
+  const fold = (value: string): string =>
+    value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const needle = fold(query.trim())
+  const visible = needle
+    ? plugins.filter((plugin) => {
+        const m = plugin.manifest
+        return fold(`${m.name} ${m.description} ${m.descriptionPt ?? ''} ${m.author}`).includes(needle)
+      })
+    : plugins
 
   return (
     <>
@@ -113,10 +124,23 @@ export function PluginsPanel(): JSX.Element {
           {t('settings.plugins.reload')}
         </button>
       </div>
+      {plugins.length > 0 && (
+        <input
+          className="text-input"
+          style={{ width: '100%' }}
+          type="search"
+          value={query}
+          placeholder={t('settings.plugins.search')}
+          aria-label={t('settings.plugins.search')}
+          onChange={(event) => setQuery(event.currentTarget.value)}
+        />
+      )}
       {plugins.length === 0 ? (
         <Empty icon="plug" title={t('settings.plugins.empty')} />
+      ) : visible.length === 0 ? (
+        <Empty icon="search" title={t('settings.plugins.searchEmpty')} />
       ) : (
-        plugins.map((plugin) => <PluginCard key={plugin.manifest.id} plugin={plugin} onChange={setPlugins} />)
+        visible.map((plugin) => <PluginCard key={plugin.manifest.id} plugin={plugin} onChange={setPlugins} />)
       )}
     </>
   )
@@ -130,6 +154,8 @@ function PluginCard({
   onChange(plugins: PluginInfo[]): void
 }): JSX.Element {
   const manifest = plugin.manifest
+  const description =
+    getLanguage() === 'pt' && manifest.descriptionPt ? manifest.descriptionPt : manifest.description
   return (
     <div className="plugin-card">
       <div className="pc-head">
@@ -186,7 +212,7 @@ function PluginCard({
           />
         </div>
       </div>
-      <div className="pc-desc">{manifest.description}</div>
+      <div className="pc-desc">{description}</div>
       <div className="pc-perms">
         {manifest.permissions.length === 0 ? (
           <span className="badge">{t('settings.plugins.noPermissions')}</span>
@@ -225,17 +251,20 @@ function PluginField({
   onChange(plugins: PluginInfo[]): void
 }): JSX.Element {
   const value = plugin.config[field.key] ?? field.default
+  const isPt = getLanguage() === 'pt'
+  const label = isPt && field.labelPt ? field.labelPt : field.label
+  const description = isPt && field.descriptionPt ? field.descriptionPt : field.description
   const save = (next: PluginConfigValue): void => {
     void api.plugins.configure(plugin.manifest.id, { [field.key]: next }).then(onChange)
   }
   return (
     <div className="plugin-setting">
       <div>
-        <div className="ps-label">{field.label}</div>
-        {field.description && <div className="ps-desc">{field.description}</div>}
+        <div className="ps-label">{label}</div>
+        {description && <div className="ps-desc">{description}</div>}
       </div>
       {field.type === 'boolean' && (
-        <Switch on={value === true} ariaLabel={field.label} onToggle={(on) => save(on)} />
+        <Switch on={value === true} ariaLabel={label} onToggle={(on) => save(on)} />
       )}
       {field.type === 'number' && (
         <input
@@ -260,7 +289,7 @@ function PluginField({
       {field.type === 'select' && (
         <Select
           value={String(value)}
-          ariaLabel={field.label}
+          ariaLabel={label}
           options={(field.options ?? []).map((option) => ({ value: option.value, label: option.label }))}
           onChange={(next) => save(next)}
         />

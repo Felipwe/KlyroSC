@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.0.2',
+    pt: [
+      'Em alta agora personalizado: segue seu país e o seu gosto musical',
+      'Plugins: busca, descrições em português e texto mais simples',
+      'Mini player: botões e informações visíveis novamente',
+      'Menus de seleção sem vazamento visual e instalador com dados do fornecedor'
+    ],
+    en: [
+      'Trending now personalized: follows your country and your taste',
+      'Plugins: search, Portuguese descriptions, simpler wording',
+      'Mini player: buttons and info visible again',
+      'Select menus no longer bleed through; installer carries publisher info'
+    ]
+  },
+  {
     version: '2.0.1',
     pt: [
       'Smart Shuffle: ordem aleatória inteligente que evita repetir artista e segue a vibe da fila (plugin novo, já ativo)',
@@ -63,9 +78,6 @@ export function ChangelogCard({ version, onClose }: ChangelogCardProps): JSX.Ele
             <h3>{t('changelog.title')}</h3>
             <span className="badge accent">v{entry.version}</span>
           </div>
-          <button className="icon-btn cl-close" onClick={onClose} aria-label={t('common.close')}>
-            <Icon name="close" size={16} />
-          </button>
         </div>
         <div className="cl-list">
           {items.map((item, index) => (

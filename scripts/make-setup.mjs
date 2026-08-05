@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -38,6 +38,27 @@ if (!csc) {
 }
 
 const out = join(dist, `KlyroSC-Setup-${version}.exe`)
+
+// version resource so Windows shows Felipwe/KlyroSC as publisher metadata
+const asmVersion = `${(version.split('-')[0].split('.').concat(['0', '0', '0']).slice(0, 3)).join('.')}.0`
+const asmInfo = join(build, 'AssemblyInfo.g.cs')
+writeFileSync(
+  asmInfo,
+  '\ufeff' +
+    [
+      'using System.Reflection;',
+      '[assembly: AssemblyTitle("KlyroSC Setup")]',
+      '[assembly: AssemblyDescription("Instalador do KlyroSC")]',
+      '[assembly: AssemblyCompany("Felipwe")]',
+      '[assembly: AssemblyProduct("KlyroSC")]',
+      '[assembly: AssemblyCopyright("Copyright \u00a9 2026 Felipwe")]',
+      `[assembly: AssemblyVersion("${asmVersion}")]`,
+      `[assembly: AssemblyFileVersion("${asmVersion}")]`,
+      `[assembly: AssemblyInformationalVersion("${version}")]`,
+      ''
+    ].join('\r\n')
+)
+
 execFileSync(
   csc,
   [
@@ -50,7 +71,8 @@ execFileSync(
     `/resource:${join(dist, payload)},payload.exe`,
     `/resource:${bgPng},bg.png`,
     `/out:${out}`,
-    join(root, 'installer-src', 'Bootstrapper.cs')
+    join(root, 'installer-src', 'Bootstrapper.cs'),
+    asmInfo
   ],
   { stdio: 'inherit' }
 )

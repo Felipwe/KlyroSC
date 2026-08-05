@@ -298,6 +298,13 @@
   -webkit-app-region: no-drag;
 }
 
+/* keep content above the fixed .ambient backdrop layer */
+.mini-player .artwork,
+.mini-player .mini-main {
+  position: relative;
+  z-index: 1;
+}
+
 .mini-player .artwork {
   width: 84px;
   box-shadow: var(--shadow-2);

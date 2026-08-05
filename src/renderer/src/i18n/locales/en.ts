@@ -47,7 +47,8 @@ export const en = {
     tagline: 'What are we listening to today?',
     continueListening: 'Pick up where you left off',
     quick: 'Jump back in',
-    trending: 'Trending now'
+    trending: 'Trending now',
+    trendingIn: 'Trending · {region}'
   },
   search: {
     placeholder: 'Search tracks, artists, playlists  or paste a SoundCloud link',
@@ -290,6 +291,8 @@ export const en = {
       errorLabel: 'Plugin error',
       noSettings: 'This plugin has no settings.',
       empty: 'No plugins found',
+      search: 'Search plugins…',
+      searchEmpty: 'No plugin matches your search',
       installed: 'Plugin installed',
       uninstalled: 'Plugin uninstalled',
       installFailed: 'Could not install plugin: {error}'

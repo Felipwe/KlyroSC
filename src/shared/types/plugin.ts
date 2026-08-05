@@ -17,7 +17,9 @@ export interface PluginSettingField {
   key: string
   type: 'boolean' | 'string' | 'number' | 'select'
   label: string
+  labelPt?: string
   description?: string
+  descriptionPt?: string
   default: PluginConfigValue
   options?: { value: string; label: string }[]
   min?: number
@@ -30,6 +32,7 @@ export interface PluginManifest {
   name: string
   version: string
   description: string
+  descriptionPt?: string
   author: string
   main: string
   apiVersion: number
@@ -102,6 +105,8 @@ export function validatePluginManifest(
       name: raw.name,
       version: raw.version,
       description: typeof raw.description === 'string' ? raw.description.slice(0, 400) : '',
+      descriptionPt:
+        typeof raw.descriptionPt === 'string' ? raw.descriptionPt.slice(0, 400) : undefined,
       author: typeof raw.author === 'string' ? raw.author.slice(0, 80) : 'Unknown',
       main: raw.main,
       apiVersion: raw.apiVersion,

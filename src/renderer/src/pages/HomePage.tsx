@@ -1,12 +1,13 @@
-import { useMemo, type JSX } from 'react'
+import { useEffect, useMemo, useState, type JSX } from 'react'
 import { type Track } from '@shared/types/track'
-import { t, useLanguage } from '@renderer/i18n'
+import { getLanguage, t, useLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
 import { usePlayer } from '@renderer/player/store'
 import { useLibrary } from '@renderer/stores/library'
 import { useAuth } from '@renderer/stores/auth'
 import { useNav } from '@renderer/stores/nav'
 import { useAsyncResult } from '@renderer/hooks/async'
+import { personalizeTrending, tasteOf } from '@renderer/utils/trending'
 import { Loading, ErrorState } from '@renderer/components/Status'
 import { Rail, TrackCard, PlaylistCard } from '@renderer/components/cards'
 import { Artwork } from '@renderer/components/Artwork'
@@ -17,6 +18,15 @@ function greeting(): string {
   if (hour < 12) return t('home.greetingMorning')
   if (hour < 18) return t('home.greetingAfternoon')
   return t('home.greetingEvening')
+}
+
+function regionLabel(code: string): string {
+  try {
+    const names = new Intl.DisplayNames([getLanguage() === 'pt' ? 'pt-BR' : 'en'], { type: 'region' })
+    return names.of(code) ?? code
+  } catch {
+    return code
+  }
 }
 
 type QuickTile =
@@ -34,6 +44,20 @@ export function HomePage(): JSX.Element {
 
   const trending = useAsyncResult(() => api.sc.charts('all-music'), [])
   const home = useAsyncResult(() => api.sc.home(), [])
+  const [country, setCountry] = useState('')
+
+  useEffect(() => {
+    void api.app.info().then((info) => setCountry(info.country))
+  }, [])
+
+  const ranked = useMemo(() => {
+    if (!trending.data) return []
+    const taste = tasteOf([
+      ...libraryData.history.map((entry) => entry.track),
+      ...libraryData.favorites.map((favorite) => favorite.track)
+    ])
+    return personalizeTrending(trending.data, taste)
+  }, [trending.data, libraryData])
 
   const tiles = useMemo<QuickTile[]>(() => {
     const out: QuickTile[] = []
@@ -132,10 +156,9 @@ export function HomePage(): JSX.Element {
       ) : trending.error ? (
         <ErrorState message={trending.error} onRetry={trending.reload} />
       ) : (
-        trending.data &&
-        trending.data.length > 0 && (
-          <Rail title={t('home.trending')}>
-            {trending.data.map((track) => (
+        ranked.length > 0 && (
+          <Rail title={country ? t('home.trendingIn', { region: regionLabel(country) }) : t('home.trending')}>
+            {ranked.map((track) => (
               <TrackCard key={track.id} track={track} />
             ))}
           </Rail>

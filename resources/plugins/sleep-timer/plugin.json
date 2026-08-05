@@ -2,7 +2,8 @@
   "id": "sleep-timer",
   "name": "Sleep Timer",
   "version": "1.0.0",
-  "description": "Pauses playback automatically after a chosen amount of time. Arm the timer below and enjoy falling asleep to your music.",
+  "description": "Pauses the music after the time you pick. Great for falling asleep.",
+  "descriptionPt": "Pausa a música depois do tempo que você escolher. Perfeito pra dormir ouvindo som.",
   "author": "KlyroSC",
   "main": "index.js",
   "apiVersion": 1,
@@ -12,6 +13,7 @@
       "key": "minutes",
       "type": "number",
       "label": "Minutes until pause",
+      "labelPt": "Minutos até pausar",
       "default": 30,
       "min": 5,
       "max": 240
@@ -20,7 +22,9 @@
       "key": "armed",
       "type": "boolean",
       "label": "Timer armed",
+      "labelPt": "Timer ligado",
       "description": "Disarms automatically after firing.",
+      "descriptionPt": "Desliga sozinho depois de disparar.",
       "default": false
     }
   ]

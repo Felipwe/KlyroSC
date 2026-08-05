@@ -2,7 +2,8 @@
   "id": "lastfm-scrobbler",
   "name": "Last.fm Scrobbler",
   "version": "1.1.0",
-  "description": "Scrobbles your listening to Last.fm and keeps your Now Playing status in sync. Create an API account at last.fm/api/account/create, paste your keys and turn on Connect.",
+  "description": "Sends what you listen to to your Last.fm profile. Create your keys at last.fm/api, paste them here and turn on Connect.",
+  "descriptionPt": "Manda o que você ouve pro seu perfil do Last.fm. Crie suas chaves em last.fm/api, cole aqui e ligue o Conectar.",
   "author": "KlyroSC",
   "main": "index.js",
   "apiVersion": 1,
@@ -12,6 +13,7 @@
       "key": "apiKey",
       "type": "string",
       "label": "API key",
+      "labelPt": "Chave da API",
       "secret": true,
       "default": ""
     },
@@ -19,6 +21,7 @@
       "key": "apiSecret",
       "type": "string",
       "label": "Shared secret",
+      "labelPt": "Segredo compartilhado",
       "secret": true,
       "default": ""
     },
@@ -26,7 +29,9 @@
       "key": "connect",
       "type": "boolean",
       "label": "Connect to Last.fm",
+      "labelPt": "Conectar ao Last.fm",
       "description": "Opens the authorization page in your browser.",
+      "descriptionPt": "Abre a página de autorização no seu navegador.",
       "default": false
     }
   ]

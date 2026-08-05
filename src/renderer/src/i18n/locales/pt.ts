@@ -49,7 +49,8 @@ export const pt: Dict = {
     tagline: 'O que vamos ouvir hoje?',
     continueListening: 'Continue de onde parou',
     quick: 'Voltar a ouvir',
-    trending: 'Em alta agora'
+    trending: 'Em alta agora',
+    trendingIn: 'Em alta · {region}'
   },
   search: {
     placeholder: 'Busque faixas, artistas, playlists  ou cole um link do SoundCloud',
@@ -292,6 +293,8 @@ export const pt: Dict = {
       errorLabel: 'Erro do plugin',
       noSettings: 'Este plugin não possui configurações.',
       empty: 'Nenhum plugin encontrado',
+      search: 'Buscar plugins…',
+      searchEmpty: 'Nenhum plugin bate com a sua busca',
       installed: 'Plugin instalado',
       uninstalled: 'Plugin desinstalado',
       installFailed: 'Não foi possível instalar o plugin: {error}'

@@ -14,7 +14,8 @@ export function registerAppIpc(ctx: AppContext): void {
     platform: process.platform,
     electron: process.versions.electron ?? '',
     chrome: process.versions.chrome ?? '',
-    arch: process.arch
+    arch: process.arch,
+    country: (app.getLocaleCountryCode() || '').toUpperCase()
   }))
 
   on(IPC.appQuit, () => {

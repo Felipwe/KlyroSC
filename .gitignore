@@ -5,6 +5,7 @@ node_modules/
 out/
 dist/
 *.tsbuildinfo
+build/AssemblyInfo.g.cs
 
 # runtime artifacts
 *.log
