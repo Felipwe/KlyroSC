@@ -78,7 +78,11 @@ function bootstrap(): void {
   )
   const updater = new UpdaterService(
     (status) => mainWindow.send(IPC.updateStatusEvent, status),
-    settings.get().updates.autoDownload
+    settings.get().updates.autoDownload,
+    () => {
+      // let the auto-update actually quit past the close-to-tray guard
+      mainWindow.isQuitting = true
+    }
   )
 
   const ctx: AppContext = {
@@ -145,7 +149,7 @@ function bootstrap(): void {
     })
 
     if (current.updates.autoCheck && app.isPackaged) {
-      setTimeout(() => void updater.check(), 15000)
+      setTimeout(() => void updater.check(true), 4000)
     }
 
     if (process.env.KLYRO_SMOKE === '1') {

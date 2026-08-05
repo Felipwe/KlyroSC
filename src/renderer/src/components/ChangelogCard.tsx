@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.3',
+    pt: [
+      'Atualização automática de verdade: o app agora baixa E instala sozinho ao abrir, sem precisar ir na aba Atualizações',
+      'Quando a nova versão termina de baixar, ele reinicia sozinho já atualizado'
+    ],
+    en: [
+      'Real auto-update: the app now downloads AND installs on its own at launch, no need to visit the Updates tab',
+      'When the new version finishes downloading, it restarts itself already updated'
+    ]
+  },
+  {
     version: '2.2.1',
     pt: [
       'Faixas Go+ (aquelas que só tocavam 30s): o Region Unblock agora procura e toca um reupload completo e limpo da mesma música quando existe',

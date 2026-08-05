@@ -108,7 +108,12 @@ export default function App(): JSX.Element {
       if (status.phase === 'available' && status.latest)
         toast(t('toast.updateAvailable', { version: status.latest }))
       else if (status.phase === 'downloaded' && status.latest)
-        toast(t('toast.updateReady', { version: status.latest }), 'success')
+        toast(
+          status.autoInstalling
+            ? t('toast.updateRestarting', { version: status.latest })
+            : t('toast.updateReady', { version: status.latest }),
+          'success'
+        )
     })
     const onWindowError = (event: ErrorEvent): void => reportError('window', event.error ?? event.message)
     const onRejection = (event: PromiseRejectionEvent): void => reportError('promise', event.reason)

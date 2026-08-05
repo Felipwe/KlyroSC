@@ -19,9 +19,13 @@ export class UpdaterService {
   }
   private broadcast: Broadcast
   private wired = false
+  private autoFlow = false
+  private autoInstallScheduled = false
+  private onBeforeInstall?: () => void
 
-  constructor(broadcast: Broadcast, private autoDownload: boolean) {
+  constructor(broadcast: Broadcast, private autoDownload: boolean, onBeforeInstall?: () => void) {
     this.broadcast = broadcast
+    this.onBeforeInstall = onBeforeInstall
   }
 
   private setStatus(patch: Partial<UpdateStatus>): void {
@@ -62,10 +66,24 @@ export class UpdaterService {
     autoUpdater.on('download-progress', (progress) =>
       this.setStatus({ phase: 'downloading', percent: Math.round(progress.percent) })
     )
-    autoUpdater.on('update-downloaded', (info) =>
+    autoUpdater.on('update-downloaded', (info) => {
       this.setStatus({ phase: 'downloaded', latest: info.version, percent: 100 })
-    )
+      if (this.autoFlow) this.scheduleAutoInstall()
+    })
     autoUpdater.on('error', (error) => this.handleError(error))
+  }
+
+  // close-to-tray keeps the app alive, so autoInstallOnAppQuit never fires on its own;
+  // when the boot check finishes downloading, install and relaunch right away.
+  private scheduleAutoInstall(): void {
+    if (this.autoInstallScheduled) return
+    this.autoInstallScheduled = true
+    log.info('update downloaded automatically — installing and relaunching')
+    this.setStatus({ autoInstalling: true })
+    setTimeout(() => {
+      this.onBeforeInstall?.()
+      autoUpdater.quitAndInstall(true, true)
+    }, 6000)
   }
 
   private handleError(error: unknown): void {
@@ -80,11 +98,12 @@ export class UpdaterService {
     this.setStatus({ phase: 'error', error: friendly })
   }
 
-  async check(): Promise<UpdateStatus> {
+  async check(auto = false): Promise<UpdateStatus> {
     if (!app.isPackaged) {
       this.setStatus({ phase: 'not-available', error: null })
       return this.status
     }
+    if (auto) this.autoFlow = true
     this.wire()
     try {
       await autoUpdater.checkForUpdates()
@@ -96,6 +115,8 @@ export class UpdaterService {
 
   async download(): Promise<UpdateStatus> {
     if (!app.isPackaged || this.status.phase !== 'available') return this.status
+    // manual download from the Updates tab: let the user hit Restart when ready
+    this.autoFlow = false
     this.wire()
     try {
       this.setStatus({ phase: 'downloading', percent: 0 })
@@ -107,7 +128,10 @@ export class UpdaterService {
   }
 
   install(): void {
-    if (this.status.phase === 'downloaded') autoUpdater.quitAndInstall()
+    if (this.status.phase === 'downloaded') {
+      this.onBeforeInstall?.()
+      autoUpdater.quitAndInstall()
+    }
   }
 }
 

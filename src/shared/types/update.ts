@@ -14,4 +14,5 @@ export interface UpdateStatus {
   notes: string | null
   percent: number
   error: string | null
+  autoInstalling?: boolean
 }

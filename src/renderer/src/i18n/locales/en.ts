@@ -183,6 +183,7 @@ export const en = {
     downloadFailed: 'Download failed: {error}',
     updateAvailable: 'Update {version} is available',
     updateReady: 'Update {version} is ready to install',
+    updateRestarting: 'Updating to {version} — restarting…',
     restartRequired: 'Restart KlyroSC to apply this change',
     settingsReset: 'Settings restored to defaults',
     exportDone: 'Library exported',
