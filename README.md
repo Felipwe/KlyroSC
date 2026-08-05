@@ -68,6 +68,12 @@ SoundCloud Modded by: Felipe and Yusuro
 - **AppImage**: baixa, dá permissão (`chmod +x KlyroSC-*.AppImage`) e executa
 - **Debian/Ubuntu**: baixa o `.deb` e instala com `sudo dpkg -i klyrosc_*.deb`
 
+## Assinatura de código
+
+O KlyroSC não coleta nenhum dado do usuário — tudo fica salvo localmente no seu computador.
+
+Free code signing on Windows provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
 ## Stack
 
 ![Electron](https://img.shields.io/badge/Electron-43-2b2e3a?style=flat-square&logo=electron)
