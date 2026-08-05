@@ -318,6 +318,12 @@ export const en = {
       deleteConfirm: 'Delete the preset “{name}”?',
       deleted: 'Preset “{name}” deleted',
       reset: 'Reset to flat',
+      export: 'Export preset',
+      import: 'Import preset',
+      exported: 'Preset exported — share the file with anyone',
+      exportFailed: 'Could not export: {error}',
+      imported: 'Preset “{name}” imported and applied',
+      importFailed: 'Could not import: {error}',
       hint: 'Changes apply to the music instantly. Double-click a band to zero it. Your presets are included in library exports.'
     },
     discord: {

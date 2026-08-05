@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import { IPC, type AppInfo, type OpenPathKind } from '@shared/types/ipc'
 import { isRecord, type DeepPartial } from '@shared/types/result'
 import { type Settings } from '@shared/types/settings'
+import { sanitizeEqGains } from '@shared/utils/eq'
 import { ensureDir, paths } from '../core/paths'
 import { logger } from '../core/logger'
 import { handle, handleResult, on } from './core'
@@ -102,6 +103,53 @@ export function registerAppIpc(ctx: AppContext): void {
       return ctx.library.replace(raw.library)
     }
     return ctx.library.replace(raw)
+  })
+
+  handleResult(IPC.eqExport, async (payload) => {
+    const p = payload as { name?: unknown; preamp?: unknown; gains?: unknown }
+    const name = typeof p?.name === 'string' && p.name.trim() ? p.name.trim().slice(0, 40) : 'Custom'
+    const window = ctx.mainWindow.get()
+    if (!window) return null
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'preset'
+    const result = await dialog.showSaveDialog(window, {
+      defaultPath: `klyrosc-eq-${slug}.json`,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    if (result.canceled || !result.filePath) return null
+    const doc = {
+      format: 'klyrosc-eq',
+      version: 1,
+      name,
+      preamp: typeof p.preamp === 'number' && Number.isFinite(p.preamp) ? p.preamp : 0,
+      gains: sanitizeEqGains(p.gains)
+    }
+    fs.writeFileSync(result.filePath, JSON.stringify(doc, null, 2), 'utf8')
+    return result.filePath
+  })
+
+  handleResult(IPC.eqImport, async () => {
+    const window = ctx.mainWindow.get()
+    if (!window) return null
+    const result = await dialog.showOpenDialog(window, {
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    const file = result.filePaths[0]
+    if (result.canceled || !file) return null
+    const raw: unknown = JSON.parse(fs.readFileSync(file, 'utf8'))
+    if (!isRecord(raw) || !Array.isArray(raw.gains)) throw new Error('not a KlyroSC EQ preset')
+    const name =
+      typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim().slice(0, 40) : 'Preset importado'
+    const gains = sanitizeEqGains(raw.gains)
+    const preamp = typeof raw.preamp === 'number' && Number.isFinite(raw.preamp) ? raw.preamp : 0
+    const current = ctx.settings.get().eq
+    const custom = [
+      ...current.custom.filter((preset) => preset.name.toLowerCase() !== name.toLowerCase()),
+      { name, gains }
+    ]
+    // saves the preset and applies it live via the settings-changed broadcast
+    ctx.settings.patch({ eq: { custom, gains, preamp } } as DeepPartial<Settings>)
+    return { name }
   })
 
   handleResult(IPC.librarySetCover, async (id) => {

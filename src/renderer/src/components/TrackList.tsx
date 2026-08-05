@@ -53,11 +53,6 @@ export const TrackRow = memo(function TrackRow({ track, index, onPlay, extraMenu
       <div className="tr-main">
         <div className="tr-title" title={track.title}>
           {track.title}
-          {track.snippet && (
-            <span className="badge warn" style={{ marginLeft: 8 }} title={t('player.snippet')}>
-              30s
-            </span>
-          )}
         </div>
         <div
           className="tr-artist"

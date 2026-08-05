@@ -14,6 +14,13 @@ export function registerSoundCloudIpc(ctx: AppContext): void {
     return ctx.sc.charts(genre)
   })
 
+  handleResult(IPC.scCountryCharts, (payload) => {
+    const p = payload as { country?: unknown }
+    if (typeof p?.country !== 'string' || !/^[a-z]{2}$/i.test(p.country))
+      throw new Error('invalid country')
+    return ctx.sc.countryCharts(p.country)
+  })
+
   handleResult(IPC.scSearch, (payload) => {
     const p = payload as { kind?: unknown; query?: unknown; nextHref?: unknown }
     const kind = KINDS.includes(p?.kind as SearchKind) ? (p.kind as SearchKind) : 'tracks'

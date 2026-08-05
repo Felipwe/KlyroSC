@@ -71,6 +71,7 @@ export interface KlyroApi {
   sc: {
     home(): Promise<Result<HomeSection[]>>
     charts(genre: string): Promise<Result<Track[]>>
+    countryCharts(country: string): Promise<Result<Track[]>>
     search(kind: SearchKind, query: string, nextHref?: string | null): Promise<Result<Page<Track | Artist | PlaylistLite>>>
     track(id: number): Promise<Result<Track>>
     tracks(ids: number[]): Promise<Result<Track[]>>
@@ -105,6 +106,10 @@ export interface KlyroApi {
   playback: {
     load(): Promise<PlaybackSnapshot | null>
     save(snapshot: PlaybackSnapshot): void
+  }
+  eq: {
+    exportPreset(preset: { name: string; preamp: number; gains: number[] }): Promise<Result<string | null>>
+    importPreset(): Promise<Result<{ name: string } | null>>
   }
   presence: {
     update(payload: PresencePayload | null): void
@@ -164,6 +169,7 @@ export const IPC = {
   authChanged: 'auth:changed',
   scHome: 'sc:home',
   scCharts: 'sc:charts',
+  scCountryCharts: 'sc:country-charts',
   scSearch: 'sc:search',
   scTrack: 'sc:track',
   scTracks: 'sc:tracks',
@@ -194,6 +200,8 @@ export const IPC = {
   libraryImport: 'library:import',
   playbackLoad: 'playback:load',
   playbackSave: 'playback:save',
+  eqExport: 'eq:export',
+  eqImport: 'eq:import',
   presenceUpdate: 'presence:update',
   lyricsGet: 'lyrics:get',
   pluginsList: 'plugins:list',

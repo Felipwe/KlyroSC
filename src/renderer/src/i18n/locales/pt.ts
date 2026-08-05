@@ -320,6 +320,12 @@ export const pt: Dict = {
       deleteConfirm: 'Excluir o preset “{name}”?',
       deleted: 'Preset “{name}” excluído',
       reset: 'Zerar bandas',
+      export: 'Exportar preset',
+      import: 'Importar preset',
+      exported: 'Preset exportado — compartilhe o arquivo com quem quiser',
+      exportFailed: 'Não deu para exportar: {error}',
+      imported: 'Preset “{name}” importado e aplicado',
+      importFailed: 'Não deu para importar: {error}',
       hint: 'As mudanças valem na música na hora. Dê dois cliques numa banda para zerá-la. Seus presets entram no arquivo de exportação da biblioteca.'
     },
     discord: {

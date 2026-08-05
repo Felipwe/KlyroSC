@@ -9,6 +9,7 @@ import {
   type EqCustomPreset
 } from '@shared/utils/eq'
 import { t, useLanguage } from '@renderer/i18n'
+import { api } from '@renderer/services/ipc'
 import { useSettings } from '@renderer/stores/settings'
 import { useUi } from '@renderer/stores/ui'
 import { toast } from '@renderer/stores/toasts'
@@ -258,6 +259,23 @@ export function EqualizerPanel(): JSX.Element {
     })
   }
 
+  const exportPreset = async (): Promise<void> => {
+    const name = matched?.startsWith(CUSTOM_PREFIX)
+      ? matched.slice(CUSTOM_PREFIX.length)
+      : matched
+        ? t(`settings.eq.presets.${matched}`)
+        : t('settings.eq.customNow')
+    const result = await api.eq.exportPreset({ name, preamp, gains })
+    if (result.ok && result.data) toast(t('settings.eq.exported'), 'success')
+    else if (!result.ok) toast(t('settings.eq.exportFailed', { error: result.error }), 'error')
+  }
+
+  const importPreset = async (): Promise<void> => {
+    const result = await api.eq.importPreset()
+    if (result.ok && result.data) toast(t('settings.eq.imported', { name: result.data.name }), 'success')
+    else if (!result.ok) toast(t('settings.eq.importFailed', { error: result.error }), 'error')
+  }
+
   return (
     <>
       <SettingRow label={t('settings.eq.enable')} desc={t('settings.eq.enableDesc')}>
@@ -328,6 +346,14 @@ export function EqualizerPanel(): JSX.Element {
         <button className="btn" onClick={() => setAllGains([...EQ_FLAT])}>
           <Icon name="refresh" size={15} />
           {t('settings.eq.reset')}
+        </button>
+        <button className="btn" onClick={() => void exportPreset()}>
+          <Icon name="download" size={15} />
+          {t('settings.eq.export')}
+        </button>
+        <button className="btn" onClick={() => void importPreset()}>
+          <Icon name="folder" size={15} />
+          {t('settings.eq.import')}
         </button>
       </div>
       <p className="settings-section-desc">{t('settings.eq.hint')}</p>

@@ -24,6 +24,7 @@ import {
   nextHrefOf
 } from './mappers'
 import { pickAlternative, type AltCandidate, type AltOriginal } from '@shared/utils/alternative'
+import { pickChartMatch, primaryArtist, type ChartCandidate } from '@shared/utils/charts-match'
 import { cleanTitle } from '@shared/utils/lyrics-query'
 import { logger } from '../../core/logger'
 
@@ -38,6 +39,8 @@ const SEARCH_PATHS: Record<SearchKind, string> = {
 export class SoundCloudApi {
   private client = new ScClient()
   private streamCache = new Map<number, { source: StreamSource; at: number }>()
+  private countryChartsCache: { country: string; tracks: Track[]; at: number } | null = null
+  private countryChartsPending: Promise<Track[]> | null = null
   private regionUnblock = true
 
   setRegionUnblock(enabled: boolean): void {
@@ -74,6 +77,72 @@ export class SoundCloudApi {
       if (track) tracks.push(track)
     }
     return tracks
+  }
+
+  /** Real per-country top songs (Apple Music most-played feed) matched to playable SC tracks. */
+  async countryCharts(country: string): Promise<Track[]> {
+    const cc = /^[a-z]{2}$/i.test(country) ? country.toLowerCase() : ''
+    if (!cc) return []
+    const cached = this.countryChartsCache
+    if (cached && cached.country === cc && Date.now() - cached.at < 45 * 60 * 1000)
+      return cached.tracks
+    if (this.countryChartsPending) return this.countryChartsPending
+    this.countryChartsPending = this.buildCountryCharts(cc).finally(() => {
+      this.countryChartsPending = null
+    })
+    return this.countryChartsPending
+  }
+
+  private async buildCountryCharts(cc: string): Promise<Track[]> {
+    const res = await fetch(
+      `https://rss.applemarketingtools.com/api/v2/${cc}/music/most-played/30/songs.json`,
+      { signal: AbortSignal.timeout(15000) }
+    )
+    if (!res.ok) throw new Error(`chart feed error ${res.status}`)
+    const feed = (await res.json()) as { feed?: { results?: { artistName?: string; name?: string }[] } }
+    const songs = (feed.feed?.results ?? [])
+      .filter((s) => typeof s.artistName === 'string' && typeof s.name === 'string')
+      .map((s) => ({ artist: s.artistName as string, title: s.name as string }))
+    if (songs.length === 0) return []
+
+    const resolveSong = async (song: { artist: string; title: string }): Promise<Track | null> => {
+      try {
+        const query = `${primaryArtist(song.artist)} ${cleanTitle(song.title)}`.trim().slice(0, 100)
+        const raw = await this.client.api('/search/tracks', { q: query, limit: 10 })
+        const entries = collectionOf(raw).filter(isRecord)
+        const candidates: ChartCandidate[] = entries.map((entry) => {
+          const user = isRecord(entry.user) ? entry.user : {}
+          const transcodings = mapTranscodings(entry.media)
+          return {
+            id: typeof entry.id === 'number' ? entry.id : -1,
+            title: typeof entry.title === 'string' ? entry.title : '',
+            artist: typeof user.username === 'string' ? user.username : '',
+            playbackCount: typeof entry.playback_count === 'number' ? entry.playback_count : 0,
+            snipped: transcodings.length > 0 && transcodings.every((t) => t.snipped)
+          }
+        })
+        const picked = pickChartMatch(song.artist, song.title, candidates)
+        if (picked === null) return null
+        return mapTrack(entries.find((entry) => entry.id === picked))
+      } catch {
+        return null
+      }
+    }
+
+    const tracks: (Track | null)[] = []
+    for (let i = 0; i < songs.length; i += 5) {
+      const chunk = songs.slice(i, i + 5)
+      tracks.push(...(await Promise.all(chunk.map(resolveSong))))
+    }
+    const seen = new Set<number>()
+    const matched = tracks.filter((track): track is Track => {
+      if (!track || seen.has(track.id)) return false
+      seen.add(track.id)
+      return true
+    })
+    log.info(`country charts ${cc}: matched ${matched.length}/${songs.length} songs on SoundCloud`)
+    this.countryChartsCache = { country: cc, tracks: matched, at: Date.now() }
+    return matched
   }
 
   async search(

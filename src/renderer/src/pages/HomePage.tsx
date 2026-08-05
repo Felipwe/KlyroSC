@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type JSX } from 'react'
+import { useMemo, type JSX } from 'react'
 import { type Track } from '@shared/types/track'
 import { getLanguage, t, useLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
@@ -33,6 +33,31 @@ type QuickTile =
   | { kind: 'playlist'; id: string; title: string; sub: string; artwork: string | null }
   | { kind: 'track'; track: Track }
 
+interface TrendingRail {
+  tracks: Track[]
+  country: string
+  regional: boolean
+}
+
+/** Real per-country charts when available; otherwise the global SC chart re-ranked by taste. */
+async function loadTrending(): Promise<{ ok: true; data: TrendingRail } | { ok: false; error: string }> {
+  const info = await api.app.info().catch(() => null)
+  const country = info?.country ?? ''
+  if (country) {
+    const regional = await api.sc.countryCharts(country)
+    if (regional.ok && regional.data.length >= 8)
+      return { ok: true, data: { tracks: regional.data, country, regional: true } }
+  }
+  const global = await api.sc.charts('all-music')
+  if (!global.ok) return global
+  const library = useLibrary.getState().data
+  const taste = tasteOf([
+    ...library.history.map((entry) => entry.track),
+    ...library.favorites.map((favorite) => favorite.track)
+  ])
+  return { ok: true, data: { tracks: personalizeTrending(global.data, taste), country, regional: false } }
+}
+
 export function HomePage(): JSX.Element {
   useLanguage()
   const current = usePlayer((state) => state.current)
@@ -42,22 +67,8 @@ export function HomePage(): JSX.Element {
 
   const firstName = (authUser?.name.trim().split(/\s+/)[0] ?? t('home.anonymous')).slice(0, 18)
 
-  const trending = useAsyncResult(() => api.sc.charts('all-music'), [])
+  const trending = useAsyncResult(loadTrending, [])
   const home = useAsyncResult(() => api.sc.home(), [])
-  const [country, setCountry] = useState('')
-
-  useEffect(() => {
-    void api.app.info().then((info) => setCountry(info.country))
-  }, [])
-
-  const ranked = useMemo(() => {
-    if (!trending.data) return []
-    const taste = tasteOf([
-      ...libraryData.history.map((entry) => entry.track),
-      ...libraryData.favorites.map((favorite) => favorite.track)
-    ])
-    return personalizeTrending(trending.data, taste)
-  }, [trending.data, libraryData])
 
   const tiles = useMemo<QuickTile[]>(() => {
     const out: QuickTile[] = []
@@ -156,9 +167,16 @@ export function HomePage(): JSX.Element {
       ) : trending.error ? (
         <ErrorState message={trending.error} onRetry={trending.reload} />
       ) : (
-        ranked.length > 0 && (
-          <Rail title={country ? t('home.trendingIn', { region: regionLabel(country) }) : t('home.trending')}>
-            {ranked.map((track) => (
+        trending.data &&
+        trending.data.tracks.length > 0 && (
+          <Rail
+            title={
+              trending.data.regional && trending.data.country
+                ? t('home.trendingIn', { region: regionLabel(trending.data.country) })
+                : t('home.trending')
+            }
+          >
+            {trending.data.tracks.map((track) => (
               <TrackCard key={track.id} track={track} />
             ))}
           </Rail>

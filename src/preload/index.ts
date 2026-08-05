@@ -51,6 +51,7 @@ const api: KlyroApi = {
   sc: {
     home: () => invoke(IPC.scHome),
     charts: (genre) => invoke(IPC.scCharts, { genre }),
+    countryCharts: (country) => invoke(IPC.scCountryCharts, { country }),
     search: (kind, query, nextHref) => invoke(IPC.scSearch, { kind, query, nextHref }),
     track: (id) => invoke(IPC.scTrack, id),
     tracks: (ids) => invoke(IPC.scTracks, ids),
@@ -85,6 +86,10 @@ const api: KlyroApi = {
   playback: {
     load: () => invoke(IPC.playbackLoad),
     save: (snapshot) => send(IPC.playbackSave, snapshot)
+  },
+  eq: {
+    exportPreset: (preset) => invoke(IPC.eqExport, preset),
+    importPreset: () => invoke(IPC.eqImport)
   },
   presence: {
     update: (payload) => send(IPC.presenceUpdate, payload)
