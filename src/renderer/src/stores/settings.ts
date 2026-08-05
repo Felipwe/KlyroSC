@@ -12,12 +12,57 @@ interface SettingsState {
   reset(): Promise<void>
 }
 
+const CUSTOM_PROPS = [
+  '--accent-a',
+  '--accent-b',
+  '--accent-gradient',
+  '--accent-soft',
+  '--accent-text',
+  '--glow',
+  '--bg',
+  '--bg-raised',
+  '--blur',
+  '--custom-bg',
+  '--cv-a',
+  '--cv-b'
+]
+
+const hexRgb = (hex: string): { r: number; g: number; b: number } => ({
+  r: parseInt(hex.slice(1, 3), 16),
+  g: parseInt(hex.slice(3, 5), 16),
+  b: parseInt(hex.slice(5, 7), 16)
+})
+
 function applyToDocument(settings: Settings): void {
   const root = document.documentElement
   root.dataset.accent = settings.appearance.accent
   root.dataset.glass = settings.appearance.glass
   root.dataset.motion = settings.appearance.motion
   root.style.fontSize = `${(settings.appearance.fontScale / 100) * 16}px`
+
+  if (settings.appearance.accent === 'custom') {
+    const theme = settings.appearance.custom
+    const a = hexRgb(theme.colorA)
+    const bg = hexRgb(theme.bgColor)
+    const veilHi = Math.min(0.96, theme.dim / 100 + 0.18)
+    const veilLo = Math.max(0.08, theme.dim / 100 - 0.14)
+    const set = (prop: string, value: string): void => root.style.setProperty(prop, value)
+    set('--accent-a', theme.colorA)
+    set('--accent-b', theme.colorB)
+    set('--accent-gradient', `linear-gradient(135deg, ${theme.colorA}, ${theme.colorB})`)
+    set('--accent-soft', `rgba(${a.r}, ${a.g}, ${a.b}, 0.16)`)
+    set('--accent-text', `color-mix(in srgb, ${theme.colorA} 42%, #ffffff)`)
+    set('--glow', `0 0 44px rgba(${a.r}, ${a.g}, ${a.b}, 0.2)`)
+    set('--bg', theme.bgColor)
+    set('--bg-raised', `color-mix(in srgb, ${theme.bgColor} 86%, #ffffff)`)
+    set('--blur', `${theme.blur}px`)
+    set('--custom-bg', theme.background ? `url("${theme.background}")` : 'none')
+    set('--cv-a', `rgba(${bg.r}, ${bg.g}, ${bg.b}, ${veilHi})`)
+    set('--cv-b', `rgba(${bg.r}, ${bg.g}, ${bg.b}, ${veilLo})`)
+  } else {
+    for (const prop of CUSTOM_PROPS) root.style.removeProperty(prop)
+  }
+
   applyLanguage(settings.language)
 }
 

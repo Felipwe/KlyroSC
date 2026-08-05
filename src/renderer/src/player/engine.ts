@@ -30,6 +30,7 @@ export class AudioEngine {
   private pendingSeeks = 0
   private seekSettleTimer: ReturnType<typeof setTimeout> | null = null
   private watchdogTimer: ReturnType<typeof setTimeout> | null = null
+  private stallTimer: ReturnType<typeof setTimeout> | null = null
   private targetVolume = 0.8
   private fadeMs = 220
   private fadeTimer: ReturnType<typeof setInterval> | null = null
@@ -43,6 +44,7 @@ export class AudioEngine {
     this.audio.addEventListener('timeupdate', () => {
       // ignore echoes from before a pending seek completed
       if (this.sourceReady && this.pendingSeeks === 0) this.events.onTime(this.audio.currentTime)
+      this.clearStallWatchdog()
     })
     this.audio.addEventListener('seeked', () => {
       if (this.pendingSeeks > 0) this.pendingSeeks--
@@ -58,10 +60,15 @@ export class AudioEngine {
     this.audio.addEventListener('ended', () => {
       if (this.sourceReady) this.events.onEnded()
     })
-    this.audio.addEventListener('waiting', () => this.events.onBuffering(true))
+    this.audio.addEventListener('waiting', () => {
+      this.events.onBuffering(true)
+      // expired CDN urls stall silently without ever erroring; force the retry chain
+      this.armStallWatchdog()
+    })
     this.audio.addEventListener('canplay', () => this.events.onBuffering(false))
     this.audio.addEventListener('playing', () => {
       this.clearWatchdog()
+      this.clearStallWatchdog()
       this.events.onBuffering(false)
       this.events.onPlayingChange(true)
     })
@@ -137,6 +144,26 @@ export class AudioEngine {
     }
   }
 
+  private clearStallWatchdog(): void {
+    if (this.stallTimer) {
+      clearTimeout(this.stallTimer)
+      this.stallTimer = null
+    }
+  }
+
+  private armStallWatchdog(): void {
+    if (!this.sourceReady || this.stallTimer) return
+    const generation = this.generation
+    const startPos = this.audio.currentTime
+    this.stallTimer = setTimeout(() => {
+      this.stallTimer = null
+      if (generation !== this.generation || !this.sourceReady) return
+      if (this.audio.paused && this.pendingSeeks === 0) return
+      const progressed = Math.abs(this.audio.currentTime - startPos)
+      if (progressed < 0.5 && this.audio.readyState < 3) this.emitError('stalled while buffering')
+    }, 12000)
+  }
+
   private armWatchdog(generation: number): void {
     this.clearWatchdog()
     const startPos = this.audio.currentTime
@@ -153,6 +180,7 @@ export class AudioEngine {
     this.pendingSeeks = 0
     this.clearSeekSettle()
     this.clearWatchdog()
+    this.clearStallWatchdog()
     this.stopFade()
     this.detachHls()
     this.audio.pause()
@@ -281,6 +309,7 @@ export class AudioEngine {
     this.pendingSeeks = 0
     this.clearSeekSettle()
     this.clearWatchdog()
+    this.clearStallWatchdog()
     this.stopFade()
     this.detachHls()
     this.audio.pause()

@@ -2,10 +2,25 @@ import { isRecord, type DeepPartial } from './result'
 import { EQ_GAIN_LIMIT, sanitizeEqGains, type EqCustomPreset } from '../utils/eq'
 
 export type LanguageSetting = 'auto' | 'en' | 'pt'
-export type AccentId = 'yagami' | 'aurora' | 'ember' | 'ocean' | 'orchid' | 'mint'
+export type AccentId = 'yagami' | 'custom'
 export type GlassLevel = 'low' | 'medium' | 'high'
 export type MotionLevel = 'full' | 'reduced'
 export type StreamQuality = 'auto' | 'progressive' | 'hls'
+
+export interface CustomTheme {
+  colorA: string
+  colorB: string
+  bgColor: string
+  background: string | null
+  blur: number
+  dim: number
+  syncIcon: boolean
+}
+
+export interface ThemeProfile {
+  name: string
+  theme: CustomTheme
+}
 
 export interface Settings {
   language: LanguageSetting
@@ -14,6 +29,8 @@ export interface Settings {
     glass: GlassLevel
     motion: MotionLevel
     fontScale: number
+    custom: CustomTheme
+    profiles: ThemeProfile[]
   }
   playback: {
     volume: number
@@ -54,13 +71,25 @@ export interface Settings {
   }
 }
 
+export const DEFAULT_CUSTOM_THEME: CustomTheme = {
+  colorA: '#b31423',
+  colorB: '#e5484d',
+  bgColor: '#0a0b12',
+  background: null,
+  blur: 24,
+  dim: 62,
+  syncIcon: true
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   language: 'auto',
   appearance: {
     accent: 'yagami',
     glass: 'medium',
     motion: 'full',
-    fontScale: 100
+    fontScale: 100,
+    custom: { ...DEFAULT_CUSTOM_THEME },
+    profiles: []
   },
   playback: {
     volume: 0.8,
@@ -117,6 +146,45 @@ const oneOf = <T extends string>(value: unknown, options: readonly T[], fallback
 const str = (value: unknown, fallback: string, maxLen = 200): string =>
   typeof value === 'string' ? value.slice(0, maxLen) : fallback
 
+const HEX_RE = /^#[0-9a-f]{6}$/i
+
+const hexColor = (value: unknown, fallback: string): string =>
+  typeof value === 'string' && HEX_RE.test(value) ? value.toLowerCase() : fallback
+
+export function sanitizeCustomTheme(raw: unknown): CustomTheme {
+  const r = isRecord(raw) ? raw : {}
+  const d = DEFAULT_CUSTOM_THEME
+  return {
+    colorA: hexColor(r.colorA, d.colorA),
+    colorB: hexColor(r.colorB, d.colorB),
+    bgColor: hexColor(r.bgColor, d.bgColor),
+    background:
+      typeof r.background === 'string' &&
+      r.background.startsWith('data:image/') &&
+      r.background.length < 2_400_000
+        ? r.background
+        : null,
+    blur: num(r.blur, 0, 48, d.blur),
+    dim: num(r.dim, 0, 95, d.dim),
+    syncIcon: bool(r.syncIcon, d.syncIcon)
+  }
+}
+
+function sanitizeProfiles(raw: unknown): ThemeProfile[] {
+  if (!Array.isArray(raw)) return []
+  const profiles: ThemeProfile[] = []
+  const seen = new Set<string>()
+  for (const entry of raw) {
+    if (!isRecord(entry) || typeof entry.name !== 'string') continue
+    const name = entry.name.trim().slice(0, 40)
+    if (!name || seen.has(name.toLowerCase())) continue
+    seen.add(name.toLowerCase())
+    profiles.push({ name, theme: sanitizeCustomTheme(entry.theme) })
+    if (profiles.length >= 40) break
+  }
+  return profiles
+}
+
 function sanitizeEqCustom(raw: unknown): EqCustomPreset[] {
   if (!Array.isArray(raw)) return []
   const presets: EqCustomPreset[] = []
@@ -149,14 +217,12 @@ export function sanitizeSettings(raw: unknown): Settings {
   return {
     language: oneOf(r.language, ['auto', 'en', 'pt'] as const, d.language),
     appearance: {
-      accent: oneOf(
-        appearance.accent,
-        ['yagami', 'aurora', 'ember', 'ocean', 'orchid', 'mint'] as const,
-        d.appearance.accent
-      ),
+      accent: oneOf(appearance.accent, ['yagami', 'custom'] as const, d.appearance.accent),
       glass: oneOf(appearance.glass, ['low', 'medium', 'high'] as const, d.appearance.glass),
       motion: oneOf(appearance.motion, ['full', 'reduced'] as const, d.appearance.motion),
-      fontScale: num(appearance.fontScale, 85, 120, d.appearance.fontScale)
+      fontScale: num(appearance.fontScale, 85, 120, d.appearance.fontScale),
+      custom: sanitizeCustomTheme(appearance.custom),
+      profiles: sanitizeProfiles(appearance.profiles)
     },
     playback: {
       volume: num(playback.volume, 0, 1, d.playback.volume),

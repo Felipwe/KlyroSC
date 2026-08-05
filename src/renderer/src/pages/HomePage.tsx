@@ -105,10 +105,24 @@ export function HomePage(): JSX.Element {
     <div className="page">
       <div className="home-hero">
         <div className="hh-main">
-          <h1>
-            {greeting()}, {firstName}
-          </h1>
-          <p>{t('home.tagline')}</p>
+          <div className="hh-greet">
+            {authUser && (
+              <button
+                className="hh-avatar"
+                title={authUser.name}
+                aria-label={authUser.name}
+                onClick={() => useNav.getState().push({ name: 'settings', section: 'account' })}
+              >
+                <Artwork src={authUser.avatar} alt="" round fallbackIcon="user" iconSize={20} />
+              </button>
+            )}
+            <div className="hh-greet-text">
+              <h1>
+                {greeting()}, {firstName}
+              </h1>
+              <p>{t('home.tagline')}</p>
+            </div>
+          </div>
           {showResume && current && (
             <button className="resume-card" onClick={() => usePlayer.getState().toggle()}>
               <Artwork src={current.artwork} alt="" round />

@@ -7,6 +7,7 @@
   "author": "KlyroSC",
   "main": "index.js",
   "apiVersion": 1,
+  "enabledByDefault": false,
   "permissions": ["player", "notifications"],
   "settings": [
     {

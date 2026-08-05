@@ -1,5 +1,5 @@
 import { type Result, type DeepPartial } from './result'
-import { type Settings } from './settings'
+import { type CustomTheme, type Settings } from './settings'
 import {
   type Artist,
   type HomeSection,
@@ -47,6 +47,7 @@ export interface KlyroApi {
     close(): void
     isMaximized(): Promise<boolean>
     setMiniMode(on: boolean): Promise<void>
+    setIcon(dataUrl: string): void
     onMaximized(cb: (maximized: boolean) => void): Unsubscribe
   }
   app: {
@@ -110,6 +111,11 @@ export interface KlyroApi {
   eq: {
     exportPreset(preset: { name: string; preamp: number; gains: number[] }): Promise<Result<string | null>>
     importPreset(): Promise<Result<{ name: string } | null>>
+  }
+  theme: {
+    pickBackground(): Promise<Result<boolean | null>>
+    exportTheme(payload: { name: string; theme: CustomTheme }): Promise<Result<string | null>>
+    importTheme(): Promise<Result<{ name: string } | null>>
   }
   presence: {
     update(payload: PresencePayload | null): void
@@ -202,6 +208,10 @@ export const IPC = {
   playbackSave: 'playback:save',
   eqExport: 'eq:export',
   eqImport: 'eq:import',
+  themePickBackground: 'theme:pick-background',
+  themeExport: 'theme:export',
+  themeImport: 'theme:import',
+  windowSetIcon: 'window:set-icon',
   presenceUpdate: 'presence:update',
   lyricsGet: 'lyrics:get',
   pluginsList: 'plugins:list',

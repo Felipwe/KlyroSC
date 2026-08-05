@@ -31,6 +31,45 @@ describe('sanitizeSettings', () => {
     expect(result.playback.quality).toBe('auto')
   })
 
+  it('maps legacy accents to yagami and keeps custom', () => {
+    expect(sanitizeSettings({ appearance: { accent: 'aurora' } }).appearance.accent).toBe('yagami')
+    expect(sanitizeSettings({ appearance: { accent: 'mint' } }).appearance.accent).toBe('yagami')
+    expect(sanitizeSettings({ appearance: { accent: 'custom' } }).appearance.accent).toBe('custom')
+  })
+
+  it('sanitizes the custom theme and profiles', () => {
+    const result = sanitizeSettings({
+      appearance: {
+        accent: 'custom',
+        custom: {
+          colorA: '#FF00aa',
+          colorB: 'red',
+          bgColor: '#123',
+          background: 'https://evil.example/x.png',
+          blur: 400,
+          dim: -5,
+          syncIcon: false
+        },
+        profiles: [
+          { name: '  Meu Tema  ', theme: { colorA: '#112233' } },
+          { name: 'meu tema', theme: {} },
+          { name: '', theme: {} },
+          'junk'
+        ]
+      }
+    })
+    expect(result.appearance.custom.colorA).toBe('#ff00aa')
+    expect(result.appearance.custom.colorB).toBe('#e5484d')
+    expect(result.appearance.custom.bgColor).toBe('#0a0b12')
+    expect(result.appearance.custom.background).toBeNull()
+    expect(result.appearance.custom.blur).toBe(48)
+    expect(result.appearance.custom.dim).toBe(0)
+    expect(result.appearance.custom.syncIcon).toBe(false)
+    expect(result.appearance.profiles).toHaveLength(1)
+    expect(result.appearance.profiles[0]?.name).toBe('Meu Tema')
+    expect(result.appearance.profiles[0]?.theme.colorA).toBe('#112233')
+  })
+
   it('validates the discord client id format', () => {
     expect(sanitizeSettings({ discord: { clientId: 'abc' } }).discord.clientId).toBe('')
     expect(sanitizeSettings({ discord: { clientId: '123' } }).discord.clientId).toBe('')
@@ -41,11 +80,14 @@ describe('sanitizeSettings', () => {
   it('preserves valid values', () => {
     const result = sanitizeSettings({
       language: 'pt',
-      appearance: { accent: 'ember', glass: 'high', motion: 'reduced', fontScale: 105 },
+      appearance: { accent: 'custom', glass: 'high', motion: 'reduced', fontScale: 105 },
       system: { closeToTray: false }
     })
     expect(result.language).toBe('pt')
-    expect(result.appearance).toEqual({ accent: 'ember', glass: 'high', motion: 'reduced', fontScale: 105 })
+    expect(result.appearance.accent).toBe('custom')
+    expect(result.appearance.glass).toBe('high')
+    expect(result.appearance.motion).toBe('reduced')
+    expect(result.appearance.fontScale).toBe(105)
     expect(result.system.closeToTray).toBe(false)
   })
 })

@@ -43,3 +43,28 @@
   border: 3px solid transparent;
   background-clip: padding-box;
 }
+
+/* ── Custom user theme ──────────────────────── */
+
+:root[data-accent='custom'] .ambient {
+  background: var(--custom-bg, none) center / cover no-repeat var(--bg);
+}
+
+:root[data-accent='custom'] .ambient::before {
+  content: '';
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  filter: none;
+  transform: none;
+  animation: none;
+  opacity: 1;
+  background: linear-gradient(180deg, var(--cv-a) 0%, var(--cv-b) 38%, var(--cv-a) 100%);
+}
+
+:root[data-accent='custom'] .ambient::after {
+  background: var(--accent-a);
+  opacity: 0.08;
+  filter: blur(130px);
+}

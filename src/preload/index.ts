@@ -27,6 +27,7 @@ const api: KlyroApi = {
     close: () => send(IPC.windowClose),
     isMaximized: () => invoke(IPC.windowIsMaximized),
     setMiniMode: (on) => invoke(IPC.windowSetMini, on),
+    setIcon: (dataUrl) => send(IPC.windowSetIcon, dataUrl),
     onMaximized: (cb) => listen<boolean>(IPC.windowMaximized, cb)
   },
   app: {
@@ -90,6 +91,11 @@ const api: KlyroApi = {
   eq: {
     exportPreset: (preset) => invoke(IPC.eqExport, preset),
     importPreset: () => invoke(IPC.eqImport)
+  },
+  theme: {
+    pickBackground: () => invoke(IPC.themePickBackground),
+    exportTheme: (payload) => invoke(IPC.themeExport, payload),
+    importTheme: () => invoke(IPC.themeImport)
   },
   presence: {
     update: (payload) => send(IPC.presenceUpdate, payload)

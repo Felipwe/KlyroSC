@@ -57,6 +57,10 @@ function bootstrap(): void {
       return {
         version: app.getVersion(),
         accent: s.appearance.accent,
+        accentColors:
+          s.appearance.accent === 'custom'
+            ? { a: s.appearance.custom.colorA, b: s.appearance.custom.colorB }
+            : null,
         labels: trayPopupLabels(resolveLanguage(s)),
         stats: {
           plugins: plugins.list().filter((plugin) => plugin.enabled).length,

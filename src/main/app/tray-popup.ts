@@ -22,6 +22,7 @@ export interface TrayPopupLabels {
 export interface TrayPopupState {
   version: string
   accent: string
+  accentColors: { a: string; b: string } | null
   labels: TrayPopupLabels
   stats: { plugins: number; favorites: number; history: number }
   now: { title: string; artist: string; playing: boolean } | null

@@ -8,6 +8,7 @@ import { toast } from '@renderer/stores/toasts'
 import { type AccentId } from '@shared/types/settings'
 import { PluginsPanel, UpdatesPanel, DataPanel, AboutPanel, ShortcutsPanel, AccountPanel } from './settings-panels'
 import { EqualizerPanel } from './EqualizerPanel'
+import { ThemeStudio } from './ThemeStudio'
 
 const SECTIONS: { id: string; icon: IconName }[] = [
   { id: 'account', icon: 'user' },
@@ -47,11 +48,7 @@ export function SettingRow({
 
 const ACCENTS: { id: AccentId; colors: [string, string] }[] = [
   { id: 'yagami', colors: ['#c1121f', '#ff4d5d'] },
-  { id: 'aurora', colors: ['#8b5cf6', '#22d3ee'] },
-  { id: 'ember', colors: ['#fb7847', '#f43f7e'] },
-  { id: 'ocean', colors: ['#0ea5e9', '#34d399'] },
-  { id: 'orchid', colors: ['#e254e0', '#7c6cfc'] },
-  { id: 'mint', colors: ['#10b981', '#a3e635'] }
+  { id: 'custom', colors: ['#8b5cf6', '#22d3ee'] }
 ]
 
 export function SettingsPage({ initialSection }: { initialSection?: string }): JSX.Element {
@@ -91,19 +88,29 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
           {section === 'appearance' && (
             <>
               <SettingRow label={t('settings.appearance.accent')} desc={t('settings.appearance.accentDesc')}>
-                <div className="accent-swatches">
-                  {ACCENTS.map((accent) => (
-                    <button
-                      key={accent.id}
-                      className={cx('accent-swatch', settings.appearance.accent === accent.id && 'active')}
-                      style={{ background: `linear-gradient(135deg, ${accent.colors[0]}, ${accent.colors[1]})` }}
-                      title={t(`settings.appearance.accents.${accent.id}`)}
-                      aria-label={t(`settings.appearance.accents.${accent.id}`)}
-                      onClick={() => void update({ appearance: { accent: accent.id } })}
-                    />
-                  ))}
+                <div className="theme-cards">
+                  {ACCENTS.map((accent) => {
+                    const colors: [string, string] =
+                      accent.id === 'custom'
+                        ? [settings.appearance.custom.colorA, settings.appearance.custom.colorB]
+                        : accent.colors
+                    return (
+                      <button
+                        key={accent.id}
+                        className={cx('theme-card', settings.appearance.accent === accent.id && 'active')}
+                        onClick={() => void update({ appearance: { accent: accent.id } })}
+                      >
+                        <span
+                          className="tc-preview"
+                          style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                        />
+                        {t(`settings.appearance.accents.${accent.id}`)}
+                      </button>
+                    )
+                  })}
                 </div>
               </SettingRow>
+              {settings.appearance.accent === 'custom' && <ThemeStudio />}
               <SettingRow label={t('settings.appearance.glass')} desc={t('settings.appearance.glassDesc')}>
                 <Select
                   value={settings.appearance.glass}

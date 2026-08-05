@@ -2,7 +2,7 @@ import { app, dialog, nativeImage, shell } from 'electron'
 import fs from 'node:fs'
 import { IPC, type AppInfo, type OpenPathKind } from '@shared/types/ipc'
 import { isRecord, type DeepPartial } from '@shared/types/result'
-import { type Settings } from '@shared/types/settings'
+import { sanitizeCustomTheme, type Settings } from '@shared/types/settings'
 import { sanitizeEqGains } from '@shared/utils/eq'
 import { ensureDir, paths } from '../core/paths'
 import { logger } from '../core/logger'
@@ -150,6 +150,78 @@ export function registerAppIpc(ctx: AppContext): void {
     // saves the preset and applies it live via the settings-changed broadcast
     ctx.settings.patch({ eq: { custom, gains, preamp } } as DeepPartial<Settings>)
     return { name }
+  })
+
+  handleResult(IPC.themePickBackground, async () => {
+    const window = ctx.mainWindow.get()
+    if (!window) return null
+    const result = await dialog.showOpenDialog(window, {
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp'] }]
+    })
+    const file = result.filePaths[0]
+    if (result.canceled || !file) return null
+    const image = nativeImage.createFromPath(file)
+    if (image.isEmpty()) throw new Error('unsupported image file')
+    const size = image.getSize()
+    const resized = size.width > 1600 ? image.resize({ width: 1600, quality: 'best' }) : image
+    const dataUrl = `data:image/jpeg;base64,${resized.toJPEG(82).toString('base64')}`
+    if (dataUrl.length >= 2_400_000) throw new Error('image too large')
+    ctx.settings.patch({ appearance: { custom: { background: dataUrl } } } as DeepPartial<Settings>)
+    return true
+  })
+
+  handleResult(IPC.themeExport, async (payload) => {
+    const p = payload as { name?: unknown; theme?: unknown }
+    const name = typeof p?.name === 'string' && p.name.trim() ? p.name.trim().slice(0, 40) : 'Meu tema'
+    const window = ctx.mainWindow.get()
+    if (!window) return null
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'tema'
+    const result = await dialog.showSaveDialog(window, {
+      defaultPath: `klyrosc-theme-${slug}.json`,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    if (result.canceled || !result.filePath) return null
+    const doc = { format: 'klyrosc-theme', version: 1, name, theme: sanitizeCustomTheme(p.theme) }
+    fs.writeFileSync(result.filePath, JSON.stringify(doc, null, 2), 'utf8')
+    return result.filePath
+  })
+
+  handleResult(IPC.themeImport, async () => {
+    const window = ctx.mainWindow.get()
+    if (!window) return null
+    const result = await dialog.showOpenDialog(window, {
+      properties: ['openFile'],
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    })
+    const file = result.filePaths[0]
+    if (result.canceled || !file) return null
+    const raw: unknown = JSON.parse(fs.readFileSync(file, 'utf8'))
+    if (!isRecord(raw) || !isRecord(raw.theme)) throw new Error('not a KlyroSC theme file')
+    const name =
+      typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim().slice(0, 40) : 'Tema importado'
+    const theme = sanitizeCustomTheme(raw.theme)
+    const current = ctx.settings.get().appearance
+    const profiles = [
+      ...current.profiles.filter((profile) => profile.name.toLowerCase() !== name.toLowerCase()),
+      { name, theme }
+    ]
+    // applies the theme immediately and stores it as a profile
+    ctx.settings.patch({
+      appearance: { accent: 'custom', custom: theme, profiles }
+    } as DeepPartial<Settings>)
+    return { name }
+  })
+
+  on(IPC.windowSetIcon, (dataUrl) => {
+    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,')) return
+    if (dataUrl.length > 1_500_000) return
+    try {
+      const image = nativeImage.createFromDataURL(dataUrl)
+      if (!image.isEmpty()) ctx.mainWindow.get()?.setIcon(image)
+    } catch (error) {
+      rendererLog.warn(`could not apply themed icon: ${String(error)}`)
+    }
   })
 
   handleResult(IPC.librarySetCover, async (id) => {

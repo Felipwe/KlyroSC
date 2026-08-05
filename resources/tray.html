@@ -18,10 +18,7 @@
     --atext: #b9a5fb;
   }
   [data-accent='yagami'] { --bg: rgba(11, 9, 11, 0.97); --a: #b31423; --b: #e5484d; --soft: rgba(179, 20, 35, 0.16); --atext: #ef7d84; }
-  [data-accent='ember']  { --a: #fb7847; --b: #f43f7e; --soft: rgba(251, 120, 71, 0.16); --atext: #ffab8e; }
-  [data-accent='ocean']  { --a: #0ea5e9; --b: #34d399; --soft: rgba(14, 165, 233, 0.16); --atext: #7cd4fb; }
-  [data-accent='orchid'] { --a: #e254e0; --b: #7c6cfc; --soft: rgba(226, 84, 224, 0.15); --atext: #f0a3ef; }
-  [data-accent='mint']   { --a: #10b981; --b: #a3e635; --soft: rgba(16, 185, 129, 0.16); --atext: #6ee7b7; }
+  [data-accent='custom'] { --bg: rgba(11, 9, 11, 0.97); }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { background: transparent; height: 100%; overflow: hidden; }
@@ -168,6 +165,14 @@
 
   window.trayApi.onState((state) => {
     document.body.dataset.accent = state.accent
+    if (state.accentColors) {
+      document.body.style.setProperty('--a', state.accentColors.a)
+      document.body.style.setProperty('--b', state.accentColors.b)
+      document.body.style.setProperty('--soft', state.accentColors.a + '29')
+      document.body.style.setProperty('--atext', state.accentColors.b)
+    } else {
+      for (const p of ['--a', '--b', '--soft', '--atext']) document.body.style.removeProperty(p)
+    }
     $('ver').textContent = 'v' + state.version
     $('st-plugins').textContent = String(state.stats.plugins)
     $('st-favorites').textContent = String(state.stats.favorites)

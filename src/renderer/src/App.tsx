@@ -10,6 +10,7 @@ import { initPlayer } from '@renderer/player/store'
 import { initMediaSession } from '@renderer/player/media-session'
 import { initPresenceSync } from '@renderer/player/presence-sync'
 import { useKeyboardShortcuts } from '@renderer/hooks/keyboard'
+import { buildAppIcon } from '@renderer/utils/icon-tint'
 import { TitleBar } from '@renderer/layouts/TitleBar'
 import { Sidebar } from '@renderer/layouts/Sidebar'
 import { PlayerBar } from '@renderer/layouts/PlayerBar'
@@ -71,6 +72,16 @@ export default function App(): JSX.Element {
   const [changelogVersion, setChangelogVersion] = useState<string | null>(null)
   const route = useNav((state) => state.route)
   const miniMode = useUi((state) => state.miniMode)
+  const appearance = useSettings((state) => state.settings.appearance)
+
+  // keep the window icon in sync with the custom theme accent
+  useEffect(() => {
+    if (!booted) return
+    const tint = appearance.accent === 'custom' && appearance.custom.syncIcon ? appearance.custom.colorA : null
+    void buildAppIcon(tint).then((dataUrl) => {
+      if (dataUrl) api.window.setIcon(dataUrl)
+    })
+  }, [booted, appearance.accent, appearance.custom.syncIcon, appearance.custom.colorA])
 
   useEffect(() => {
     let cancelled = false
