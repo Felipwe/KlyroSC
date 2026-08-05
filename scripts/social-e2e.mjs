@@ -179,6 +179,17 @@ async function main() {
   const clearAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: null } })
   check('avatar removed', clearAvatar.status === 200)
 
+  // ————— optional display name —————
+  const newName = `Teste Renome ${Date.now() % 10000}`
+  const rename = await api('PATCH', '/profile', { token: tokenA, body: { name: newName } })
+  check('rename accepted', rename.status === 200 && rename.data.user.name === newName)
+  const badRename = await api('PATCH', '/profile', { token: tokenA, body: { name: 'x' } })
+  check('too-short name rejected', badRename.status === 400)
+  const takenRename = await api('PATCH', '/profile', { token: tokenB, body: { name: newName } })
+  check('duplicate name rejected', takenRename.status === 409)
+  const stateB1d = (await api('GET', '/state', { token: tokenB })).data
+  check('friend sees new name', stateB1d.friends[0]?.name === newName)
+
   //  websockets + presence 
   const wsA = await connectWs(tokenA)
   const wsB = await connectWs(tokenB)
@@ -223,7 +234,7 @@ async function main() {
   await inviteSyncPromise
   const stateB2 = (await api('GET', '/state', { token: tokenB })).data
   const jamInvite = stateB2.invites[0]
-  check('B sees jam invite', jamInvite?.from.name === a.user.name)
+  check('B sees jam invite', jamInvite?.from.name === newName) // A renamed earlier in the flow
 
   const syncAPromise = waitFor(wsA, (m) => m.t === 'sync', 8000, 'join sync at A')
   const join = await api('POST', `/invites/${jamInvite.id}/accept`, { token: tokenB })

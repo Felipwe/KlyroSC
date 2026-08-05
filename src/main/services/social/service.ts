@@ -428,6 +428,17 @@ export class SocialService {
     await this.refreshState()
   }
 
+  async rename(name: string): Promise<void> {
+    const trimmed = name.trim().replace(/\s+/g, ' ')
+    if (trimmed.length < 3 || trimmed.length > 24) throw new Error('invalid_name')
+    const data = await this.request<{ user: SocialUser }>('PATCH', '/profile', { name: trimmed })
+    this.snapshot = { ...this.snapshot, account: data.user }
+    const creds = this.store.get()
+    if (creds.user) this.store.set({ ...creds, user: data.user })
+    this.emit()
+    await this.refreshState()
+  }
+
   //  connection 
 
   private async connect(): Promise<void> {

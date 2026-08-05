@@ -318,6 +318,38 @@ export function createRouter(services: Services): Router {
     })
   )
 
+  // optional custom display name — must stay unique
+  router.patch(
+    '/profile',
+    auth,
+    socialWriteLimiter,
+    wrap(async (req, res) => {
+      const me = req.user!
+      const raw = (req.body as Record<string, unknown> | undefined)?.name
+      if (typeof raw !== 'string' || raw.length > 64) {
+        fail(res, 400, 'invalid_name')
+        return
+      }
+      const name = raw.trim().replace(/\s+/g, ' ')
+      if (!/^[\p{L}\p{N}][\p{L}\p{N} ._-]{1,22}[\p{L}\p{N}]$/u.test(name)) {
+        fail(res, 400, 'invalid_name')
+        return
+      }
+      try {
+        await pool.query('UPDATE users SET name = $1 WHERE id = $2', [name, me.id])
+      } catch (error) {
+        if ((error as { code?: string }).code === '23505') {
+          fail(res, 409, 'name_taken')
+          return
+        }
+        throw error
+      }
+      hub.setName(me.id, name)
+      for (const friendId of await friendIdsOf(me.id)) hub.send(friendId, { t: 'sync' })
+      res.json({ user: { ...me, name } })
+    })
+  )
+
   //  e2e chat keys 
   router.post(
     '/keys',

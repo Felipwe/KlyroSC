@@ -567,6 +567,18 @@ function Hub(): JSX.Element {
     useUi.getState().openMenu(rect.left, rect.bottom + 6, items)
   }
 
+  const rename = (): void =>
+    useUi.getState().openModal({
+      kind: 'prompt',
+      title: t('social.renameTitle'),
+      placeholder: t('social.renamePlaceholder'),
+      initialValue: account.name,
+      confirmLabel: t('common.save'),
+      onConfirm: (name) => {
+        if (name && name.trim() !== account.name) void useSocial.getState().rename(name)
+      }
+    })
+
   return (
     <>
       <div className="social-header social-card">
@@ -585,6 +597,14 @@ function Hub(): JSX.Element {
           <div>
             <div className="social-me-name">
               {account.name}
+              <button
+                className="icon-btn social-rename-btn"
+                onClick={rename}
+                title={t('social.renameTitle')}
+                aria-label={t('social.renameTitle')}
+              >
+                <Icon name="edit" size={12} />
+              </button>
               <button className="social-id-chip clickable" onClick={() => void copyId()} title={t('social.idCopied')}>
                 #{account.publicId}
                 <Icon name="copy" size={11} />

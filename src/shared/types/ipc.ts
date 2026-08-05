@@ -176,6 +176,7 @@ export interface KlyroApi {
     sendJamChat(text: string): void
     setAvatar(): Promise<Result<boolean | null>>
     removeAvatar(): Promise<Result<void>>
+    rename(name: string): Promise<Result<void>>
     onState(cb: (snapshot: SocialSnapshot) => void): Unsubscribe
     onJamPlayback(cb: (playback: JamPlayback) => void): Unsubscribe
     onChatMessage(cb: (payload: ChatEventPayload) => void): Unsubscribe
@@ -295,6 +296,7 @@ export const IPC = {
   socialJamChatSend: 'social:jam-chat-send',
   socialSetAvatar: 'social:set-avatar',
   socialRemoveAvatar: 'social:remove-avatar',
+  socialRename: 'social:rename',
   socialState: 'social:state',
   socialJamPlayback: 'social:jam-playback',
   socialChatMessage: 'social:chat-message',

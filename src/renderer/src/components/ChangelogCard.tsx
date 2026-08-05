@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.8.2',
+    pt: [
+      'Nome de exibição editável no Socials: clique no lápis ao lado do seu nome — único e opcional, seus amigos veem na hora',
+      'Janelas de chat agora abrem centralizadas na sua frente, em vez de escondidas no canto'
+    ],
+    en: [
+      'Editable display name on Socials: click the pencil next to your name — unique and optional, friends see it instantly',
+      'Chat windows now open centered in front of you instead of tucked into the corner'
+    ]
+  },
+  {
     version: '2.8.1',
     pt: [
       'Corrigido: as opções do tema personalizado apareciam duplicadas nas configurações'

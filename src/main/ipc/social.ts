@@ -121,4 +121,8 @@ export function registerSocialIpc(ctx: AppContext): void {
     return true
   })
   handleResult(IPC.socialRemoveAvatar, () => social.setAvatar(null))
+  handleResult(IPC.socialRename, (name) => {
+    if (typeof name !== 'string' || name.length > 64) throw new Error('invalid_name')
+    return social.rename(name)
+  })
 }

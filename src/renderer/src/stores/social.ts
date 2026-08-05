@@ -17,6 +17,8 @@ export function socialError(code: string): string {
     'invalid_account',
     'invalid_id',
     'invalid_message',
+    'invalid_name',
+    'name_taken',
     'no_chat_key',
     'user_not_found',
     'cannot_add_self',
@@ -67,13 +69,13 @@ export const clampChatRect = (rect: ChatWindowRect): ChatWindowRect => {
   }
 }
 
-/** docked bottom-right above the player bar, cascading up-left per open window */
+/** opens centered in front of the app, cascading down-right per open window */
 const defaultChatRect = (index: number): ChatWindowRect => {
   const w = 330
   const h = Math.min(480, Math.max(CHAT_MIN_H, window.innerHeight - 220))
   return clampChatRect({
-    x: window.innerWidth - w - 20 - index * 46,
-    y: window.innerHeight - 102 - h - 10 - index * 24,
+    x: Math.round((window.innerWidth - w) / 2) + index * 44,
+    y: Math.round(Math.max(60, (window.innerHeight - h) / 2 - 24)) + index * 26,
     w,
     h
   })
@@ -127,6 +129,7 @@ interface SocialStore {
   notifyTyping(friendId: string): void
   setAvatar(): Promise<void>
   removeAvatar(): Promise<void>
+  rename(name: string): Promise<boolean>
   /** unread jam-chat messages while the jam chat window is closed */
   jamUnread: number
 }
@@ -456,5 +459,15 @@ export const useSocial = create<SocialStore>((set, get) => ({
   removeAvatar: async () => {
     const result = await api.social.removeAvatar()
     if (!result.ok) toast(socialError(result.error), 'error')
+  },
+
+  rename: async (name) => {
+    const result = await api.social.rename(name)
+    if (!result.ok) {
+      toast(socialError(result.error), 'error')
+      return false
+    }
+    toast(t('social.renamed'), 'success')
+    return true
   }
 }))

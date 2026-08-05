@@ -1646,6 +1646,18 @@ kbd {
   align-items: center;
 }
 
+.social-rename-btn {
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+
+.social-me:hover .social-rename-btn {
+  opacity: 1;
+}
+
 .social-me-sub {
   color: var(--text-faint);
   font-size: 0.72rem;

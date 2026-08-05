@@ -156,6 +156,7 @@ const api: KlyroApi = {
     sendJamChat: (text) => send(IPC.socialJamChatSend, text),
     setAvatar: () => invoke(IPC.socialSetAvatar),
     removeAvatar: () => invoke(IPC.socialRemoveAvatar),
+    rename: (name) => invoke(IPC.socialRename, name),
     onState: (cb) => listen<SocialSnapshot>(IPC.socialState, cb),
     onJamPlayback: (cb) => listen<JamPlayback>(IPC.socialJamPlayback, cb),
     onChatMessage: (cb) => listen<ChatEventPayload>(IPC.socialChatMessage, cb),

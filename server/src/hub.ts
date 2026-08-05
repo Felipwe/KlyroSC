@@ -67,6 +67,12 @@ export class Hub {
     if (client) client.user = { ...client.user, avatar }
   }
 
+  /** keeps the cached identity fresh when the user renames themselves */
+  setName(userId: string, name: string): void {
+    const client = this.clients.get(userId)
+    if (client) client.user = { ...client.user, name }
+  }
+
   presenceOf(userId: string): FriendPresence {
     const client = this.clients.get(userId)
     return client ? { online: true, listening: client.listening } : { online: false, listening: null }
