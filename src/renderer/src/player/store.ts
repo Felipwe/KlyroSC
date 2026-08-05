@@ -47,6 +47,7 @@ let historyCounted = false
 let consecutiveErrors = 0
 let playerInitialized = false
 let smartShuffleEnabled = true
+let forcedPreview = false
 
 const pickShuffle = (): typeof shuffled => (smartShuffleEnabled ? smartShuffled : shuffled)
 
@@ -56,7 +57,8 @@ const getEngine = (): AudioEngine => {
     onDuration: (duration) => {
       const track = usePlayer.getState().current
       const previewActive =
-        track !== null && duration > 0 && duration <= 65 && duration < track.duration * 0.6
+        forcedPreview ||
+        (track !== null && duration > 0 && duration <= 65 && duration < track.duration * 0.6)
       usePlayer.setState({ duration, previewActive })
     },
     onTime: (position) => {
@@ -66,6 +68,12 @@ const getEngine = (): AudioEngine => {
     onEnded: () => usePlayer.getState().next(true),
     onBuffering: (buffering) => usePlayer.setState({ buffering }),
     onPlayingChange: (playing) => usePlayer.setState({ playing }),
+    onStreamInfo: ({ preview, substituted }) => {
+      forcedPreview = preview
+      usePlayer.setState({ previewActive: preview })
+      if (substituted) toast(t('toast.playingFullVersion'), 'success')
+      else if (preview) toast(t('toast.previewOnly'))
+    },
     onError: (message) => {
       const state = usePlayer.getState()
       const title = state.current?.title ?? ''
@@ -103,6 +111,7 @@ function startTrack(index: number, autoplay = true, startAt = 0, fresh = false):
   const track = queue[index]
   if (!track) return
   historyCounted = startAt > 0
+  forcedPreview = false
   usePlayer.setState({
     index,
     current: track,

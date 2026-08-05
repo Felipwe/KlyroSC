@@ -191,6 +191,8 @@ export const pt: Dict = {
     importDone: 'Biblioteca importada',
     playbackError: 'Não foi possível tocar “{title}”',
     trackSkipped: 'Faixa indisponível, pulando…',
+    playingFullVersion: 'Faixa Go+ — tocando um reupload completo no lugar',
+    previewOnly: 'Faixa Go+ — só tem prévia de 30s disponível',
     queueCleared: 'Fila limpa',
     historyCleared: 'Histórico limpo',
     playlistCreated: 'Playlist “{name}” criada',

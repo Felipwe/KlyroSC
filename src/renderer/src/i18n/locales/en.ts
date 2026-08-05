@@ -189,6 +189,8 @@ export const en = {
     importDone: 'Library imported',
     playbackError: 'Could not play “{title}”',
     trackSkipped: 'Track unavailable, skipping…',
+    playingFullVersion: 'Go+ track — playing a full reupload instead',
+    previewOnly: 'Go+ track — only a 30s preview is available',
     queueCleared: 'Queue cleared',
     historyCleared: 'History cleared',
     playlistCreated: 'Playlist “{name}” created',

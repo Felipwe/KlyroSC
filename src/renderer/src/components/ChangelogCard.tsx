@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.2.1',
+    pt: [
+      'Faixas Go+ (aquelas que só tocavam 30s): o Region Unblock agora procura e toca um reupload completo e limpo da mesma música quando existe',
+      'Quando não dá para liberar, o app avisa claramente que é uma faixa Go+ com só prévia — sem mais loading infinito',
+      'Para o original completo dessas faixas, entre com uma conta SoundCloud Go+'
+    ],
+    en: [
+      'Go+ tracks (the 30s-only ones): Region Unblock now finds and plays a clean full-length reupload of the same song when one exists',
+      'When it truly can’t, the app clearly says it’s a Go+ preview — no more infinite loading',
+      'For the full original of those tracks, sign in with a SoundCloud Go+ account'
+    ]
+  },
+  {
     version: '2.2.0',
     pt: [
       'Region Unblock agora toca a faixa INTEIRA: músicas que viravam prévia de 30s no seu país tocam completas com o plugin ativo',

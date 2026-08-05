@@ -10,6 +10,7 @@ export interface EngineEvents {
   onError(message: string): void
   onBuffering(buffering: boolean): void
   onPlayingChange(playing: boolean): void
+  onStreamInfo(info: { preview: boolean; substituted: boolean }): void
 }
 
 export class AudioEngine {
@@ -112,6 +113,10 @@ export class AudioEngine {
       else this.audio.src = source.url
       if (generation !== this.generation) return false
       this.sourceReady = true
+      this.events.onStreamInfo({
+        preview: source.preview === true,
+        substituted: source.substituted === true
+      })
       if (startAt > 0) this.audio.currentTime = startAt
       if (autoplay) {
         this.armWatchdog(generation)
