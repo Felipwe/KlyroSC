@@ -10,6 +10,8 @@ export interface Track {
   id: number
   title: string
   artist: string
+  /** Recording artist from publisher metadata; preferred for lyrics matching. */
+  lyricsArtist?: string
   artistId: number
   artistUrl: string
   artistAvatar: string | null

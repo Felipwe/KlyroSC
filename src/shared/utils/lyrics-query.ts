@@ -32,7 +32,8 @@ export function cleanTitle(raw: string): string {
 }
 
 export function splitDashTitle(title: string): LyricsQuery | null {
-  const parts = title.split(/\s+[-–]\s+/)
+  // require whitespace on at least one side so names such as Jay-Z stay intact
+  const parts = title.split(/\s*[-–]\s+|\s+[-–]\s*/)
   if (parts.length < 2) return null
   const artist = (parts[0] ?? '').trim()
   const rest = parts.slice(1).join(' - ').trim()
@@ -47,6 +48,29 @@ export const normalizeText = (value: string): string =>
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
+
+const tokensOf = (value: string): Set<string> =>
+  new Set(normalizeText(value).split(' ').filter((token) => token.length > 1 && token !== 'the'))
+
+const overlapScore = (wanted: string, candidate: string, contributorMatch = false): number => {
+  const a = normalizeText(wanted)
+  const b = normalizeText(candidate)
+  if (!a || !b) return 0
+  if (a === b) return 1
+  const aTokens = tokensOf(a)
+  const bTokens = tokensOf(b)
+  if (aTokens.size === 0 || bTokens.size === 0) return 0
+  if (
+    aTokens.size >= 2 &&
+    bTokens.size >= 2 &&
+    Math.min(a.length, b.length) >= 4 &&
+    (a.includes(b) || b.includes(a))
+  )
+    return 0.9
+  let common = 0
+  for (const token of aTokens) if (bTokens.has(token)) common++
+  return common / (contributorMatch ? Math.min(aTokens.size, bTokens.size) : Math.max(aTokens.size, bTokens.size))
+}
 
 export function buildLyricsQueries(artist: string, title: string): LyricsQuery[] {
   const out: LyricsQuery[] = []
@@ -72,30 +96,58 @@ export function buildLyricsQueries(artist: string, title: string): LyricsQuery[]
 
 export function pickBestIndex(
   candidates: CandidateMeta[],
+  wantedArtist: string,
   wantedTitle: string,
   wantedDuration: number
 ): number {
-  const nWanted = normalizeText(cleanTitle(wantedTitle))
   let best = -1
   let bestScore = 0
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i]
     if (!candidate || (!candidate.hasSynced && !candidate.hasPlain)) continue
-    let score = candidate.hasSynced ? 100 : 30
+
+    const titleScore = overlapScore(cleanTitle(wantedTitle), cleanTitle(candidate.title))
+    const artistScore = overlapScore(cleanTitle(wantedArtist), cleanTitle(candidate.artist), true)
+    if (titleScore < 0.75 || artistScore < 0.5) continue
+
+    let durationScore = 0
     if (wantedDuration > 0 && candidate.duration > 0) {
       const diff = Math.abs(candidate.duration - wantedDuration)
-      if (diff <= 2) score += 45
-      else if (diff <= 5) score += 30
-      else if (diff <= 10) score += 12
-      else if (diff > 20) score -= 35
+      const tolerance = candidate.hasSynced
+        ? Math.max(8, wantedDuration * 0.04)
+        : Math.max(20, wantedDuration * 0.12)
+      if (diff > tolerance) continue
+      durationScore = 1 - diff / tolerance
     }
-    const nCandidate = normalizeText(candidate.title)
-    if (nWanted && nCandidate && (nCandidate.includes(nWanted) || nWanted.includes(nCandidate)))
-      score += 25
+
+    const score =
+      (candidate.hasSynced ? 35 : 15) +
+      titleScore * 30 +
+      artistScore * 25 +
+      durationScore * 25
     if (score > bestScore) {
       bestScore = score
       best = i
     }
   }
-  return bestScore >= 55 ? best : -1
+  return bestScore >= 65 ? best : -1
+}
+
+export function isPlausibleSyncedTiming(
+  lines: { time: number; text: string }[],
+  wantedDuration: number
+): boolean {
+  if (lines.length === 0) return false
+  let previous = -1
+  for (const line of lines) {
+    if (!Number.isFinite(line.time) || line.time < previous) return false
+    previous = line.time
+  }
+  if (wantedDuration <= 0 || lines.length < 3) return true
+  const first = lines[0]?.time ?? 0
+  const last = lines[lines.length - 1]?.time ?? 0
+  if (first > wantedDuration * 0.45) return false
+  if (last > wantedDuration + 12) return false
+  if (last < wantedDuration * 0.35) return false
+  return true
 }

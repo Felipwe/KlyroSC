@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.5',
+    pt: [
+      'A tela de login do SoundCloud agora abre maximizada, sem o formulário apertado e cortado',
+      'Cabeçalho das letras corrigido: capa, título e botão fechar ficam fixos enquanto somente as linhas rolam',
+      'Letras muito mais confiáveis: artista, título, duração e intervalo de sincronia agora precisam combinar — resultados de outra música são rejeitados'
+    ],
+    en: [
+      'The SoundCloud login screen now opens maximized, without a cramped or clipped form',
+      'Fixed the lyrics header: cover, title and close button stay fixed while only the lines scroll',
+      'Much more reliable lyrics: artist, title, duration and timing range must now match — results from another song are rejected'
+    ]
+  },
+  {
     version: '2.5.4',
     pt: [
       'Login com Google, Facebook e Apple corrigido: o SoundCloud agora consegue abrir a janela segura do provedor sem pedir para ativar popups',

@@ -13,6 +13,9 @@ const rawTrack = {
   likes_count: 200,
   created_at: '2025-04-01T00:00:00Z',
   policy: 'ALLOW',
+  publisher_metadata: {
+    artist: 'Nightrider feat. Neon Moon'
+  },
   user: {
     id: 77,
     username: 'Nightrider',
@@ -41,6 +44,7 @@ describe('mapTrack', () => {
     expect(track).not.toBeNull()
     expect(track?.id).toBe(123)
     expect(track?.artist).toBe('Nightrider')
+    expect(track?.lyricsArtist).toBe('Nightrider feat. Neon Moon')
     expect(track?.duration).toBe(215)
     expect(track?.artwork).toBe('https://i1.sndcdn.com/artworks-abc-t500x500.jpg')
     expect(track?.artworkSmall).toBe('https://i1.sndcdn.com/artworks-abc-t120x120.jpg')

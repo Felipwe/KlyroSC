@@ -16,17 +16,30 @@ export function LyricsOverlay(): JSX.Element | null {
   const toggleLyrics = useUi((state) => state.toggleLyrics)
   const track = usePlayer((state) => state.current)
   const position = usePlayer((state) => state.position)
+  const decodedDuration = usePlayer((state) => state.duration)
   const [state, setState] = useState<'loading' | 'done' | 'none'>('loading')
   const [lyrics, setLyrics] = useState<Lyrics>({ synced: null, plain: null })
   const contentRef = useRef<HTMLDivElement>(null)
   const activeRef = useRef<HTMLDivElement>(null)
+  const trackId = track?.id ?? null
+  const lyricsArtist = track?.lyricsArtist ?? track?.artist ?? ''
+  const lyricsTitle = track?.title ?? ''
+
+  const lookupDuration = track
+    ? Math.round(
+        decodedDuration > 0 &&
+          (track.duration <= 0 || decodedDuration >= track.duration * 0.75)
+          ? decodedDuration
+          : track.duration
+      )
+    : 0
 
   useEffect(() => {
-    if (!open || !track) return
+    if (!open || trackId === null || !lyricsArtist || !lyricsTitle) return
     let cancelled = false
     setState('loading')
     setLyrics({ synced: null, plain: null })
-    void api.lyrics.get(track.artist, track.title, track.duration).then((result) => {
+    void api.lyrics.get(lyricsArtist, lyricsTitle, lookupDuration).then((result) => {
       if (cancelled) return
       if (result.ok && (result.data.synced || result.data.plain)) {
         setLyrics(result.data)
@@ -38,13 +51,21 @@ export function LyricsOverlay(): JSX.Element | null {
     return () => {
       cancelled = true
     }
-  }, [open, track?.id, track])
+  }, [open, trackId, lyricsArtist, lyricsTitle, lookupDuration])
 
   const active = lyrics.synced ? activeLineIndex(lyrics.synced, position) : -1
 
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const content = contentRef.current
+    const line = activeRef.current
+    if (!content || !line) return
+    const top = line.offsetTop - (content.clientHeight - line.offsetHeight) / 2
+    content.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
   }, [active])
+
+  useEffect(() => {
+    if (open) contentRef.current?.scrollTo({ top: 0 })
+  }, [open, trackId])
 
   useEffect(() => {
     if (open && !track) toggleLyrics(false)

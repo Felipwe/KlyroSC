@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildLyricsQueries,
   cleanTitle,
+  isPlausibleSyncedTiming,
   pickBestIndex,
   splitDashTitle,
   type CandidateMeta
@@ -45,6 +46,17 @@ describe('splitDashTitle', () => {
     expect(splitDashTitle('Single Title')).toBeNull()
     expect(splitDashTitle('no-spaces-around')).toBeNull()
   })
+
+  it('supports uploads with whitespace on only one side of the dash', () => {
+    expect(splitDashTitle('Future + The Weeknd- Low Life')).toEqual({
+      artist: 'Future + The Weeknd',
+      title: 'Low Life'
+    })
+    expect(splitDashTitle('Jay-Z - Empire State of Mind')).toEqual({
+      artist: 'Jay-Z',
+      title: 'Empire State of Mind'
+    })
+  })
 })
 
 describe('buildLyricsQueries', () => {
@@ -74,21 +86,55 @@ describe('pickBestIndex', () => {
       candidate({ hasSynced: true, duration: 201 }),
       candidate({ hasSynced: true, duration: 350 })
     ]
-    expect(pickBestIndex(list, 'Great Song', 200)).toBe(1)
+    expect(pickBestIndex(list, 'Artist X', 'Great Song', 200)).toBe(1)
   })
 
   it('rejects weak plain-only mismatches', () => {
     const list = [candidate({ hasPlain: true, title: 'Another Thing', duration: 90 })]
-    expect(pickBestIndex(list, 'Great Song', 200)).toBe(-1)
+    expect(pickBestIndex(list, 'Artist X', 'Great Song', 200)).toBe(-1)
   })
 
   it('accepts plain when duration and title align', () => {
     const list = [candidate({ hasPlain: true, duration: 199 })]
-    expect(pickBestIndex(list, 'Great Song (Official Video)', 200)).toBe(0)
+    expect(pickBestIndex(list, 'Artist X', 'Great Song (Official Video)', 200)).toBe(0)
   })
 
   it('ignores empty candidates', () => {
-    expect(pickBestIndex([candidate({})], 'Great Song', 200)).toBe(-1)
-    expect(pickBestIndex([], 'x', 0)).toBe(-1)
+    expect(pickBestIndex([candidate({})], 'Artist X', 'Great Song', 200)).toBe(-1)
+    expect(pickBestIndex([], 'Artist X', 'x', 0)).toBe(-1)
+  })
+
+  it('rejects synced lyrics from another artist even when title and duration match', () => {
+    const list = [candidate({ artist: 'Completely Different', hasSynced: true, duration: 200 })]
+    expect(pickBestIndex(list, 'Artist X', 'Great Song', 200)).toBe(-1)
+  })
+
+  it('rejects synced versions whose duration would drift noticeably', () => {
+    const list = [candidate({ hasSynced: true, duration: 218 })]
+    expect(pickBestIndex(list, 'Artist X', 'Great Song', 200)).toBe(-1)
+  })
+
+  it('accepts one credited artist from a collaboration', () => {
+    const list = [candidate({ artist: 'Future', title: 'Low Life', duration: 314, hasSynced: true })]
+    expect(pickBestIndex(list, 'Future & The Weeknd', 'Low Life', 313)).toBe(0)
+  })
+
+  it('does not accept a one-word fragment as a full title', () => {
+    const list = [candidate({ title: 'Life', hasSynced: true, duration: 200 })]
+    expect(pickBestIndex(list, 'Artist X', 'Low Life', 200)).toBe(-1)
+  })
+})
+
+describe('isPlausibleSyncedTiming', () => {
+  const lines = (times: number[]) => times.map((time) => ({ time, text: 'line' }))
+
+  it('accepts timings covering a plausible portion of the track', () => {
+    expect(isPlausibleSyncedTiming(lines([8, 40, 90, 170]), 200)).toBe(true)
+  })
+
+  it('rejects unsorted, far-too-short and overlong timelines', () => {
+    expect(isPlausibleSyncedTiming(lines([8, 90, 40]), 200)).toBe(false)
+    expect(isPlausibleSyncedTiming(lines([2, 20, 50]), 200)).toBe(false)
+    expect(isPlausibleSyncedTiming(lines([2, 100, 215]), 200)).toBe(false)
   })
 })

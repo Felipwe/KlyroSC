@@ -35,12 +35,14 @@ export function mapTranscodings(raw: unknown): Transcoding[] {
 export function mapTrack(raw: unknown): Track | null {
   if (!isRecord(raw) || typeof raw.id !== 'number' || typeof raw.title !== 'string') return null
   const user = isRecord(raw.user) ? raw.user : {}
+  const publisher = isRecord(raw.publisher_metadata) ? raw.publisher_metadata : {}
   const art = str(raw.artwork_url) ?? str(user.avatar_url)
   const duration = int(raw.full_duration) || int(raw.duration)
   return {
     id: raw.id,
     title: raw.title,
     artist: str(user.username) ?? 'Unknown artist',
+    lyricsArtist: str(publisher.artist) ?? undefined,
     artistId: int(user.id),
     artistUrl: str(user.permalink_url) ?? '',
     artistAvatar: artworkUrl(str(user.avatar_url), 't120x120'),

@@ -144,6 +144,7 @@ export class ScAuthService {
       const win = new BrowserWindow({
         width: 520,
         height: 780,
+        show: false,
         parent: parent ?? undefined,
         autoHideMenuBar: true,
         title: 'SoundCloud  KlyroSC',
@@ -157,6 +158,12 @@ export class ScAuthService {
       })
       this.loginWindow = win
       const providerWindows = new Set<BrowserWindow>()
+
+      win.once('ready-to-show', () => {
+        if (win.isDestroyed()) return
+        win.maximize()
+        win.show()
+      })
 
       let settled = false
       const cookieListener = (): void => void check()
