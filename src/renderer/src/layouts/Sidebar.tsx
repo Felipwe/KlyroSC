@@ -12,6 +12,7 @@ const NAV_ITEMS: { route: Route; icon: IconName; key: string }[] = [
   { route: { name: 'home' }, icon: 'home', key: 'nav.home' },
   { route: { name: 'search' }, icon: 'search', key: 'nav.search' },
   { route: { name: 'favorites' }, icon: 'heart', key: 'nav.favorites' },
+  { route: { name: 'social' }, icon: 'users', key: 'nav.social' },
   { route: { name: 'history' }, icon: 'clock', key: 'nav.history' },
   { route: { name: 'playlists' }, icon: 'queue', key: 'nav.playlists' }
 ]

@@ -23,6 +23,14 @@ import { type LibraryData } from './library'
 import { type PluginConfigValue, type PluginInfo } from './plugin'
 import { type UpdateStatus } from './update'
 import { type AuthState } from './auth'
+import {
+  type ChatEventPayload,
+  type ChatMessage,
+  type JamPlayback,
+  type JamTrackRef,
+  type NewSocialAccount,
+  type SocialSnapshot
+} from './social'
 
 export interface AppInfo {
   version: string
@@ -143,6 +151,34 @@ export interface KlyroApi {
     track(trackId: number, title: string): Promise<Result<string>>
     openFolder(): void
   }
+  social: {
+    status(): Promise<SocialSnapshot>
+    createAccount(): Promise<Result<NewSocialAccount>>
+    confirmAccount(accountNumber: string): Promise<Result<SocialSnapshot>>
+    login(accountNumber: string): Promise<Result<SocialSnapshot>>
+    logout(): Promise<SocialSnapshot>
+    deleteAccount(): Promise<Result<SocialSnapshot>>
+    addFriend(publicId: number): Promise<Result<void>>
+    respondRequest(id: string, accept: boolean): Promise<Result<void>>
+    removeFriend(userId: string): Promise<Result<void>>
+    createJam(): Promise<Result<void>>
+    inviteToJam(userId: string): Promise<Result<void>>
+    respondInvite(id: string, accept: boolean): Promise<Result<void>>
+    leaveJam(): Promise<Result<void>>
+    endJam(): Promise<Result<void>>
+    setJamControl(allow: boolean): Promise<Result<void>>
+    reconnect(): void
+    sendJamPlayback(payload: { track: JamTrackRef | null; playing: boolean; position: number }): void
+    sendJamQueue(queue: JamTrackRef[]): void
+    chatHistory(friendId: string, before?: number): Promise<Result<ChatMessage[]>>
+    chatSend(friendId: string, text: string, tempId: string): Promise<Result<void>>
+    chatTyping(friendId: string): void
+    onState(cb: (snapshot: SocialSnapshot) => void): Unsubscribe
+    onJamPlayback(cb: (playback: JamPlayback) => void): Unsubscribe
+    onChatMessage(cb: (payload: ChatEventPayload) => void): Unsubscribe
+    onChatSent(cb: (payload: { friendId: string; tempId: string; id: number; at: number }) => void): Unsubscribe
+    onChatTyping(cb: (payload: { friendId: string }) => void): Unsubscribe
+  }
   events: {
     onMedia(cb: (action: MediaAction) => void): Unsubscribe
     onPlayerCommand(cb: (action: MediaAction) => void): Unsubscribe
@@ -231,6 +267,32 @@ export const IPC = {
   updateStatusEvent: 'update:status',
   downloadsTrack: 'downloads:track',
   downloadsOpenFolder: 'downloads:open-folder',
+  socialStatus: 'social:status',
+  socialCreateAccount: 'social:create-account',
+  socialConfirmAccount: 'social:confirm-account',
+  socialLogin: 'social:login',
+  socialLogout: 'social:logout',
+  socialDeleteAccount: 'social:delete-account',
+  socialAddFriend: 'social:add-friend',
+  socialRespondRequest: 'social:respond-request',
+  socialRemoveFriend: 'social:remove-friend',
+  socialCreateJam: 'social:create-jam',
+  socialInviteToJam: 'social:invite-to-jam',
+  socialRespondInvite: 'social:respond-invite',
+  socialLeaveJam: 'social:leave-jam',
+  socialEndJam: 'social:end-jam',
+  socialSetJamControl: 'social:set-jam-control',
+  socialReconnect: 'social:reconnect',
+  socialJamPlaybackSend: 'social:jam-playback-send',
+  socialJamQueueSend: 'social:jam-queue-send',
+  socialChatHistory: 'social:chat-history',
+  socialChatSend: 'social:chat-send',
+  socialChatTyping: 'social:chat-typing',
+  socialState: 'social:state',
+  socialJamPlayback: 'social:jam-playback',
+  socialChatMessage: 'social:chat-message',
+  socialChatSent: 'social:chat-sent',
+  socialChatTypingEvent: 'social:chat-typing-event',
   media: 'media',
   nav: 'nav',
   trayState: 'tray:state',

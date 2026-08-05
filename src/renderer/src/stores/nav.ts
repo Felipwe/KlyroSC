@@ -4,6 +4,7 @@ export type Route =
   | { name: 'home' }
   | { name: 'search'; query?: string }
   | { name: 'favorites' }
+  | { name: 'social' }
   | { name: 'history' }
   | { name: 'playlists' }
   | { name: 'playlist'; ref: string; local: boolean }

@@ -4,7 +4,6 @@ import { api } from '@renderer/services/ipc'
 import { useNav } from '@renderer/stores/nav'
 import { cx } from '@renderer/utils/format'
 import { Icon } from '@renderer/components/Icon'
-import { LogoMark } from '@renderer/components/Logo'
 
 export function TitleBar(): JSX.Element {
   useLanguage()
@@ -20,7 +19,6 @@ export function TitleBar(): JSX.Element {
   return (
     <header className={cx('titlebar', isMac && 'mac')}>
       <div className="titlebar-brand">
-        <LogoMark size={20} />
         <span>
           Klyro<em>SC</em>
         </span>

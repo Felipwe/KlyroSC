@@ -5,6 +5,13 @@ import { type MediaAction } from '@shared/types/player'
 import { type UpdateStatus } from '@shared/types/update'
 import { type AuthState } from '@shared/types/auth'
 import { type PluginInfo } from '@shared/types/plugin'
+import {
+  type ChatEventPayload,
+  type ChatMessage,
+  type JamPlayback,
+  type SocialSnapshot
+} from '@shared/types/social'
+import { type Result } from '@shared/types/result'
 
 const invoke = <T>(channel: string, ...args: unknown[]): Promise<T> =>
   ipcRenderer.invoke(channel, ...args) as Promise<T>
@@ -122,6 +129,36 @@ const api: KlyroApi = {
   downloads: {
     track: (trackId, title) => invoke(IPC.downloadsTrack, trackId, title),
     openFolder: () => send(IPC.downloadsOpenFolder)
+  },
+  social: {
+    status: () => invoke(IPC.socialStatus),
+    createAccount: () => invoke(IPC.socialCreateAccount),
+    confirmAccount: (accountNumber) => invoke(IPC.socialConfirmAccount, accountNumber),
+    login: (accountNumber) => invoke(IPC.socialLogin, accountNumber),
+    logout: () => invoke(IPC.socialLogout),
+    deleteAccount: () => invoke(IPC.socialDeleteAccount),
+    addFriend: (name) => invoke(IPC.socialAddFriend, name),
+    respondRequest: (id, accept) => invoke(IPC.socialRespondRequest, { id, accept }),
+    removeFriend: (userId) => invoke(IPC.socialRemoveFriend, userId),
+    createJam: () => invoke(IPC.socialCreateJam),
+    inviteToJam: (userId) => invoke(IPC.socialInviteToJam, userId),
+    respondInvite: (id, accept) => invoke(IPC.socialRespondInvite, { id, accept }),
+    leaveJam: () => invoke(IPC.socialLeaveJam),
+    endJam: () => invoke(IPC.socialEndJam),
+    setJamControl: (allow) => invoke(IPC.socialSetJamControl, allow),
+    reconnect: () => send(IPC.socialReconnect),
+    sendJamPlayback: (payload) => send(IPC.socialJamPlaybackSend, payload),
+    sendJamQueue: (queue) => send(IPC.socialJamQueueSend, queue),
+    chatHistory: (friendId, before): Promise<Result<ChatMessage[]>> =>
+      invoke(IPC.socialChatHistory, { friendId, before }),
+    chatSend: (friendId, text, tempId) => invoke(IPC.socialChatSend, { friendId, text, tempId }),
+    chatTyping: (friendId) => send(IPC.socialChatTyping, friendId),
+    onState: (cb) => listen<SocialSnapshot>(IPC.socialState, cb),
+    onJamPlayback: (cb) => listen<JamPlayback>(IPC.socialJamPlayback, cb),
+    onChatMessage: (cb) => listen<ChatEventPayload>(IPC.socialChatMessage, cb),
+    onChatSent: (cb) =>
+      listen<{ friendId: string; tempId: string; id: number; at: number }>(IPC.socialChatSent, cb),
+    onChatTyping: (cb) => listen<{ friendId: string }>(IPC.socialChatTypingEvent, cb)
   },
   events: {
     onMedia: (cb) => listen<MediaAction>(IPC.media, cb),

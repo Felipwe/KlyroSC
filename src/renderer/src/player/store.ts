@@ -25,9 +25,12 @@ interface PlayerState {
   shuffle: boolean
   repeat: RepeatMode
   previewActive: boolean
+  /** true when following a jam without control permission — transport is locked */
+  jamLocked: boolean
 
   playTracks(tracks: Track[], startIndex?: number): void
   playNow(track: Track): void
+  playStation(track: Track): void
   playNext(track: Track): void
   addToQueue(tracks: Track[]): void
   removeFromQueue(index: number): void
@@ -41,6 +44,9 @@ interface PlayerState {
   toggleMute(): void
   toggleShuffle(): void
   cycleRepeat(): void
+  setJamLock(locked: boolean): void
+  jamApplyTrack(track: Track, position: number, playing: boolean): void
+  jamApplyTransport(playing: boolean, position: number | null): void
 }
 
 let engine: AudioEngine | null = null
@@ -57,6 +63,13 @@ export function applyEqLive(eq: EqState): void {
 }
 
 const pickShuffle = (): typeof shuffled => (smartShuffleEnabled ? smartShuffled : shuffled)
+
+/** Transport guard while following a jam someone else controls. */
+const jamBlocked = (): boolean => {
+  if (!usePlayer.getState().jamLocked) return false
+  toast(t('social.jam.locked'))
+  return true
+}
 
 const getEngine = (): AudioEngine => {
   if (engine) return engine
@@ -155,9 +168,10 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   shuffle: false,
   repeat: 'off',
   previewActive: false,
+  jamLocked: false,
 
   playTracks: (tracks, startIndex = 0) => {
-    if (tracks.length === 0) return
+    if (tracks.length === 0 || jamBlocked()) return
     const shuffleOn = get().shuffle
     if (shuffleOn) {
       const result = pickShuffle()(tracks, startIndex)
@@ -170,6 +184,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   playNow: (track) => {
+    if (jamBlocked()) return
     const { queue, index, current } = get()
     if (current?.id === track.id) {
       get().toggle()
@@ -186,7 +201,28 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     startTrack(queue.length > 0 ? index + 1 : 0)
   },
 
+  playStation: (track) => {
+    if (jamBlocked()) return
+    const { current } = get()
+    if (current?.id === track.id) {
+      get().toggle()
+      return
+    }
+    set({ queue: [track], originalQueue: null })
+    startTrack(0)
+    void api.sc.related(track.id).then((related) => {
+      if (!related.ok || related.data.length === 0) return
+      const state = get()
+      // only extend if the station seed is still what's playing and nothing else was queued
+      if (state.queue.length !== 1 || state.queue[0]?.id !== track.id) return
+      const items = related.data.filter((item) => item.id !== track.id)
+      if (items.length > 0)
+        set({ queue: [track, ...items].slice(0, QUEUE_PERSIST_LIMIT) })
+    })
+  },
+
   playNext: (track) => {
+    if (jamBlocked()) return
     const { queue, index } = get()
     if (queue.length === 0) {
       get().playTracks([track])
@@ -205,6 +241,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   addToQueue: (tracks) => {
+    if (jamBlocked()) return
     const { queue } = get()
     if (queue.length === 0) {
       get().playTracks(tracks)
@@ -215,6 +252,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   removeFromQueue: (removeIndex) => {
+    if (jamBlocked()) return
     const { queue, index } = get()
     if (removeIndex === index) return
     const next = queue.filter((_, i) => i !== removeIndex)
@@ -222,10 +260,12 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   jumpTo: (index) => {
+    if (jamBlocked()) return
     if (index >= 0 && index < get().queue.length) startTrack(index)
   },
 
   clearQueue: () => {
+    if (jamBlocked()) return
     const { queue, index } = get()
     const current = queue[index]
     set({
@@ -237,6 +277,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   toggle: () => {
+    if (jamBlocked()) return
     const { current, playing, queue } = get()
     if (!current) {
       if (queue.length > 0) startTrack(0)
@@ -249,6 +290,15 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   next: (auto = false) => {
     const state = get()
+    if (state.jamLocked) {
+      // follower: wait for the controller's next track instead of advancing locally
+      if (auto) {
+        set({ playing: false })
+        return
+      }
+      toast(t('social.jam.locked'))
+      return
+    }
     const result = nextIndex({ queue: state.queue, index: state.index, repeat: state.repeat }, auto)
     if (result.kind === 'index') {
       startTrack(result.index)
@@ -280,6 +330,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   previous: () => {
+    if (jamBlocked()) return
     const state = get()
     if (state.position > 4) {
       getEngine().seek(0)
@@ -295,6 +346,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   seek: (position) => {
+    if (jamBlocked()) return
     getEngine().seek(position)
     set({ position })
   },
@@ -320,6 +372,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   toggleShuffle: () => {
+    if (jamBlocked()) return
     const state = get()
     if (!state.shuffle) {
       const result = pickShuffle()(state.queue, state.index)
@@ -341,6 +394,26 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const current = get().repeat
     const next = order[(order.indexOf(current) + 1) % order.length] ?? 'off'
     set({ repeat: next })
+  },
+
+  setJamLock: (locked) => {
+    if (get().jamLocked !== locked) set({ jamLocked: locked })
+  },
+
+  jamApplyTrack: (track, position, playing) => {
+    set({ queue: [track], originalQueue: null, shuffle: false })
+    startTrack(0, playing, Math.max(0, position))
+  },
+
+  jamApplyTransport: (playing, position) => {
+    const eng = getEngine()
+    if (position !== null) {
+      eng.seek(position)
+      set({ position })
+    }
+    if (playing === get().playing) return
+    if (playing) void eng.playWithFade().catch(() => set({ playing: false }))
+    else eng.pauseWithFade()
   }
 }))
 

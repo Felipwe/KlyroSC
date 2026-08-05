@@ -29,6 +29,10 @@ SoundCloud Modded by: Felipe and Yusuro
 | :---: | :---: |
 | ![Home](assets/readme/home.png) | ![Plugins](assets/readme/plugins.png) |
 
+| Social + Jam ao vivo | Chat criptografado |
+| :---: | :---: |
+| ![Social](assets/readme/social.png) | ![Chat](assets/readme/chat.png) |
+
 | Instalador próprio | Configurações |
 | :---: | :---: |
 | ![Instalador](assets/readme/installer.png) | ![Configurações](assets/readme/settings.png) |
@@ -36,6 +40,10 @@ SoundCloud Modded by: Felipe and Yusuro
 ## O que tem
 
 - [x] **Player nativo**  sem site embutido, sem anúncio de áudio, nunca
+- [x] **KlyroSC Socials**  conta anônima estilo Mullvad: sem e-mail, sem senha  você ganha um nome aleatório (tipo “Bold Zebra”), um ID (#42) e um código secreto de 16 dígitos que é sua única chave
+- [x] **Jam ao vivo**  ouça a mesma música com até 8 amigos em tempo real, com convite, fila sincronizada e controle do dono (libere ou trave pause/skip dos convidados)
+- [x] **Chat criptografado de ponta a ponta**  X25519 + AES-GCM, o servidor só vê texto cifrado; com indicador de “digitando…” ao vivo
+- [x] **Amigos por ID**  adicione pelo #ID, veja quem está online e o que cada um está ouvindo em tempo real
 - [x] **Tema Capa da música**  fundo e cores acompanham a capa da faixa em tempo real (padrão), com Light Yagami e temas 100% personalizados (suas cores, seu fundo, seus perfis, exportar/importar)
 - [x] **Equalizador de 10 bandas**  presets prontos (Rock, Grave, Agudos…), presets seus ilimitados e compartilháveis por arquivo
 - [x] **Em alta do seu país de verdade**  as mais tocadas do dia no Brasil, casadas com o SoundCloud
@@ -46,6 +54,7 @@ SoundCloud Modded by: Felipe and Yusuro
 - [x] **Discord Rich Presence**  mostra o que você está ouvindo, limpo e sem poluição
 - [x] **Biblioteca local**  favoritos, playlists arrastáveis com capa personalizada e histórico por dia
 - [x] **Fila completa**  shuffle, repeat, mini player flutuante e atalhos de teclado
+- [x] **Mix da pesquisa**  tocou uma música da busca? A fila continua com faixas parecidas, não com a mesma música repetida
 - [x] **Plugins**  liga/desliga tudo: Last.fm scrobbler, sleep timer, notificações e mais
 - [x] **Atualização automática**  já vem ativada, baixa e instala sozinho
 - [x] **Instalador próprio**  animado, preto/vermelho, limpa versões antigas sozinho
@@ -79,6 +88,16 @@ O KlyroSC não coleta nenhum dado do usuário tudo fica salvo localmente no seu 
 
 Free code signing on Windows provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 
+## KlyroSC Socials
+
+A aba **Social** conecta você aos amigos sem pedir nenhum dado pessoal:
+
+- **Conta em 1 clique**: o app gera um nome aleatório (“Bold Zebra”), um ID público (#42) e um código secreto de 16 dígitos — igual Mullvad. O código é a única chave da conta: sem e-mail, sem senha, sem recuperação.
+- **Amigos**: adicione pelo #ID, aceite ou recuse pedidos, veja quem está online e o que estão ouvindo ao vivo.
+- **Jam**: até 8 pessoas ouvindo a mesma música em tempo real. O dono convida, controla e decide se os convidados podem pausar/trocar música. Jam parada encerra sozinha.
+- **Chat E2E**: mensagens criptografadas de ponta a ponta (X25519 + HKDF + AES-256-GCM). As chaves privadas nunca saem do seu computador — o servidor só armazena e repassa texto cifrado.
+- **Backend privado** em Railway (Node + Postgres + WebSocket), com rate limiting, sessões com hash e zero endpoints públicos sem autenticação.
+
 ## Stack
 
 ![Electron](https://img.shields.io/badge/Electron-43-2b2e3a?style=flat-square&logo=electron)
@@ -86,7 +105,8 @@ Free code signing on Windows provided by [SignPath.io](https://signpath.io), cer
 ![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/electron--vite-5-646cff?style=flat-square&logo=vite&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-5-443e38?style=flat-square)
-![Vitest](https://img.shields.io/badge/Vitest-95%20testes-6e9f18?style=flat-square&logo=vitest&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-143%20testes-6e9f18?style=flat-square&logo=vitest&logoColor=white)
+![Railway](https://img.shields.io/badge/Socials%20API-Railway%20%C2%B7%20Postgres%20%C2%B7%20WebSocket-853bce?style=flat-square&logo=railway&logoColor=white)
 
 ## Rodando do código
 

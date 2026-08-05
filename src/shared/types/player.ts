@@ -18,6 +18,7 @@ export interface PresencePayload {
   artist: string
   artworkUrl: string | null
   trackUrl: string
+  trackId?: number
   durationSec: number
   positionSec: number
   playing: boolean

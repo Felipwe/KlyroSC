@@ -11,6 +11,7 @@ export const paths = {
   windowStateFile: (): string => path.join(app.getPath('userData'), 'window-state.json'),
   scCacheFile: (): string => path.join(app.getPath('userData'), 'soundcloud.json'),
   pluginStateFile: (): string => path.join(app.getPath('userData'), 'plugins.json'),
+  socialFile: (): string => path.join(app.getPath('userData'), 'social.json'),
   pluginDataDir: (): string => path.join(app.getPath('userData'), 'plugin-data'),
   externalPluginsDir: (): string => path.join(app.getPath('userData'), 'plugins'),
   builtinPluginsDir: (): string =>

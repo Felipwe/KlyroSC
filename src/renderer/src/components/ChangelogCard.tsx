@@ -11,6 +11,25 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.0',
+    pt: [
+      'KlyroSC Socials: conta anônima estilo Mullvad — sem e-mail nem senha, você ganha um nome aleatório, um ID (#42) e um código secreto de 16 dígitos que é sua única chave',
+      'Jam ao vivo: ouça a mesma música com até 8 amigos em tempo real, com convites, fila sincronizada e controle do dono sobre o que os convidados podem fazer',
+      'Chat criptografado de ponta a ponta com indicador de “digitando…” — o servidor nunca vê o conteúdo das mensagens',
+      'Amigos por ID: adicione pelo #ID, veja quem está online e o que estão ouvindo ao vivo',
+      'Tocar da pesquisa virou mix: a fila continua com faixas parecidas em vez de repetir a mesma música',
+      'Visual mais limpo: ícone removido ao lado do logo na barra de título'
+    ],
+    en: [
+      'KlyroSC Socials: Mullvad-style anonymous account — no e-mail or password, you get a random name, an ID (#42) and a secret 16-digit code as your only key',
+      'Live Jam: listen to the same music with up to 8 friends in real time, with invites, synced queue and host control over what guests can do',
+      'End-to-end encrypted chat with a live “typing…” indicator — the server never sees message contents',
+      'Friends by ID: add people by their #ID, see who is online and what they are listening to live',
+      'Playing from search is now a mix: the queue continues with similar tracks instead of repeating the same song',
+      'Cleaner look: removed the icon next to the logo in the title bar'
+    ]
+  },
+  {
     version: '2.6.1',
     pt: [
       'Novo seletor de cores do tema personalizado: painel próprio do KlyroSC com área de saturação, barra de matiz, campo hex, conta-gotas para capturar cor da tela e cores prontas — adeus janelinha padrão do navegador',

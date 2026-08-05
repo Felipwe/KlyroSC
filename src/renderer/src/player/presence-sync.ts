@@ -21,6 +21,7 @@ function sendPresence(): void {
     artist: state.current.artist,
     artworkUrl: state.current.artwork,
     trackUrl: state.current.url,
+    trackId: state.current.id,
     durationSec: state.duration,
     positionSec: state.position,
     playing: state.playing

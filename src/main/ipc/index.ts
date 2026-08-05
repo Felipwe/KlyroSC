@@ -7,10 +7,12 @@ import { type ScAuthService } from '../services/soundcloud/auth'
 import { type PresenceManager } from '../integrations/discord/presence'
 import { type PluginManager } from '../plugins/manager'
 import { type UpdaterService } from '../updater'
+import { type SocialService } from '../services/social/service'
 import { registerAppIpc } from './app'
 import { registerDataIpc } from './data'
 import { registerSoundCloudIpc } from './soundcloud'
 import { registerFeatureIpc } from './features'
+import { registerSocialIpc } from './social'
 
 export interface AppContext {
   mainWindow: MainWindow
@@ -22,6 +24,7 @@ export interface AppContext {
   presence: PresenceManager
   plugins: PluginManager
   updater: UpdaterService
+  social: SocialService
   flushers: (() => void)[]
 }
 
@@ -30,4 +33,5 @@ export function registerIpc(ctx: AppContext): void {
   registerDataIpc(ctx)
   registerSoundCloudIpc(ctx)
   registerFeatureIpc(ctx)
+  registerSocialIpc(ctx)
 }

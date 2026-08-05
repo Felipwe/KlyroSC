@@ -1,0 +1,30 @@
+{
+  "name": "klyrosc-social-server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "KlyroSC Socials API — Mullvad-style accounts, friends, presence and listening jams.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "pg": "^8.16.3",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^22.19.11",
+    "@types/pg": "^8.15.6",
+    "@types/ws": "^8.18.1",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

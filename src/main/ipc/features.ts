@@ -17,6 +17,7 @@ const parsePresence = (raw: unknown): PresencePayload | null => {
     artist: raw.artist,
     artworkUrl: typeof raw.artworkUrl === 'string' ? raw.artworkUrl : null,
     trackUrl: typeof raw.trackUrl === 'string' ? raw.trackUrl : '',
+    trackId: typeof raw.trackId === 'number' ? raw.trackId : undefined,
     durationSec: typeof raw.durationSec === 'number' ? raw.durationSec : 0,
     positionSec: typeof raw.positionSec === 'number' ? raw.positionSec : 0,
     playing: raw.playing === true
@@ -28,6 +29,17 @@ export function registerFeatureIpc(ctx: AppContext): void {
     const parsed = parsePresence(payload)
     ctx.presence.update(parsed)
     ctx.trayPopup.setNowPlaying(parsed)
+    ctx.social.setNowPlaying(
+      parsed && typeof parsed.trackId === 'number' && parsed.trackId > 0
+        ? {
+            trackId: parsed.trackId,
+            title: parsed.title,
+            artist: parsed.artist,
+            artwork: parsed.artworkUrl,
+            playing: parsed.playing
+          }
+        : null
+    )
   })
 
   handle(IPC.authStatus, () => ctx.auth.state())

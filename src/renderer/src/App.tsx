@@ -10,6 +10,7 @@ import { initPlayer } from '@renderer/player/store'
 import { initMediaSession } from '@renderer/player/media-session'
 import { initPresenceSync } from '@renderer/player/presence-sync'
 import { initDynamicTheme } from '@renderer/player/dynamic-theme'
+import { initJamSync } from '@renderer/player/jam-sync'
 import { useKeyboardShortcuts } from '@renderer/hooks/keyboard'
 import { buildAppIcon } from '@renderer/utils/icon-tint'
 import { TitleBar } from '@renderer/layouts/TitleBar'
@@ -28,6 +29,7 @@ import { LoginPrompt } from '@renderer/components/LoginPrompt'
 import { ChangelogCard } from '@renderer/components/ChangelogCard'
 import { BootSplash } from '@renderer/components/BootSplash'
 import { useAuth } from '@renderer/stores/auth'
+import { useSocial } from '@renderer/stores/social'
 import { HomePage } from '@renderer/pages/HomePage'
 import { SearchPage } from '@renderer/pages/SearchPage'
 import { FavoritesPage, HistoryPage } from '@renderer/pages/LibraryPages'
@@ -35,6 +37,7 @@ import { PlaylistsPage, LocalPlaylistPage, RemotePlaylistPage } from '@renderer/
 import { ArtistPage } from '@renderer/pages/ArtistPage'
 import { TrackPage } from '@renderer/pages/TrackPage'
 import { SettingsPage } from '@renderer/pages/SettingsPage'
+import { SocialPage } from '@renderer/pages/SocialPage'
 
 function PageRouter({ route }: { route: Route }): JSX.Element {
   switch (route.name) {
@@ -44,6 +47,8 @@ function PageRouter({ route }: { route: Route }): JSX.Element {
       return <SearchPage initialQuery={route.query} />
     case 'favorites':
       return <FavoritesPage />
+    case 'social':
+      return <SocialPage />
     case 'history':
       return <HistoryPage />
     case 'playlists':
@@ -94,6 +99,8 @@ export default function App(): JSX.Element {
         initMediaSession()
         initPresenceSync()
         initDynamicTheme()
+        await useSocial.getState().load()
+        initJamSync()
         await useAuth.getState().load()
         const info = await api.app.info()
         const seen = useSettings.getState().settings.system.lastSeenVersion

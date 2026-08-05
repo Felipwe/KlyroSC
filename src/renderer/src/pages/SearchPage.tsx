@@ -47,7 +47,7 @@ export function SearchPage({ initialQuery }: { initialQuery?: string }): JSX.Ele
       return
     }
     const nav = useNav.getState()
-    if (resolved.data.kind === 'track') usePlayer.getState().playNow(resolved.data.track)
+    if (resolved.data.kind === 'track') usePlayer.getState().playStation(resolved.data.track)
     else if (resolved.data.kind === 'playlist')
       nav.push({ name: 'playlist', ref: resolved.data.ref, local: false })
     else if (resolved.data.kind === 'artist') nav.push({ name: 'artist', id: resolved.data.id })
@@ -165,7 +165,13 @@ export function SearchPage({ initialQuery }: { initialQuery?: string }): JSX.Ele
       ) : (
         <>
           {tracks ? (
-            <TrackList tracks={tracks} />
+            <TrackList
+              tracks={tracks}
+              onPlayIndex={(index) => {
+                const track = tracks[index]
+                if (track) usePlayer.getState().playStation(track)
+              }}
+            />
           ) : (
             <div className="grid-cards">
               {kind === 'artists' &&

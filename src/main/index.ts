@@ -18,6 +18,7 @@ import { ScAuthService } from './services/soundcloud/auth'
 import { PresenceManager } from './integrations/discord/presence'
 import { PluginManager } from './plugins/manager'
 import { UpdaterService } from './updater'
+import { SocialService } from './services/social/service'
 import { registerIpc, type AppContext } from './ipc'
 import { runSmokeCapture } from './smoke'
 
@@ -91,6 +92,13 @@ function bootstrap(): void {
       mainWindow.isQuitting = true
     }
   )
+  const social = new SocialService(
+    (snapshot) => mainWindow.send(IPC.socialState, snapshot),
+    (playback) => mainWindow.send(IPC.socialJamPlayback, playback),
+    (payload) => mainWindow.send(IPC.socialChatMessage, payload),
+    (payload) => mainWindow.send(IPC.socialChatSent, payload),
+    (payload) => mainWindow.send(IPC.socialChatTypingEvent, payload)
+  )
 
   const ctx: AppContext = {
     mainWindow,
@@ -102,6 +110,7 @@ function bootstrap(): void {
     presence,
     plugins,
     updater,
+    social,
     flushers: []
   }
 
@@ -144,6 +153,7 @@ function bootstrap(): void {
     plugins.onChange(applySystemPlugins)
     void auth.init()
     auth.onChange((state) => mainWindow.send(IPC.authChanged, state))
+    social.init()
 
     settings.onChange((next, previous) => {
       mainWindow.send(IPC.settingsChanged, next)
@@ -187,6 +197,7 @@ function bootstrap(): void {
     presence.destroy()
     plugins.stopAll()
     trayPopup.destroy()
+    social.destroy()
     settings.flush()
     library.flush()
     for (const flush of ctx.flushers) flush()
