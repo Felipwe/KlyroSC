@@ -8,6 +8,7 @@ import { logger } from '../../core/logger'
 import { setScAuthToken, SC_UA } from './client'
 import { artworkUrl } from './mappers'
 import { type SoundCloudApi } from './api'
+import { isTrustedAuthPopupUrl } from '@shared/utils/auth-popup'
 
 const log = logger.scope('sc-auth')
 const PARTITION = 'persist:sc-auth'
@@ -155,6 +156,7 @@ export class ScAuthService {
         }
       })
       this.loginWindow = win
+      const providerWindows = new Set<BrowserWindow>()
 
       let settled = false
       const cookieListener = (): void => void check()
@@ -166,6 +168,10 @@ export class ScAuthService {
         clearTimeout(timeout)
         this.session.cookies.removeListener('changed', cookieListener)
         this.loginWindow = null
+        for (const providerWindow of providerWindows) {
+          if (!providerWindow.isDestroyed()) providerWindow.close()
+        }
+        providerWindows.clear()
         if (!win.isDestroyed()) win.close()
         resolve(token)
       }
@@ -178,17 +184,52 @@ export class ScAuthService {
 
       this.session.cookies.on('changed', cookieListener)
       win.webContents.on('did-navigate', () => void check())
-      win.webContents.setWindowOpenHandler(({ url }) =>
-        url.startsWith('https://') ? { action: 'allow' } : { action: 'deny' }
-      )
+
+      const installPopupPolicy = (contents: Electron.WebContents): void => {
+        contents.setWindowOpenHandler(({ url }) => {
+          if (!isTrustedAuthPopupUrl(url)) {
+            log.warn(`blocked untrusted login popup: ${url.slice(0, 200)}`)
+            return { action: 'deny' }
+          }
+          return {
+            action: 'allow',
+            overrideBrowserWindowOptions: {
+              parent: win,
+              autoHideMenuBar: true,
+              backgroundColor: '#0a0b12',
+              webPreferences: {
+                partition: PARTITION,
+                nodeIntegration: false,
+                contextIsolation: true,
+                sandbox: true
+              }
+            }
+          }
+        })
+
+        contents.on('did-create-window', (child) => {
+          providerWindows.add(child)
+          child.setMenuBarVisibility(false)
+          installPopupPolicy(child.webContents)
+
+          const guardNavigation = (event: Electron.Event, url: string): void => {
+            if (isTrustedAuthPopupUrl(url)) return
+            event.preventDefault()
+            log.warn(`blocked untrusted login navigation: ${url.slice(0, 200)}`)
+          }
+          child.webContents.on('will-navigate', guardNavigation)
+          child.webContents.on('will-redirect', guardNavigation)
+          child.webContents.on('did-navigate', () => void check())
+          child.on('closed', () => {
+            providerWindows.delete(child)
+            void check()
+          })
+        })
+      }
+
+      installPopupPolicy(win.webContents)
       win.on('closed', () => {
-        if (!settled) {
-          settled = true
-          clearTimeout(timeout)
-          this.session.cookies.removeListener('changed', cookieListener)
-          this.loginWindow = null
-          resolve(null)
-        }
+        if (!settled) finish(null)
       })
 
       void win.loadURL(SIGNIN_URL)

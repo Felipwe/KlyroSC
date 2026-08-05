@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.4',
+    pt: [
+      'Login com Google, Facebook e Apple corrigido: o SoundCloud agora consegue abrir a janela segura do provedor sem pedir para ativar popups',
+      'A janela do provedor usa a mesma sessão do SoundCloud e fecha automaticamente quando o login termina'
+    ],
+    en: [
+      'Google, Facebook and Apple login fixed: SoundCloud can now open the secure provider window without asking you to enable popups',
+      'The provider window shares the SoundCloud session and closes automatically when login completes'
+    ]
+  },
+  {
     version: '2.5.3',
     pt: [
       'Login com SoundCloud corrigido: quem via a tela “You have been blocked” agora consegue entrar normalmente',
