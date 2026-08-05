@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { type Track } from '@shared/types/track'
 import { type RepeatMode } from '@shared/types/player'
 import { QUEUE_PERSIST_LIMIT } from '@shared/constants'
+import { type EqState } from '@shared/utils/eq'
 import { api } from '@renderer/services/ipc'
 import { t } from '@renderer/i18n'
 import { toast } from '@renderer/stores/toasts'
@@ -48,6 +49,12 @@ let consecutiveErrors = 0
 let playerInitialized = false
 let smartShuffleEnabled = true
 let forcedPreview = false
+let volumePersistTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Applies EQ straight to the audio graph without persisting (live preview while dragging). */
+export function applyEqLive(eq: EqState): void {
+  getEngine().setEq(eq)
+}
 
 const pickShuffle = (): typeof shuffled => (smartShuffleEnabled ? smartShuffled : shuffled)
 
@@ -290,7 +297,13 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const clamped = Math.min(1, Math.max(0, volume))
     set({ volume: clamped, muted: false })
     getEngine().setVolume(clamped)
-    void useSettings.getState().update({ playback: { volume: clamped, muted: false } })
+    // trailing debounce so rapid slider drags cannot persist out of order
+    if (volumePersistTimer) clearTimeout(volumePersistTimer)
+    volumePersistTimer = setTimeout(() => {
+      volumePersistTimer = null
+      const state = get()
+      void useSettings.getState().update({ playback: { volume: state.volume, muted: state.muted } })
+    }, 350)
   },
 
   toggleMute: () => {
@@ -333,9 +346,11 @@ export async function initPlayer(): Promise<void> {
   const eng = getEngine()
   eng.setVolume(settings.playback.muted ? 0 : settings.playback.volume)
   eng.setFade(settings.playback.fadeMs)
+  eng.setEq(settings.eq)
 
-  useSettings.subscribe((state) => {
+  useSettings.subscribe((state, previous) => {
     eng.setFade(state.settings.playback.fadeMs)
+    if (state.settings.eq !== previous.settings.eq) eng.setEq(state.settings.eq)
   })
 
   if (settings.playback.resumeOnLaunch) {

@@ -96,6 +96,7 @@ export interface KlyroApi {
     addToPlaylist(id: string, tracks: Track[]): Promise<LibraryData>
     removeFromPlaylist(id: string, index: number): Promise<LibraryData>
     moveInPlaylist(id: string, from: number, to: number): Promise<LibraryData>
+    movePlaylist(from: number, to: number): Promise<LibraryData>
     addHistory(track: Track): Promise<LibraryData>
     clearHistory(): Promise<LibraryData>
     exportData(): Promise<Result<string | null>>
@@ -186,6 +187,7 @@ export const IPC = {
   libraryAddToPlaylist: 'library:add-to-playlist',
   libraryRemoveFromPlaylist: 'library:remove-from-playlist',
   libraryMoveInPlaylist: 'library:move-in-playlist',
+  libraryMovePlaylist: 'library:move-playlist',
   libraryAddHistory: 'library:add-history',
   libraryClearHistory: 'library:clear-history',
   libraryExport: 'library:export',

@@ -19,6 +19,7 @@ interface LibraryState {
   addToPlaylist(id: string, tracks: Track[]): Promise<void>
   removeFromPlaylist(id: string, index: number): Promise<void>
   moveInPlaylist(id: string, from: number, to: number): Promise<void>
+  movePlaylist(from: number, to: number): Promise<void>
   addHistory(track: Track): void
   clearHistory(): Promise<void>
 }
@@ -88,6 +89,19 @@ export const useLibrary = create<LibraryState>((set, get) => ({
 
   moveInPlaylist: async (id, from, to) => {
     const data = await api.library.moveInPlaylist(id, from, to)
+    set({ data })
+  },
+
+  movePlaylist: async (from, to) => {
+    // optimistic reorder so the drop feels instant
+    const current = get().data
+    const playlists = [...current.playlists]
+    const [moved] = playlists.splice(from, 1)
+    if (moved) {
+      playlists.splice(to, 0, moved)
+      set({ data: { ...current, playlists } })
+    }
+    const data = await api.library.movePlaylist(from, to)
     set({ data })
   },
 

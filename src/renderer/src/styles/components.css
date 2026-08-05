@@ -588,6 +588,15 @@
   transform-origin: bottom right;
 }
 
+/* portal variant: positioned in viewport coordinates, immune to clipping */
+.kselect-pop {
+  position: fixed;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  z-index: 95;
+}
+
 .kselect-item {
   display: flex;
   align-items: center;

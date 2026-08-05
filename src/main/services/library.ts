@@ -119,6 +119,15 @@ export class LibraryService {
     })
   }
 
+  movePlaylist(from: number, to: number): LibraryData {
+    return this.mutate((data) => {
+      const len = data.playlists.length
+      if (from < 0 || from >= len || to < 0 || to >= len || from === to) return
+      const [moved] = data.playlists.splice(from, 1)
+      if (moved) data.playlists.splice(to, 0, moved)
+    })
+  }
+
   addToPlaylist(id: string, tracks: Track[]): LibraryData {
     return this.mutate((data) => {
       const playlist = data.playlists.find((p) => p.id === id)

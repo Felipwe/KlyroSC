@@ -844,6 +844,190 @@ kbd {
   word-break: break-word;
 }
 
+/* ── Equalizer ─────────────────────────────────────────── */
+
+.eq-preset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eq-board {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  padding: 22px 18px 14px;
+  margin: 6px 0 2px;
+  border-radius: var(--radius-l);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 55%),
+    var(--surface);
+  border: 1px solid var(--stroke);
+  transition: opacity var(--t-med), filter var(--t-med);
+}
+
+.eq-board.disabled {
+  opacity: 0.42;
+  filter: saturate(0.4);
+  pointer-events: none;
+}
+
+.eq-scale {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px 0 26px;
+  color: var(--text-faint);
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 22px;
+}
+
+.eq-divider {
+  width: 1px;
+  background: var(--stroke);
+  margin: 8px 2px;
+}
+
+.eq-bands {
+  position: relative;
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+}
+
+.eq-curve {
+  position: absolute;
+  inset: 24px 14px 28px;
+  width: calc(100% - 28px);
+  height: calc(100% - 52px);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.eq-curve .eq-zero {
+  stroke: var(--stroke-strong);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.eq-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 30px;
+  z-index: 1;
+}
+
+.eq-band.preamp {
+  flex: 0 0 40px;
+}
+
+.eq-band-value {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--t-fast);
+}
+
+.eq-band:hover .eq-band-value {
+  color: var(--accent-text);
+}
+
+.eq-band-freq {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.eq-band.preamp .eq-band-freq {
+  color: var(--accent-text);
+}
+
+.eq-track {
+  position: relative;
+  width: 100%;
+  height: 190px;
+  cursor: pointer;
+  border-radius: 8px;
+  outline: none;
+  touch-action: none;
+}
+
+.eq-track:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.eq-rail {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: var(--surface-active);
+}
+
+.eq-fill {
+  position: absolute;
+  left: 50%;
+  width: 4px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: var(--accent-gradient);
+}
+
+.eq-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55), 0 0 0 3px var(--accent-soft);
+  transition: box-shadow var(--t-fast);
+  pointer-events: none;
+}
+
+.eq-track:hover .eq-thumb,
+.eq-track:focus-visible .eq-thumb {
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55), 0 0 0 5px var(--accent-soft), var(--glow);
+}
+
+.eq-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Playlist drag & drop ─────────────────────────────── */
+
+.pl-draggable {
+  transition: opacity var(--t-fast), outline-color var(--t-fast), transform var(--t-med);
+}
+
+.pl-draggable.dragging {
+  opacity: 0.35;
+}
+
+.media-card.drop-target {
+  outline: 2px solid var(--accent-a);
+  outline-offset: 2px;
+  transform: scale(1.02);
+}
+
 @media (max-width: 900px) {
   .track-hero {
     align-items: flex-start;

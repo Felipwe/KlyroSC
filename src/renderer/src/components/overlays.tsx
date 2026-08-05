@@ -10,21 +10,24 @@ export function ContextMenuHost(): JSX.Element | null {
   const menu = useUi((state) => state.menu)
   const closeMenu = useUi((state) => state.closeMenu)
   const ref = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState({ x: menu.x, y: menu.y })
-
-  useEffect(() => {
-    setPos({ x: menu.x, y: menu.y })
-  }, [menu.x, menu.y, menu.items])
+  const [pos, setPos] = useState<{ x: number; y: number; origin: string } | null>(null)
 
   useLayoutEffect(() => {
-    if (!menu.open) return
-    const el = ref.current
-    if (el) {
-      const rect = el.getBoundingClientRect()
-      const x = Math.min(menu.x, window.innerWidth - rect.width - 8)
-      const y = Math.min(menu.y, window.innerHeight - rect.height - 8)
-      setPos({ x: Math.max(8, x), y: Math.max(8, y) })
+    if (!menu.open) {
+      setPos(null)
+      return
     }
+    const el = ref.current
+    if (!el) return
+    // offsetWidth/Height ignore the scale-in transform, unlike getBoundingClientRect
+    const width = el.offsetWidth
+    const height = el.offsetHeight
+    const margin = 8
+    const flipX = menu.x + width > window.innerWidth - margin && menu.x - width >= margin
+    const flipY = menu.y + height > window.innerHeight - margin && menu.y - height >= margin
+    const x = Math.max(margin, Math.min(flipX ? menu.x - width : menu.x, window.innerWidth - width - margin))
+    const y = Math.max(margin, Math.min(flipY ? menu.y - height : menu.y, window.innerHeight - height - margin))
+    setPos({ x, y, origin: `${flipY ? 'bottom' : 'top'} ${flipX ? 'right' : 'left'}` })
   }, [menu.open, menu.x, menu.y, menu.items])
 
   useEffect(() => {
@@ -47,7 +50,16 @@ export function ContextMenuHost(): JSX.Element | null {
 
   if (!menu.open) return null
   return (
-    <div ref={ref} className="ctx-menu glass" style={{ left: pos.x, top: pos.y }} role="menu">
+    <div
+      ref={ref}
+      className="ctx-menu glass"
+      style={
+        pos
+          ? { left: pos.x, top: pos.y, transformOrigin: pos.origin }
+          : { left: menu.x, top: menu.y, visibility: 'hidden' }
+      }
+      role="menu"
+    >
       {menu.items.map((item, index) =>
         item.id === 'sep' ? (
           <div key={`sep-${index}`} className="ctx-sep" />

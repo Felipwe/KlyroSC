@@ -1,4 +1,5 @@
 import { isRecord, type DeepPartial } from './result'
+import { EQ_GAIN_LIMIT, sanitizeEqGains, type EqCustomPreset } from '../utils/eq'
 
 export type LanguageSetting = 'auto' | 'en' | 'pt'
 export type AccentId = 'yagami' | 'aurora' | 'ember' | 'ocean' | 'orchid' | 'mint'
@@ -21,6 +22,12 @@ export interface Settings {
     resumeOnLaunch: boolean
     quality: StreamQuality
     fadeMs: number
+  }
+  eq: {
+    enabled: boolean
+    preamp: number
+    gains: number[]
+    custom: EqCustomPreset[]
   }
   discord: {
     enabled: boolean
@@ -63,6 +70,12 @@ export const DEFAULT_SETTINGS: Settings = {
     quality: 'auto',
     fadeMs: 220
   },
+  eq: {
+    enabled: false,
+    preamp: 0,
+    gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    custom: []
+  },
   discord: {
     enabled: true,
     showButtons: true,
@@ -104,11 +117,27 @@ const oneOf = <T extends string>(value: unknown, options: readonly T[], fallback
 const str = (value: unknown, fallback: string, maxLen = 200): string =>
   typeof value === 'string' ? value.slice(0, maxLen) : fallback
 
+function sanitizeEqCustom(raw: unknown): EqCustomPreset[] {
+  if (!Array.isArray(raw)) return []
+  const presets: EqCustomPreset[] = []
+  const seen = new Set<string>()
+  for (const entry of raw) {
+    if (!isRecord(entry) || typeof entry.name !== 'string') continue
+    const name = entry.name.trim().slice(0, 40)
+    if (!name || seen.has(name.toLowerCase())) continue
+    seen.add(name.toLowerCase())
+    presets.push({ name, gains: sanitizeEqGains(entry.gains) })
+    if (presets.length >= 200) break
+  }
+  return presets
+}
+
 export function sanitizeSettings(raw: unknown): Settings {
   const r = isRecord(raw) ? raw : {}
   const d = DEFAULT_SETTINGS
   const appearance = isRecord(r.appearance) ? r.appearance : {}
   const playback = isRecord(r.playback) ? r.playback : {}
+  const eq = isRecord(r.eq) ? r.eq : {}
   const discord = isRecord(r.discord) ? r.discord : {}
   const updates = isRecord(r.updates) ? r.updates : {}
   const performance = isRecord(r.performance) ? r.performance : {}
@@ -140,6 +169,12 @@ export function sanitizeSettings(raw: unknown): Settings {
         d.playback.quality
       ),
       fadeMs: num(playback.fadeMs, 0, 1000, d.playback.fadeMs)
+    },
+    eq: {
+      enabled: bool(eq.enabled, d.eq.enabled),
+      preamp: num(eq.preamp, -EQ_GAIN_LIMIT, EQ_GAIN_LIMIT, d.eq.preamp),
+      gains: sanitizeEqGains(eq.gains),
+      custom: sanitizeEqCustom(eq.custom)
     },
     discord: {
       enabled: bool(discord.enabled, d.discord.enabled),

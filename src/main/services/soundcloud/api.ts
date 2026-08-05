@@ -183,12 +183,11 @@ export class SoundCloudApi {
   }
 
   async addComment(trackId: number, body: string, timestampMs: number | null): Promise<TrackComment | null> {
-    const comment: Record<string, unknown> = { body }
-    if (timestampMs !== null) comment.timestamp = timestampMs
+    // api-v2 wants body/timestamp as query params (matches the web client's commentCreate)
     const raw = await this.client.api(
       `/tracks/${trackId}/comments`,
-      {},
-      { method: 'POST', body: { comment } }
+      { body, timestamp: timestampMs ?? 0 },
+      { method: 'POST' }
     )
     return mapComment(raw)
   }

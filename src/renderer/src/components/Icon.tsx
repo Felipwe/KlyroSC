@@ -274,6 +274,19 @@ export const ICONS = {
       {stroke('M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z')}
       {stroke('M12 10v4')}
     </>
+  ),
+  sliders: (
+    <>
+      {stroke('M5 21v-6')}
+      {stroke('M5 11V3')}
+      {stroke('M12 21v-9')}
+      {stroke('M12 8V3')}
+      {stroke('M19 21v-4')}
+      {stroke('M19 13V3')}
+      {stroke('M2.5 15h5')}
+      {stroke('M9.5 8h5')}
+      {stroke('M16.5 17h5')}
+    </>
   )
 } as const
 

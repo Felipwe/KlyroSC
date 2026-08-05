@@ -1,6 +1,8 @@
 import { app, dialog, nativeImage, shell } from 'electron'
 import fs from 'node:fs'
 import { IPC, type AppInfo, type OpenPathKind } from '@shared/types/ipc'
+import { isRecord, type DeepPartial } from '@shared/types/result'
+import { type Settings } from '@shared/types/settings'
 import { ensureDir, paths } from '../core/paths'
 import { logger } from '../core/logger'
 import { handle, handleResult, on } from './core'
@@ -74,7 +76,13 @@ export function registerAppIpc(ctx: AppContext): void {
       filters: [{ name: 'JSON', extensions: ['json'] }]
     })
     if (result.canceled || !result.filePath) return null
-    fs.writeFileSync(result.filePath, ctx.library.serialize(), 'utf8')
+    const payload = {
+      format: 'klyrosc-backup',
+      version: 2,
+      library: JSON.parse(ctx.library.serialize()) as unknown,
+      eq: ctx.settings.get().eq
+    }
+    fs.writeFileSync(result.filePath, JSON.stringify(payload, null, 2), 'utf8')
     return result.filePath
   })
 
@@ -88,6 +96,11 @@ export function registerAppIpc(ctx: AppContext): void {
     const file = result.filePaths[0]
     if (result.canceled || !file) return null
     const raw: unknown = JSON.parse(fs.readFileSync(file, 'utf8'))
+    // v2 backups wrap the library and carry the EQ config; older files are the bare library
+    if (isRecord(raw) && isRecord(raw.library)) {
+      if (isRecord(raw.eq)) ctx.settings.patch({ eq: raw.eq } as DeepPartial<Settings>)
+      return ctx.library.replace(raw.library)
+    }
     return ctx.library.replace(raw)
   })
 

@@ -84,6 +84,12 @@ export function registerDataIpc(ctx: AppContext): void {
       ? ctx.library.moveInPlaylist(p.id, p.from, p.to)
       : ctx.library.get()
   })
+  handle(IPC.libraryMovePlaylist, (payload) => {
+    const p = payload as { from?: unknown; to?: unknown }
+    return typeof p?.from === 'number' && typeof p?.to === 'number'
+      ? ctx.library.movePlaylist(Math.floor(p.from), Math.floor(p.to))
+      : ctx.library.get()
+  })
   handle(IPC.libraryAddHistory, (track) =>
     isStoredTrack(track) ? ctx.library.addHistory(track) : ctx.library.get()
   )

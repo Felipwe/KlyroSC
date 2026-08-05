@@ -1,3 +1,4 @@
+import { session } from 'electron'
 import { SC_API_BASE, SC_HOME_URL } from '@shared/constants'
 import { JsonStore } from '../../core/store'
 import { paths } from '../../core/paths'
@@ -5,6 +6,8 @@ import { logger } from '../../core/logger'
 import { isRecord } from '@shared/types/result'
 
 const log = logger.scope('sc-client')
+
+const AUTH_PARTITION = 'persist:sc-auth'
 
 export const SC_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
@@ -96,15 +99,42 @@ export class ScClient {
   }
 
   private async request(url: string, init?: RequestInitLite): Promise<unknown> {
+    const method = init?.method ?? 'GET'
+    const body = init?.body !== undefined ? JSON.stringify(init.body) : undefined
+
+    // Writes must look like the logged-in web app: Chromium's network stack with the
+    // sc-auth session cookies (datadome & friends) — plain node fetch gets rejected.
+    if (method !== 'GET' && authToken) {
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        Authorization: `OAuth ${authToken}`,
+        Origin: 'https://soundcloud.com',
+        Referer: 'https://soundcloud.com/'
+      }
+      if (body !== undefined) headers['Content-Type'] = 'application/json'
+      const res = await session.fromPartition(AUTH_PARTITION).fetch(url, {
+        method,
+        headers,
+        body,
+        credentials: 'include',
+        signal: AbortSignal.timeout(15000)
+      })
+      return this.parseResponse(res)
+    }
+
     const headers: Record<string, string> = { 'User-Agent': UA, Accept: 'application/json' }
     if (authToken) headers.Authorization = `OAuth ${authToken}`
-    if (init?.body !== undefined) headers['Content-Type'] = 'application/json'
+    if (body !== undefined) headers['Content-Type'] = 'application/json'
     const res = await fetch(url, {
-      method: init?.method ?? 'GET',
+      method,
       headers,
-      body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
+      body,
       signal: AbortSignal.timeout(15000)
     })
+    return this.parseResponse(res)
+  }
+
+  private async parseResponse(res: Response): Promise<unknown> {
     if (res.status === 401 || res.status === 403) throw new UnauthorizedError()
     if (!res.ok) throw new Error(`SoundCloud API error ${res.status}`)
     const text = await res.text()

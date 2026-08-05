@@ -7,12 +7,14 @@ import { Select, Switch } from '@renderer/components/controls'
 import { toast } from '@renderer/stores/toasts'
 import { type AccentId } from '@shared/types/settings'
 import { PluginsPanel, UpdatesPanel, DataPanel, AboutPanel, ShortcutsPanel, AccountPanel } from './settings-panels'
+import { EqualizerPanel } from './EqualizerPanel'
 
 const SECTIONS: { id: string; icon: IconName }[] = [
   { id: 'account', icon: 'user' },
   { id: 'appearance', icon: 'sparkle' },
   { id: 'language', icon: 'globe' },
   { id: 'playback', icon: 'playCircle' },
+  { id: 'equalizer', icon: 'sliders' },
   { id: 'discord', icon: 'activity' },
   { id: 'plugins', icon: 'plug' },
   { id: 'updates', icon: 'refresh' },
@@ -83,6 +85,8 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
           <h2 className="settings-section-title">{t(`settings.sections.${section}`)}</h2>
 
           {section === 'account' && <AccountPanel />}
+
+          {section === 'equalizer' && <EqualizerPanel />}
 
           {section === 'appearance' && (
             <>

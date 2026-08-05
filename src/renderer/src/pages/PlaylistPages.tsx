@@ -11,12 +11,14 @@ import { TrackList } from '@renderer/components/TrackList'
 import { Empty, ErrorState, Loading } from '@renderer/components/Status'
 import { Artwork } from '@renderer/components/Artwork'
 import { Icon } from '@renderer/components/Icon'
-import { formatDate, formatTime } from '@renderer/utils/format'
+import { cx, formatDate, formatTime } from '@renderer/utils/format'
 
 export function PlaylistsPage(): JSX.Element {
   useLanguage()
   const playlists = useLibrary((state) => state.data.playlists)
   const locale = getLanguage() === 'pt' ? 'pt-BR' : 'en-US'
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
 
   const createPlaylist = (): void =>
     useUi.getState().openModal({
@@ -28,6 +30,11 @@ export function PlaylistsPage(): JSX.Element {
         if (name) void useLibrary.getState().createPlaylist(name)
       }
     })
+
+  const finishDrag = (): void => {
+    setDragIndex(null)
+    setDropIndex(null)
+  }
 
   return (
     <div className="page">
@@ -42,10 +49,37 @@ export function PlaylistsPage(): JSX.Element {
         <Empty icon="queue" title={t('playlists.empty')} hint={t('playlists.emptyHint')} />
       ) : (
         <div className="grid-cards">
-          {playlists.map((playlist) => (
+          {playlists.map((playlist, index) => (
             <div
               key={playlist.id}
-              className="media-card card"
+              className={cx(
+                'media-card card pl-draggable',
+                dragIndex === index && 'dragging',
+                dropIndex === index && dragIndex !== null && dragIndex !== index && 'drop-target'
+              )}
+              draggable
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('text/plain', playlist.id)
+                setDragIndex(index)
+              }}
+              onDragEnd={finishDrag}
+              onDragOver={(event) => {
+                if (dragIndex === null) return
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+                if (dropIndex !== index) setDropIndex(index)
+              }}
+              onDragLeave={(event) => {
+                if (event.currentTarget.contains(event.relatedTarget as Node)) return
+                if (dropIndex === index) setDropIndex(null)
+              }}
+              onDrop={(event) => {
+                event.preventDefault()
+                if (dragIndex !== null && dragIndex !== index)
+                  void useLibrary.getState().movePlaylist(dragIndex, index)
+                finishDrag()
+              }}
               onClick={() => useNav.getState().push({ name: 'playlist', ref: playlist.id, local: true })}
             >
               <Artwork

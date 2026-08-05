@@ -1,5 +1,6 @@
 import type Hls from 'hls.js'
 import { type StreamSource } from '@shared/types/player'
+import { EQ_BAND_COUNT, EQ_FREQUENCIES, type EqState } from '@shared/utils/eq'
 import { api, reportError } from '@renderer/services/ipc'
 import { clamp } from '@renderer/utils/format'
 
@@ -11,6 +12,13 @@ export interface EngineEvents {
   onBuffering(buffering: boolean): void
   onPlayingChange(playing: boolean): void
   onStreamInfo(info: { preview: boolean; substituted: boolean }): void
+}
+
+interface AudioGraph {
+  ctx: AudioContext
+  preamp: GainNode
+  filters: BiquadFilterNode[]
+  volume: GainNode
 }
 
 export class AudioEngine {
@@ -25,9 +33,13 @@ export class AudioEngine {
   private targetVolume = 0.8
   private fadeMs = 220
   private fadeTimer: ReturnType<typeof setInterval> | null = null
+  private graph: AudioGraph | null = null
 
   constructor(private events: EngineEvents) {
     this.audio.preload = 'auto'
+    // required so MediaElementSource receives samples from the SC CDNs (they send ACAO:*)
+    this.audio.crossOrigin = 'anonymous'
+    this.initGraph()
     this.audio.addEventListener('timeupdate', () => {
       // ignore echoes from before a pending seek completed
       if (this.sourceReady && this.pendingSeeks === 0) this.events.onTime(this.audio.currentTime)
@@ -56,6 +68,51 @@ export class AudioEngine {
     this.audio.addEventListener('pause', () => this.events.onPlayingChange(false))
     this.audio.addEventListener('error', () => {
       if (this.audio.src) this.emitError('audio element error')
+    })
+  }
+
+  private initGraph(): void {
+    try {
+      const ctx = new AudioContext({ latencyHint: 'playback' })
+      const source = ctx.createMediaElementSource(this.audio)
+      const preamp = ctx.createGain()
+      const volume = ctx.createGain()
+      const filters: BiquadFilterNode[] = []
+      for (let i = 0; i < EQ_BAND_COUNT; i++) {
+        const filter = ctx.createBiquadFilter()
+        filter.type = i === 0 ? 'lowshelf' : i === EQ_BAND_COUNT - 1 ? 'highshelf' : 'peaking'
+        filter.frequency.value = EQ_FREQUENCIES[i] ?? 1000
+        filter.Q.value = 1.1
+        filter.gain.value = 0
+        filters.push(filter)
+      }
+      source.connect(preamp)
+      let node: AudioNode = preamp
+      for (const filter of filters) {
+        node.connect(filter)
+        node = filter
+      }
+      node.connect(volume)
+      volume.connect(ctx.destination)
+      volume.gain.value = this.targetVolume ** 2
+      this.graph = { ctx, preamp, filters, volume }
+    } catch (error) {
+      // graph is optional: without it we fall back to plain element volume
+      this.graph = null
+      this.audio.crossOrigin = null
+      reportError('engine-graph', error)
+    }
+  }
+
+  setEq(eq: EqState): void {
+    if (!this.graph) return
+    const { ctx, preamp, filters } = this.graph
+    const now = ctx.currentTime
+    const preampGain = eq.enabled ? 10 ** (clamp(eq.preamp, -12, 12) / 20) : 1
+    preamp.gain.setTargetAtTime(preampGain, now, 0.05)
+    filters.forEach((filter, i) => {
+      const gain = eq.enabled ? clamp(eq.gains[i] ?? 0, -12, 12) : 0
+      filter.gain.setTargetAtTime(gain, now, 0.05)
     })
   }
 
@@ -96,6 +153,7 @@ export class AudioEngine {
     this.pendingSeeks = 0
     this.clearSeekSettle()
     this.clearWatchdog()
+    this.stopFade()
     this.detachHls()
     this.audio.pause()
     this.audio.removeAttribute('src')
@@ -169,21 +227,30 @@ export class AudioEngine {
     }
   }
 
+  /** Applies the perceptual (squared) volume to the gain node, or the element as fallback. */
   private applyVolume(linear: number): void {
-    this.audio.volume = clamp(linear, 0, 1) ** 2
+    const value = clamp(linear, 0, 1) ** 2
+    if (this.graph) {
+      const gain = this.graph.volume.gain
+      gain.cancelScheduledValues(this.graph.ctx.currentTime)
+      gain.setTargetAtTime(value, this.graph.ctx.currentTime, 0.015)
+    } else {
+      this.audio.volume = value
+    }
   }
 
-  private ramp(from: number, to: number, ms: number, done?: () => void): void {
+  /** Fades toward a live target so a user volume change mid-fade is never overridden. */
+  private ramp(from: number, target: () => number, ms: number, done?: () => void): void {
     this.stopFade()
     if (ms <= 20) {
-      this.applyVolume(to)
+      this.applyVolume(target())
       done?.()
       return
     }
     const start = performance.now()
     this.fadeTimer = setInterval(() => {
       const progress = clamp((performance.now() - start) / ms, 0, 1)
-      this.applyVolume(from + (to - from) * progress)
+      this.applyVolume(from + (target() - from) * progress)
       if (progress >= 1) {
         this.stopFade()
         done?.()
@@ -192,13 +259,20 @@ export class AudioEngine {
   }
 
   async playWithFade(): Promise<void> {
+    if (this.graph && this.graph.ctx.state !== 'running') {
+      void this.graph.ctx.resume().catch(() => undefined)
+    }
+    this.stopFade()
     this.applyVolume(0)
     await this.audio.play()
-    this.ramp(0, this.targetVolume, this.fadeMs)
+    this.ramp(0, () => this.targetVolume, this.fadeMs)
   }
 
   pauseWithFade(): void {
-    this.ramp(this.targetVolume, 0, Math.min(this.fadeMs, 160), () => this.audio.pause())
+    this.ramp(this.targetVolume, () => 0, Math.min(this.fadeMs, 160), () => {
+      this.audio.pause()
+      this.applyVolume(this.targetVolume)
+    })
   }
 
   stop(): void {
@@ -229,6 +303,7 @@ export class AudioEngine {
 
   setVolume(volume: number): void {
     this.targetVolume = clamp(volume, 0, 1)
+    // live fades follow targetVolume; outside a fade apply instantly
     if (!this.fadeTimer) this.applyVolume(this.targetVolume)
   }
 

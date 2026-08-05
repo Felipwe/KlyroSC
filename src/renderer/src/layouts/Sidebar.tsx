@@ -1,4 +1,4 @@
-import { type JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { t, useLanguage } from '@renderer/i18n'
 import { useNav, type Route } from '@renderer/stores/nav'
 import { useLibrary } from '@renderer/stores/library'
@@ -22,6 +22,13 @@ export function Sidebar(): JSX.Element {
   const push = useNav((state) => state.push)
   const playlists = useLibrary((state) => state.data.playlists)
   const authState = useAuth((state) => state.state)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
+
+  const finishDrag = (): void => {
+    setDragIndex(null)
+    setDropIndex(null)
+  }
 
   return (
     <aside className="sidebar">
@@ -56,13 +63,34 @@ export function Sidebar(): JSX.Element {
           <Icon name="plus" size={14} />
         </button>
       </div>
-      {playlists.slice(0, 12).map((playlist) => (
+      {playlists.slice(0, 12).map((playlist, index) => (
         <button
           key={playlist.id}
           className={cx(
             'side-item side-playlist',
-            route.name === 'playlist' && route.ref === playlist.id && 'active'
+            route.name === 'playlist' && route.ref === playlist.id && 'active',
+            dragIndex === index && 'dragging',
+            dropIndex === index && dragIndex !== null && dragIndex !== index && 'drop-target'
           )}
+          draggable
+          onDragStart={(event) => {
+            event.dataTransfer.effectAllowed = 'move'
+            event.dataTransfer.setData('text/plain', playlist.id)
+            setDragIndex(index)
+          }}
+          onDragEnd={finishDrag}
+          onDragOver={(event) => {
+            if (dragIndex === null) return
+            event.preventDefault()
+            event.dataTransfer.dropEffect = 'move'
+            if (dropIndex !== index) setDropIndex(index)
+          }}
+          onDrop={(event) => {
+            event.preventDefault()
+            if (dragIndex !== null && dragIndex !== index)
+              void useLibrary.getState().movePlaylist(dragIndex, index)
+            finishDrag()
+          }}
           onClick={() => push({ name: 'playlist', ref: playlist.id, local: true })}
         >
           <span className="pl-dot">
