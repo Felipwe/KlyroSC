@@ -58,7 +58,9 @@ export const en = {
     noResults: 'No results for “{query}”',
     noResultsHint: 'Check the spelling or try different keywords.',
     startTitle: 'Find your next favorite sound',
-    startHint: 'Search millions of tracks, artists and playlists.'
+    startHint: 'Search millions of tracks, artists and playlists.',
+    recent: 'Recent searches',
+    removeFromHistory: 'Remove from history'
   },
   favorites: {
     title: 'Favorites',

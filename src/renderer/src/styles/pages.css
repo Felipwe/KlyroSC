@@ -1012,6 +1012,65 @@ kbd {
   flex-wrap: wrap;
 }
 
+/* ── Search history ───────────────────────────────────── */
+
+.search-history {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 560px;
+}
+
+.sh-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 0 12px 8px;
+}
+
+.sh-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  color: var(--text-dim);
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.sh-row:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.sh-row > svg {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.sh-query {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.87rem;
+  font-weight: 500;
+}
+
+.sh-remove {
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.sh-row:hover .sh-remove,
+.sh-remove:focus-visible {
+  opacity: 1;
+}
+
 /* ── Playlist drag & drop ─────────────────────────────── */
 
 .pl-draggable {

@@ -594,6 +594,7 @@
   top: auto;
   right: auto;
   bottom: auto;
+  min-width: 0;
   z-index: 95;
 }
 

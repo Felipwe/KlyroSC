@@ -4,6 +4,7 @@ import { t, useLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
 import { useNav } from '@renderer/stores/nav'
 import { toast } from '@renderer/stores/toasts'
+import { useSearchHistory } from '@renderer/stores/search-history'
 import { useDebouncedValue } from '@renderer/hooks/async'
 import { TrackList } from '@renderer/components/TrackList'
 import { ArtistCard, PlaylistCard } from '@renderer/components/cards'
@@ -30,6 +31,7 @@ export function SearchPage({ initialQuery }: { initialQuery?: string }): JSX.Ele
   const debounced = useDebouncedValue(query.trim(), 350)
   const inputRef = useRef<HTMLInputElement>(null)
   const requestRef = useRef(0)
+  const history = useSearchHistory((state) => state.entries)
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -71,8 +73,10 @@ export function SearchPage({ initialQuery }: { initialQuery?: string }): JSX.Ele
     void api.sc.search(kind, debounced).then((result) => {
       if (requestId !== requestRef.current) return
       setLoading(false)
-      if (result.ok) setResults({ items: result.data.items, nextHref: result.data.nextHref })
-      else setError(result.error)
+      if (result.ok) {
+        setResults({ items: result.data.items, nextHref: result.data.nextHref })
+        if (result.data.items.length > 0) useSearchHistory.getState().add(debounced)
+      } else setError(result.error)
     })
   }, [debounced, kind])
 
@@ -119,7 +123,39 @@ export function SearchPage({ initialQuery }: { initialQuery?: string }): JSX.Ele
       </div>
 
       {debounced.length < 2 ? (
-        <Empty icon="search" title={t('search.startTitle')} hint={t('search.startHint')} />
+        history.length > 0 ? (
+          <div className="search-history">
+            <div className="sh-title">{t('search.recent')}</div>
+            {history.map((entry) => (
+              <div
+                key={entry}
+                className="sh-row"
+                role="button"
+                tabIndex={0}
+                onClick={() => setQuery(entry)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') setQuery(entry)
+                }}
+              >
+                <Icon name="clock" size={15} />
+                <span className="sh-query">{entry}</span>
+                <button
+                  className="icon-btn sh-remove"
+                  title={t('search.removeFromHistory')}
+                  aria-label={t('search.removeFromHistory')}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    useSearchHistory.getState().remove(entry)
+                  }}
+                >
+                  <Icon name="close" size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Empty icon="search" title={t('search.startTitle')} hint={t('search.startHint')} />
+        )
       ) : loading ? (
         <Loading />
       ) : error ? (

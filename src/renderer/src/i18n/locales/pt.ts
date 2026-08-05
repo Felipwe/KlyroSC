@@ -60,7 +60,9 @@ export const pt: Dict = {
     noResults: 'Nenhum resultado para “{query}”',
     noResultsHint: 'Confira a ortografia ou tente outras palavras.',
     startTitle: 'Encontre seu próximo som favorito',
-    startHint: 'Pesquise milhões de faixas, artistas e playlists.'
+    startHint: 'Pesquise milhões de faixas, artistas e playlists.',
+    recent: 'Buscas recentes',
+    removeFromHistory: 'Remover do histórico'
   },
   favorites: {
     title: 'Favoritos',

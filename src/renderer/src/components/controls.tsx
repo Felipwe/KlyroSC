@@ -77,6 +77,9 @@ export function Select({ value, options, onChange, ariaLabel }: SelectProps): JS
     const menu = menuRef.current
     if (!btn || !menu) return
     const rect = btn.getBoundingClientRect()
+    // apply the final min-width BEFORE measuring: the CSS min-width:100% rule would
+    // otherwise resolve against the body in the portal and inflate offsetWidth
+    menu.style.minWidth = `${rect.width}px`
     const margin = 8
     const width = Math.max(menu.offsetWidth, rect.width)
     const height = menu.offsetHeight
