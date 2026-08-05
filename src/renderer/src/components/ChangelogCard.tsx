@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.0',
+    pt: [
+      'Em alta do seu país de verdade: o ranking agora vem das músicas mais tocadas do dia no Brasil (fonte real, atualizada diariamente), casadas com o SoundCloud',
+      'Compartilhe seu equalizador: botões de exportar e importar preset — mande o arquivo para um amigo e ele aplica na hora',
+      'Selo “30s” removido das listas: agora só aparece “Prévia” no player quando a faixa realmente não tem versão completa nem por bypass'
+    ],
+    en: [
+      'Real country trending: the chart now comes from your country’s actual most-played songs of the day (real source, updated daily), matched to SoundCloud',
+      'Share your equalizer: export and import preset buttons — send the file to a friend and it applies instantly',
+      '“30s” badge removed from lists: only the player’s “Preview” badge shows, when a track truly has no full version even via bypass'
+    ]
+  },
+  {
     version: '2.3.1',
     pt: [
       'Menus de seleção corrigidos: abriam no canto esquerdo por cima da barra lateral — agora abrem colados no botão, em todos os lugares',
