@@ -44,6 +44,50 @@
   background-clip: padding-box;
 }
 
+/* ── Album-art theme ─────────────────────────── */
+
+:root[data-accent='art'] .ambient::before {
+  content: '';
+  inset: -48px;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  transform: none;
+  animation: none;
+  opacity: 1;
+  background: var(--art-bg, none) center 30% / cover no-repeat var(--bg);
+  filter: blur(26px) saturate(1.15) brightness(0.92);
+  transition: background var(--t-slow);
+}
+
+:root[data-accent='art'] .ambient::after {
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  filter: none;
+  transform: none;
+  animation: none;
+  opacity: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 11, 18, 0.7) 0%,
+    rgba(10, 11, 18, 0.48) 36%,
+    rgba(10, 11, 18, 0.58) 70%,
+    rgba(10, 11, 18, 0.7) 100%
+  );
+}
+
+/* the bar stays frosted glass so the cover glows through it */
+:root[data-accent='art'] .player-bar.glass {
+  background: color-mix(in srgb, var(--bg-raised) 26%, transparent);
+}
+
+:root[data-accent='art'] .sidebar,
+:root[data-accent='art'] .titlebar {
+  background: transparent;
+}
+
 /* ── Custom user theme ──────────────────────── */
 
 :root[data-accent='custom'] .ambient {

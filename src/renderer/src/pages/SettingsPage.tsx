@@ -1,11 +1,13 @@
-import { useState, type JSX, type ReactNode } from 'react'
+import { useState, type CSSProperties, type JSX, type ReactNode } from 'react'
 import { t, useLanguage } from '@renderer/i18n'
 import { useSettings } from '@renderer/stores/settings'
+import { usePlayer } from '@renderer/player/store'
 import { cx } from '@renderer/utils/format'
 import { Icon, type IconName } from '@renderer/components/Icon'
 import { Select, Switch } from '@renderer/components/controls'
 import { toast } from '@renderer/stores/toasts'
 import { type AccentId } from '@shared/types/settings'
+import yagamiBg from '../assets/yagami-bg.png'
 import { PluginsPanel, UpdatesPanel, DataPanel, AboutPanel, ShortcutsPanel, AccountPanel } from './settings-panels'
 import { EqualizerPanel } from './EqualizerPanel'
 import { ThemeStudio } from './ThemeStudio'
@@ -47,9 +49,68 @@ export function SettingRow({
 }
 
 const ACCENTS: { id: AccentId; colors: [string, string] }[] = [
-  { id: 'yagami', colors: ['#c1121f', '#ff4d5d'] },
+  { id: 'art', colors: ['#8b5cf6', '#22d3ee'] },
+  { id: 'yagami', colors: ['#b31423', '#e5484d'] },
   { id: 'custom', colors: ['#8b5cf6', '#22d3ee'] }
 ]
+
+function ThemePicker(): JSX.Element {
+  const { settings, update } = useSettings()
+  const artwork = usePlayer((state) => state.current?.artwork ?? null)
+
+  const canvasStyle = (id: AccentId): CSSProperties => {
+    if (id === 'art') {
+      return artwork
+        ? { backgroundImage: `url("${artwork}")` }
+        : { background: 'linear-gradient(135deg, #241543, #0b2436 70%, #0a1a2c)' }
+    }
+    if (id === 'yagami') return { backgroundImage: `url(${yagamiBg})`, backgroundPosition: 'center 30%' }
+    const custom = settings.appearance.custom
+    return custom.background
+      ? { backgroundImage: `url("${custom.background}")` }
+      : { background: custom.bgColor }
+  }
+
+  const gradient = (id: AccentId): string => {
+    // the art card mirrors the live extracted accent while it is the active theme
+    if (id === 'art' && settings.appearance.accent === 'art') return 'var(--accent-gradient)'
+    const colors =
+      id === 'custom'
+        ? [settings.appearance.custom.colorA, settings.appearance.custom.colorB]
+        : (ACCENTS.find((accent) => accent.id === id)?.colors ?? ACCENTS[0]!.colors)
+    return `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+  }
+
+  return (
+    <div className="theme-cards">
+      {ACCENTS.map(({ id }) => {
+        const active = settings.appearance.accent === id
+        return (
+          <button
+            key={id}
+            className={cx('theme-card', active && 'active')}
+            onClick={() => void update({ appearance: { accent: id } })}
+          >
+            <span className={cx('tc-canvas', id === 'art' && 'blurred')} style={canvasStyle(id)}>
+              <span className="tc-veil" />
+              <span className="tc-side" />
+              <span className="tc-line long" style={{ background: gradient(id) }} />
+              <span className="tc-line" />
+              <span className="tc-player">
+                <i style={{ background: gradient(id) }} />
+              </span>
+            </span>
+            <span className="tc-label">
+              {t(`settings.appearance.accents.${id}`)}
+              {active && <Icon name="check" size={13} />}
+            </span>
+            <span className="tc-hint">{t(`settings.appearance.accentHints.${id}`)}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 export function SettingsPage({ initialSection }: { initialSection?: string }): JSX.Element {
   useLanguage()
@@ -87,29 +148,12 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
 
           {section === 'appearance' && (
             <>
-              <SettingRow label={t('settings.appearance.accent')} desc={t('settings.appearance.accentDesc')}>
-                <div className="theme-cards">
-                  {ACCENTS.map((accent) => {
-                    const colors: [string, string] =
-                      accent.id === 'custom'
-                        ? [settings.appearance.custom.colorA, settings.appearance.custom.colorB]
-                        : accent.colors
-                    return (
-                      <button
-                        key={accent.id}
-                        className={cx('theme-card', settings.appearance.accent === accent.id && 'active')}
-                        onClick={() => void update({ appearance: { accent: accent.id } })}
-                      >
-                        <span
-                          className="tc-preview"
-                          style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
-                        />
-                        {t(`settings.appearance.accents.${accent.id}`)}
-                      </button>
-                    )
-                  })}
-                </div>
-              </SettingRow>
+              <div className="sr-text" style={{ marginBottom: 12 }}>
+                <div className="sr-label">{t('settings.appearance.accent')}</div>
+                <div className="sr-desc">{t('settings.appearance.accentDesc')}</div>
+              </div>
+              <ThemePicker />
+              {settings.appearance.accent === 'custom' && <ThemeStudio />}
               {settings.appearance.accent === 'custom' && <ThemeStudio />}
               <SettingRow label={t('settings.appearance.glass')} desc={t('settings.appearance.glassDesc')}>
                 <Select

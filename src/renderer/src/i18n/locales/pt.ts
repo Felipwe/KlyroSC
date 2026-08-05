@@ -264,10 +264,16 @@ export const pt: Dict = {
     },
     appearance: {
       accent: 'Tema',
-      accentDesc: 'Light Yagami, ou crie o seu com cores, fundo e desfoque.',
+      accentDesc: 'Capa da música seguindo o som, o clássico Light Yagami, ou crie o seu.',
       accents: {
+        art: 'Capa da música',
         yagami: 'Light Yagami',
         custom: 'Personalizado'
+      },
+      accentHints: {
+        art: 'Segue a capa que está tocando',
+        yagami: 'Preto e vermelho clássico',
+        custom: 'Suas cores e seu fundo'
       },
       glass: 'Intensidade do vidro',
       glassDesc: 'O quão translúcidos ficam os painéis e efeitos de blur.',

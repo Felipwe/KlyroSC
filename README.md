@@ -23,6 +23,8 @@ SoundCloud Modded by: Felipe and Yusuro
 
 ## Prints
 
+> Tema padrão **Capa da música**: o fundo e as cores do app seguem, ao vivo, a capa do que está tocando.
+
 | Início | Plugins |
 | :---: | :---: |
 | ![Home](assets/readme/home.png) | ![Plugins](assets/readme/plugins.png) |
@@ -34,12 +36,15 @@ SoundCloud Modded by: Felipe and Yusuro
 ## O que tem
 
 - [x] **Player nativo**  sem site embutido, sem anúncio de áudio, nunca
+- [x] **Tema Capa da música**  fundo e cores acompanham a capa da faixa em tempo real (padrão), com Light Yagami e temas 100% personalizados (suas cores, seu fundo, seus perfis, exportar/importar)
+- [x] **Equalizador de 10 bandas**  presets prontos (Rock, Grave, Agudos…), presets seus ilimitados e compartilháveis por arquivo
+- [x] **Em alta do seu país de verdade**  as mais tocadas do dia no Brasil, casadas com o SoundCloud
 - [x] **AdBlock nativo**  bloqueia 40+ redes de anúncio/rastreio e conteúdo patrocinado
 - [x] **Region Unblock**  destrava faixas bloqueadas no seu país via rota de embed
-- [x] **Login com SoundCloud**  curtidas sincronizam com sua conta real (opcional)
+- [x] **Login com SoundCloud**  curtir, republicar e comentar valem na sua conta real (opcional)
 - [x] **Letras sincronizadas**  em tempo real, com busca inteligente que acha até título sujo
 - [x] **Discord Rich Presence**  mostra o que você está ouvindo, limpo e sem poluição
-- [x] **Biblioteca local**  favoritos, playlists com capa personalizada e histórico por dia
+- [x] **Biblioteca local**  favoritos, playlists arrastáveis com capa personalizada e histórico por dia
 - [x] **Fila completa**  shuffle, repeat, mini player flutuante e atalhos de teclado
 - [x] **Plugins**  liga/desliga tudo: Last.fm scrobbler, sleep timer, notificações e mais
 - [x] **Atualização automática**  já vem ativada, baixa e instala sozinho
@@ -81,7 +86,7 @@ Free code signing on Windows provided by [SignPath.io](https://signpath.io), cer
 ![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/electron--vite-5-646cff?style=flat-square&logo=vite&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-5-443e38?style=flat-square)
-![Vitest](https://img.shields.io/badge/Vitest-62%20testes-6e9f18?style=flat-square&logo=vitest&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-95%20testes-6e9f18?style=flat-square&logo=vitest&logoColor=white)
 
 ## Rodando do código
 

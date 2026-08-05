@@ -26,14 +26,15 @@ describe('sanitizeSettings', () => {
       playback: { quality: 'flac' }
     })
     expect(result.language).toBe('auto')
-    expect(result.appearance.accent).toBe('yagami')
+    expect(result.appearance.accent).toBe('art')
     expect(result.appearance.glass).toBe('medium')
     expect(result.playback.quality).toBe('auto')
   })
 
-  it('maps legacy accents to yagami and keeps custom', () => {
-    expect(sanitizeSettings({ appearance: { accent: 'aurora' } }).appearance.accent).toBe('yagami')
-    expect(sanitizeSettings({ appearance: { accent: 'mint' } }).appearance.accent).toBe('yagami')
+  it('maps legacy accents to the art default and keeps the valid ones', () => {
+    expect(sanitizeSettings({ appearance: { accent: 'aurora' } }).appearance.accent).toBe('art')
+    expect(sanitizeSettings({ appearance: { accent: 'mint' } }).appearance.accent).toBe('art')
+    expect(sanitizeSettings({ appearance: { accent: 'yagami' } }).appearance.accent).toBe('yagami')
     expect(sanitizeSettings({ appearance: { accent: 'custom' } }).appearance.accent).toBe('custom')
   })
 

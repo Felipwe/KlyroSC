@@ -262,10 +262,16 @@ export const en = {
     },
     appearance: {
       accent: 'Theme',
-      accentDesc: 'Light Yagami, or build your own with colors, background and blur.',
+      accentDesc: 'Album art follows the music, classic Light Yagami, or build your own.',
       accents: {
+        art: 'Album art',
         yagami: 'Light Yagami',
         custom: 'Custom'
+      },
+      accentHints: {
+        art: 'Follows the playing cover',
+        yagami: 'Classic black & red',
+        custom: 'Your colors and background'
       },
       glass: 'Glass intensity',
       glassDesc: 'How translucent panels and blur effects look.',

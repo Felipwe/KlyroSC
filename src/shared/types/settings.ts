@@ -2,7 +2,7 @@ import { isRecord, type DeepPartial } from './result'
 import { EQ_GAIN_LIMIT, sanitizeEqGains, type EqCustomPreset } from '../utils/eq'
 
 export type LanguageSetting = 'auto' | 'en' | 'pt'
-export type AccentId = 'yagami' | 'custom'
+export type AccentId = 'art' | 'yagami' | 'custom'
 export type GlassLevel = 'low' | 'medium' | 'high'
 export type MotionLevel = 'full' | 'reduced'
 export type StreamQuality = 'auto' | 'progressive' | 'hls'
@@ -68,6 +68,7 @@ export interface Settings {
     closeToTray: boolean
     globalMediaKeys: boolean
     lastSeenVersion: string
+    artThemeMigrated: boolean
   }
 }
 
@@ -84,7 +85,7 @@ export const DEFAULT_CUSTOM_THEME: CustomTheme = {
 export const DEFAULT_SETTINGS: Settings = {
   language: 'auto',
   appearance: {
-    accent: 'yagami',
+    accent: 'art',
     glass: 'medium',
     motion: 'full',
     fontScale: 100,
@@ -126,7 +127,8 @@ export const DEFAULT_SETTINGS: Settings = {
   system: {
     closeToTray: true,
     globalMediaKeys: false,
-    lastSeenVersion: ''
+    lastSeenVersion: '',
+    artThemeMigrated: false
   }
 }
 
@@ -217,7 +219,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   return {
     language: oneOf(r.language, ['auto', 'en', 'pt'] as const, d.language),
     appearance: {
-      accent: oneOf(appearance.accent, ['yagami', 'custom'] as const, d.appearance.accent),
+      accent: oneOf(appearance.accent, ['art', 'yagami', 'custom'] as const, d.appearance.accent),
       glass: oneOf(appearance.glass, ['low', 'medium', 'high'] as const, d.appearance.glass),
       motion: oneOf(appearance.motion, ['full', 'reduced'] as const, d.appearance.motion),
       fontScale: num(appearance.fontScale, 85, 120, d.appearance.fontScale),
@@ -263,7 +265,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     system: {
       closeToTray: bool(system.closeToTray, d.system.closeToTray),
       globalMediaKeys: bool(system.globalMediaKeys, d.system.globalMediaKeys),
-      lastSeenVersion: str(system.lastSeenVersion, d.system.lastSeenVersion, 20)
+      lastSeenVersion: str(system.lastSeenVersion, d.system.lastSeenVersion, 20),
+      artThemeMigrated: bool(system.artThemeMigrated, d.system.artThemeMigrated)
     }
   }
 }

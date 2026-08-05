@@ -24,8 +24,12 @@ const CUSTOM_PROPS = [
   '--blur',
   '--custom-bg',
   '--cv-a',
-  '--cv-b'
+  '--cv-b',
+  '--art-bg'
 ]
+
+// vars exclusive to the custom theme; the art theme owns the accent vars via dynamic-theme
+const CUSTOM_ONLY_PROPS = ['--bg', '--bg-raised', '--blur', '--custom-bg', '--cv-a', '--cv-b']
 
 const hexRgb = (hex: string): { r: number; g: number; b: number } => ({
   r: parseInt(hex.slice(1, 3), 16),
@@ -59,6 +63,9 @@ function applyToDocument(settings: Settings): void {
     set('--custom-bg', theme.background ? `url("${theme.background}")` : 'none')
     set('--cv-a', `rgba(${bg.r}, ${bg.g}, ${bg.b}, ${veilHi})`)
     set('--cv-b', `rgba(${bg.r}, ${bg.g}, ${bg.b}, ${veilLo})`)
+  } else if (settings.appearance.accent === 'art') {
+    // keep the accent vars managed by dynamic-theme; drop only custom leftovers
+    for (const prop of CUSTOM_ONLY_PROPS) root.style.removeProperty(prop)
   } else {
     for (const prop of CUSTOM_PROPS) root.style.removeProperty(prop)
   }

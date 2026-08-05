@@ -38,6 +38,9 @@ function bootstrap(): void {
 
   const settings = new SettingsService()
   if (!settings.get().performance.hardwareAcceleration) app.disableHardwareAcceleration()
+  // one-time switch to the album-art theme for existing installs (changeable in settings)
+  if (!settings.get().system.artThemeMigrated)
+    settings.patch({ appearance: { accent: 'art' }, system: { artThemeMigrated: true } })
 
   const mainWindow = new MainWindow()
   const tray = new AppTray()

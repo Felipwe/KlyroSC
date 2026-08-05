@@ -11,6 +11,23 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.0',
+    pt: [
+      'Novo tema padrão “Capa da música”: o fundo e as cores do app seguem ao vivo a capa do que está tocando (troque nas Configurações se preferir)',
+      'Tema personalizado completo: suas cores, sua imagem de fundo, desfoque, ícone sincronizado, vários perfis salvos e exportar/importar para compartilhar',
+      'Seu avatar redondo no topo da Início quando logado',
+      'Faixas que ficavam carregando para sempre agora se recuperam sozinhas com um link novo',
+      'Sleep Timer e Track Notifier agora vêm desligados por padrão'
+    ],
+    en: [
+      'New default “Album art” theme: the background and colors follow the playing cover live (switch in Settings if you prefer)',
+      'Full custom theming: your colors, your background image, blur, synced icon, multiple saved profiles and export/import to share',
+      'Your round avatar at the top of Home when signed in',
+      'Tracks that loaded forever now recover on their own with a fresh link',
+      'Sleep Timer and Track Notifier now ship disabled by default'
+    ]
+  },
+  {
     version: '2.4.1',
     pt: [
       'Fim do inglês perdido: as seções da Início (“Mais do que você curte”, “Em alta por gênero”…) agora aparecem em português',

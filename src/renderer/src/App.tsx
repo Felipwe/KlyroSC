@@ -9,6 +9,7 @@ import { toast } from '@renderer/stores/toasts'
 import { initPlayer } from '@renderer/player/store'
 import { initMediaSession } from '@renderer/player/media-session'
 import { initPresenceSync } from '@renderer/player/presence-sync'
+import { initDynamicTheme } from '@renderer/player/dynamic-theme'
 import { useKeyboardShortcuts } from '@renderer/hooks/keyboard'
 import { buildAppIcon } from '@renderer/utils/icon-tint'
 import { TitleBar } from '@renderer/layouts/TitleBar'
@@ -92,6 +93,7 @@ export default function App(): JSX.Element {
         await initPlayer()
         initMediaSession()
         initPresenceSync()
+        initDynamicTheme()
         await useAuth.getState().load()
         const info = await api.app.info()
         const seen = useSettings.getState().settings.system.lastSeenVersion
