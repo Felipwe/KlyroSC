@@ -23,7 +23,11 @@ export const pt: Dict = {
     by: 'de {name}',
     loadMore: 'Carregar mais',
     seeAll: 'Ver tudo',
-    ok: 'OK'
+    ok: 'OK',
+    album: 'Álbum',
+    playlist: 'Playlist',
+    scrollBack: 'Rolar para trás',
+    scrollForward: 'Rolar para frente'
   },
   nav: {
     home: 'Início',
@@ -50,10 +54,24 @@ export const pt: Dict = {
     continueListening: 'Continue de onde parou',
     quick: 'Voltar a ouvir',
     trending: 'Em alta agora',
-    trendingIn: 'Em alta · {region}'
+    trendingIn: 'Em alta · {region}',
+    scSections: {
+      trendingByGenre: 'Em alta por gênero',
+      artistsToWatch: 'Artistas para ficar de olho',
+      curatedBySoundcloud: 'Selecionadas pelo SoundCloud',
+      moreOfWhatYouLike: 'Mais do que você curte',
+      relatedTracks: 'Faixas relacionadas',
+      chartsTop: 'Charts: Top 50',
+      chartsNewHot: 'Charts: novas e quentes',
+      mixesForYou: 'Mixes para você',
+      playlistsForYou: 'Playlists para você',
+      recentlyPlayed: 'Tocadas recentemente',
+      freshPressed: 'Recém-lançadas',
+      dailyDrops: 'Lançamentos do dia'
+    }
   },
   search: {
-    placeholder: 'Busque faixas, artistas, playlists  ou cole um link do SoundCloud',
+    placeholder: 'Busque faixas, artistas, playlists ou cole um link do SoundCloud',
     tracks: 'Faixas',
     artists: 'Artistas',
     playlists: 'Playlists',

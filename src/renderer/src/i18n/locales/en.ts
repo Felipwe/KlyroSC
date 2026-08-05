@@ -21,7 +21,11 @@ export const en = {
     by: 'by {name}',
     loadMore: 'Load more',
     seeAll: 'See all',
-    ok: 'OK'
+    ok: 'OK',
+    album: 'Album',
+    playlist: 'Playlist',
+    scrollBack: 'Scroll back',
+    scrollForward: 'Scroll forward'
   },
   nav: {
     home: 'Home',
@@ -48,7 +52,21 @@ export const en = {
     continueListening: 'Pick up where you left off',
     quick: 'Jump back in',
     trending: 'Trending now',
-    trendingIn: 'Trending · {region}'
+    trendingIn: 'Trending · {region}',
+    scSections: {
+      trendingByGenre: 'Trending by genre',
+      artistsToWatch: 'Artists to watch out for',
+      curatedBySoundcloud: 'Curated by SoundCloud',
+      moreOfWhatYouLike: 'More of what you like',
+      relatedTracks: 'Related tracks',
+      chartsTop: 'Charts: Top 50',
+      chartsNewHot: 'Charts: New & hot',
+      mixesForYou: 'Mixes for you',
+      playlistsForYou: 'Playlists for you',
+      recentlyPlayed: 'Recently played',
+      freshPressed: 'Fresh pressed',
+      dailyDrops: 'Daily drops'
+    }
   },
   search: {
     placeholder: 'Search tracks, artists, playlists  or paste a SoundCloud link',

@@ -270,7 +270,7 @@ export function RemotePlaylistPage({ playlistRef }: { playlistRef: string }): JS
       <div className="playlist-hero">
         <Artwork src={data.artwork} alt="" fallbackIcon="queue" iconSize={40} />
         <div className="ph-info">
-          <div className="ph-kind">{data.isAlbum ? 'Album' : 'Playlist'}</div>
+          <div className="ph-kind">{data.isAlbum ? t('common.album') : t('common.playlist')}</div>
           <h1>{data.title}</h1>
           <div className="ph-meta">
             {data.artist && <span>{t('common.by', { name: data.artist })}</span>}

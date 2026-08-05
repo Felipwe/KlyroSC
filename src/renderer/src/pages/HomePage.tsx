@@ -1,6 +1,7 @@
 import { useMemo, type JSX } from 'react'
 import { type Track } from '@shared/types/track'
 import { getLanguage, t, useLanguage } from '@renderer/i18n'
+import { localizeScTitle } from '@renderer/i18n/sc-titles'
 import { api } from '@renderer/services/ipc'
 import { usePlayer } from '@renderer/player/store'
 import { useLibrary } from '@renderer/stores/library'
@@ -184,7 +185,7 @@ export function HomePage(): JSX.Element {
       )}
 
       {home.data?.map((section) => (
-        <Rail key={section.id} title={section.title}>
+        <Rail key={section.id} title={localizeScTitle(section.title)}>
           {section.playlists.map((playlist) => (
             <PlaylistCard key={playlist.ref} playlist={playlist} />
           ))}

@@ -1,4 +1,4 @@
-import { type JSX, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type JSX, type ReactNode } from 'react'
 import { type PlaylistLite, type Track, type Artist } from '@shared/types/track'
 import { t } from '@renderer/i18n'
 import { formatCount } from '@renderer/utils/format'
@@ -9,12 +9,61 @@ import { Artwork } from './Artwork'
 import { Icon } from './Icon'
 
 export function Rail({ title, children }: { title: string; children: ReactNode }): JSX.Element {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [arrows, setArrows] = useState({ left: false, right: false })
+
+  const updateArrows = useCallback((): void => {
+    const el = scrollerRef.current
+    if (!el) return
+    const max = el.scrollWidth - el.clientWidth
+    const next = { left: el.scrollLeft > 4, right: el.scrollLeft < max - 4 }
+    setArrows((prev) => (prev.left === next.left && prev.right === next.right ? prev : next))
+  }, [])
+
+  useEffect(() => {
+    updateArrows()
+    const el = scrollerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(updateArrows)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [updateArrows, children])
+
+  const scrollByPage = (direction: 1 | -1): void => {
+    const el = scrollerRef.current
+    el?.scrollBy({ left: direction * el.clientWidth * 0.85, behavior: 'smooth' })
+  }
+
   return (
     <section className="rail">
       <div className="rail-head">
         <h2 className="rail-title">{title}</h2>
+        {(arrows.left || arrows.right) && (
+          <div className="rail-arrows">
+            <button
+              className="icon-btn"
+              disabled={!arrows.left}
+              aria-label={t('common.scrollBack')}
+              title={t('common.scrollBack')}
+              onClick={() => scrollByPage(-1)}
+            >
+              <Icon name="chevronLeft" size={16} />
+            </button>
+            <button
+              className="icon-btn"
+              disabled={!arrows.right}
+              aria-label={t('common.scrollForward')}
+              title={t('common.scrollForward')}
+              onClick={() => scrollByPage(1)}
+            >
+              <Icon name="chevronRight" size={16} />
+            </button>
+          </div>
+        )}
       </div>
-      <div className="rail-scroller">{children}</div>
+      <div className="rail-scroller" ref={scrollerRef} onScroll={updateArrows}>
+        {children}
+      </div>
     </section>
   )
 }

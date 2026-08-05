@@ -131,6 +131,26 @@
   margin-bottom: 14px;
 }
 
+.rail-arrows {
+  display: flex;
+  gap: 6px;
+}
+
+.rail-arrows .icon-btn {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+}
+
+.rail-arrows .icon-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--stroke-strong);
+}
+
+.rail-arrows .icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .rail-title {
   font-size: 1.15rem;
   font-weight: 700;
