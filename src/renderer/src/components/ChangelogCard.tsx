@@ -11,6 +11,15 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.2',
+    pt: [
+      'Player 100% transparente no tema Capa da música: sem linha e sem vidro — os controles flutuam direto sobre a capa'
+    ],
+    en: [
+      'Fully transparent player bar in the Album art theme: no line, no glass — the controls float right over the cover'
+    ]
+  },
+  {
     version: '2.5.1',
     pt: [
       'Início mais limpa: a saudação agora fica direto sobre o fundo, sem caixa',
