@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.6.1',
+    pt: [
+      'Novo seletor de cores do tema personalizado: painel próprio do KlyroSC com área de saturação, barra de matiz, campo hex, conta-gotas para capturar cor da tela e cores prontas — adeus janelinha padrão do navegador',
+      'Cards "Voltar a ouvir" e "Continue de onde parou" agora são transparentes, integrados ao fundo como os demais cards'
+    ],
+    en: [
+      'New custom-theme color picker: KlyroSC\'s own panel with saturation area, hue bar, hex field, screen eyedropper and preset swatches — goodbye default browser popup',
+      '"Back to listening" and "Continue where you left off" cards are now transparent, blending with the background like the other cards'
+    ]
+  },
+  {
     version: '2.6.0',
     pt: [
       'Reprodução reconstruída: falhas de carregamento agora são detectadas em segundos e o app se recupera sozinho — chega de música carregando para sempre',

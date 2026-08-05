@@ -294,6 +294,7 @@ export const pt: Dict = {
       colorA: 'Destaque',
       colorB: 'Secundária',
       colorBg: 'Fundo',
+      pickFromScreen: 'Capturar uma cor da tela',
       background: 'Imagem de fundo',
       backgroundDesc: 'Use sua própria imagem atrás do app inteiro.',
       upload: 'Enviar imagem',

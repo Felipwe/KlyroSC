@@ -6,26 +6,8 @@ import { useSettings } from '@renderer/stores/settings'
 import { useUi } from '@renderer/stores/ui'
 import { toast } from '@renderer/stores/toasts'
 import { Icon } from '@renderer/components/Icon'
-import { Slider, Switch } from '@renderer/components/controls'
+import { ColorPicker, Slider, Switch } from '@renderer/components/controls'
 import { SettingRow } from './SettingsPage'
-
-function ColorField({
-  label,
-  value,
-  onChange
-}: {
-  label: string
-  value: string
-  onChange(next: string): void
-}): JSX.Element {
-  return (
-    <label className="color-field" title={label}>
-      <input type="color" value={value} onChange={(event) => onChange(event.currentTarget.value)} />
-      <span className="cf-swatch" style={{ background: value }} />
-      <span className="cf-label">{label}</span>
-    </label>
-  )
-}
 
 export function ThemeStudio(): JSX.Element {
   useLanguage()
@@ -105,9 +87,9 @@ export function ThemeStudio(): JSX.Element {
     <div className="theme-studio">
       <SettingRow label={t('settings.theme.colors')} desc={t('settings.theme.colorsDesc')}>
         <div className="color-fields">
-          <ColorField label={t('settings.theme.colorA')} value={theme.colorA} onChange={(colorA) => patch({ colorA })} />
-          <ColorField label={t('settings.theme.colorB')} value={theme.colorB} onChange={(colorB) => patch({ colorB })} />
-          <ColorField label={t('settings.theme.colorBg')} value={theme.bgColor} onChange={(bgColor) => patch({ bgColor })} />
+          <ColorPicker label={t('settings.theme.colorA')} value={theme.colorA} onChange={(colorA) => patch({ colorA })} eyedropperLabel={t('settings.theme.pickFromScreen')} />
+          <ColorPicker label={t('settings.theme.colorB')} value={theme.colorB} onChange={(colorB) => patch({ colorB })} eyedropperLabel={t('settings.theme.pickFromScreen')} />
+          <ColorPicker label={t('settings.theme.colorBg')} value={theme.bgColor} onChange={(bgColor) => patch({ bgColor })} eyedropperLabel={t('settings.theme.pickFromScreen')} />
         </div>
       </SettingRow>
 

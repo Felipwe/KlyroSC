@@ -287,6 +287,13 @@ export const ICONS = {
       {stroke('M9.5 8h5')}
       {stroke('M16.5 17h5')}
     </>
+  ),
+  eyedropper: (
+    <>
+      {stroke('m2 22 1-1h3l9-9')}
+      {stroke('M3 21v-3l9-9')}
+      {stroke('m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a1 1 0 0 1 0 1.4l-1.2 1.2a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4l1.2-1.2a1 1 0 0 1 1.4 0Z')}
+    </>
   )
 } as const
 

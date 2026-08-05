@@ -25,6 +25,15 @@ export const SC_UA = `Mozilla/5.0 (${UA_PLATFORM}) AppleWebKit/537.36 (KHTML, li
 
 const UA = SC_UA
 
+// Mobile UA issues different track_authorization tokens which bypass most geo-restrictions
+const MOBILE_UA = `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_MAJOR}.0.0.0 Mobile Safari/537.36`
+
+// Headers that hint a neutral/US geo origin to CDN routing layers
+const GEO_HEADERS = {
+  'Accept-Language': 'en-US,en;q=0.9',
+  'X-Forwarded-For': '1.1.1.1'
+} as const
+
 let authToken: string | null = null
 
 export function setScAuthToken(token: string | null): void {
@@ -133,7 +142,11 @@ export class ScClient {
       return this.parseResponse(res)
     }
 
-    const headers: Record<string, string> = { 'User-Agent': UA, Accept: 'application/json' }
+    const headers: Record<string, string> = {
+      'User-Agent': UA,
+      Accept: 'application/json',
+      ...GEO_HEADERS
+    }
     if (authToken) headers.Authorization = `OAuth ${authToken}`
     if (body !== undefined) headers['Content-Type'] = 'application/json'
     const res = await fetch(url, {
@@ -177,6 +190,54 @@ export class ScClient {
       if (authToken && init?.method && init.method !== 'GET') throw error
       clientId = await this.ensureClientId(true)
       return this.request(this.withClientId(url, clientId), init)
+    }
+  }
+
+  // Fetches with widget-player origin headers so the API issues embed-context CDN tokens,
+  // which bypass most regional licensing restrictions.
+  async widgetAbsolute(url: string): Promise<unknown> {
+    let clientId = await this.ensureClientId()
+    const makeReq = (id: string): Promise<Response> =>
+      fetch(this.withClientId(url, id), {
+        headers: {
+          'User-Agent': UA,
+          Accept: 'application/json',
+          ...GEO_HEADERS,
+          Origin: 'https://w.soundcloud.com',
+          Referer: 'https://w.soundcloud.com/'
+        },
+        signal: AbortSignal.timeout(15000)
+      })
+    try {
+      return this.parseResponse(await makeReq(clientId))
+    } catch (error) {
+      if (!(error instanceof UnauthorizedError)) throw error
+      clientId = await this.ensureClientId(true)
+      return this.parseResponse(await makeReq(clientId))
+    }
+  }
+
+  // Fetches as an Android mobile client.  Mobile context often yields different
+  // track_authorization tokens that are not subject to web-player geo-blocks.
+  async mobileAbsolute(url: string): Promise<unknown> {
+    let clientId = await this.ensureClientId()
+    const makeReq = (id: string): Promise<Response> =>
+      fetch(this.withClientId(url, id), {
+        headers: {
+          'User-Agent': MOBILE_UA,
+          Accept: 'application/json',
+          ...GEO_HEADERS,
+          Origin: 'https://soundcloud.com',
+          Referer: 'https://soundcloud.com/'
+        },
+        signal: AbortSignal.timeout(15000)
+      })
+    try {
+      return this.parseResponse(await makeReq(clientId))
+    } catch (error) {
+      if (!(error instanceof UnauthorizedError)) throw error
+      clientId = await this.ensureClientId(true)
+      return this.parseResponse(await makeReq(clientId))
     }
   }
 }

@@ -292,6 +292,7 @@ export const en = {
       colorA: 'Accent',
       colorB: 'Secondary',
       colorBg: 'Background',
+      pickFromScreen: 'Pick a color from the screen',
       background: 'Background image',
       backgroundDesc: 'Use your own image behind the whole app.',
       upload: 'Upload image',

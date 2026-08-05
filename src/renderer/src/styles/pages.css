@@ -46,7 +46,7 @@
   gap: 10px;
   padding: 7px 10px 7px 7px;
   border-radius: var(--radius-m);
-  background: color-mix(in srgb, var(--bg-raised) 62%, transparent);
+  background: var(--surface);
   border: 1px solid var(--stroke);
   text-align: left;
   min-width: 0;
@@ -55,7 +55,7 @@
 }
 
 .quick-tile:hover {
-  background: var(--bg-raised);
+  background: var(--surface-hover);
   border-color: var(--stroke-strong);
   transform: translateY(-1px);
 }
@@ -165,14 +165,14 @@
   gap: 12px;
   padding: 7px 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-raised) 70%, transparent);
-  border: 1px solid var(--stroke-strong);
+  background: var(--surface);
+  border: 1px solid var(--stroke);
   cursor: pointer;
   transition: background var(--t-fast), transform var(--t-fast), border-color var(--t-fast);
 }
 
 .resume-card:hover {
-  background: var(--bg-raised);
+  background: var(--surface-hover);
   border-color: var(--accent-a);
   transform: translateY(-2px);
 }
@@ -1201,13 +1201,6 @@ kbd {
 
 .color-field:hover {
   border-color: var(--stroke-strong);
-}
-
-.color-field input[type='color'] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .cf-swatch {
