@@ -153,6 +153,8 @@ const api: KlyroApi = {
       invoke(IPC.socialChatHistory, { friendId, before }),
     chatSend: (friendId, text, tempId) => invoke(IPC.socialChatSend, { friendId, text, tempId }),
     chatTyping: (friendId) => send(IPC.socialChatTyping, friendId),
+    setAvatar: () => invoke(IPC.socialSetAvatar),
+    removeAvatar: () => invoke(IPC.socialRemoveAvatar),
     onState: (cb) => listen<SocialSnapshot>(IPC.socialState, cb),
     onJamPlayback: (cb) => listen<JamPlayback>(IPC.socialJamPlayback, cb),
     onChatMessage: (cb) => listen<ChatEventPayload>(IPC.socialChatMessage, cb),

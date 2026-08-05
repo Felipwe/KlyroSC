@@ -123,7 +123,7 @@ export class ScClient {
     const body = init?.body !== undefined ? JSON.stringify(init.body) : undefined
 
     // Writes must look like the logged-in web app: Chromium's network stack with the
-    // sc-auth session cookies (datadome & friends) — plain node fetch gets rejected.
+    // sc-auth session cookies (datadome & friends)  plain node fetch gets rejected.
     if (method !== 'GET' && authToken) {
       const headers: Record<string, string> = {
         Accept: 'application/json',

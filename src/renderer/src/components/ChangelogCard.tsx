@@ -11,19 +11,32 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.7.1',
+    pt: [
+      'Chats em janelas flutuantes: arraste pelo cabeçalho, redimensione pelo canto e abra várias conversas ao mesmo tempo',
+      'Foto de perfil no Socials: clique no seu avatar para escolher uma imagem — seus amigos veem na hora',
+      'Clicar em uma janela de chat traz ela para a frente, como um app de verdade'
+    ],
+    en: [
+      'Floating chat windows: drag by the header, resize from the corner and keep several conversations open at once',
+      'Socials profile picture: click your avatar to pick an image — friends see it instantly',
+      'Clicking a chat window brings it to the front, like a real app'
+    ]
+  },
+  {
     version: '2.7.0',
     pt: [
-      'KlyroSC Socials: conta anônima estilo Mullvad — sem e-mail nem senha, você ganha um nome aleatório, um ID (#42) e um código secreto de 16 dígitos que é sua única chave',
+      'KlyroSC Socials: conta anônima estilo Mullvad  sem e-mail nem senha, você ganha um nome aleatório, um ID (#42) e um código secreto de 16 dígitos que é sua única chave',
       'Jam ao vivo: ouça a mesma música com até 8 amigos em tempo real, com convites, fila sincronizada e controle do dono sobre o que os convidados podem fazer',
-      'Chat criptografado de ponta a ponta com indicador de “digitando…” — o servidor nunca vê o conteúdo das mensagens',
+      'Chat criptografado de ponta a ponta com indicador de “digitando…”  o servidor nunca vê o conteúdo das mensagens',
       'Amigos por ID: adicione pelo #ID, veja quem está online e o que estão ouvindo ao vivo',
       'Tocar da pesquisa virou mix: a fila continua com faixas parecidas em vez de repetir a mesma música',
       'Visual mais limpo: ícone removido ao lado do logo na barra de título'
     ],
     en: [
-      'KlyroSC Socials: Mullvad-style anonymous account — no e-mail or password, you get a random name, an ID (#42) and a secret 16-digit code as your only key',
+      'KlyroSC Socials: Mullvad-style anonymous account  no e-mail or password, you get a random name, an ID (#42) and a secret 16-digit code as your only key',
       'Live Jam: listen to the same music with up to 8 friends in real time, with invites, synced queue and host control over what guests can do',
-      'End-to-end encrypted chat with a live “typing…” indicator — the server never sees message contents',
+      'End-to-end encrypted chat with a live “typing…” indicator  the server never sees message contents',
       'Friends by ID: add people by their #ID, see who is online and what they are listening to live',
       'Playing from search is now a mix: the queue continues with similar tracks instead of repeating the same song',
       'Cleaner look: removed the icon next to the logo in the title bar'
@@ -32,24 +45,24 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '2.6.1',
     pt: [
-      'Novo seletor de cores do tema personalizado: painel próprio do KlyroSC com área de saturação, barra de matiz, campo hex, conta-gotas para capturar cor da tela e cores prontas — adeus janelinha padrão do navegador',
+      'Novo seletor de cores do tema personalizado: painel próprio do KlyroSC com área de saturação, barra de matiz, campo hex, conta-gotas para capturar cor da tela e cores prontas  adeus janelinha padrão do navegador',
       'Cards "Voltar a ouvir" e "Continue de onde parou" agora são transparentes, integrados ao fundo como os demais cards'
     ],
     en: [
-      'New custom-theme color picker: KlyroSC\'s own panel with saturation area, hue bar, hex field, screen eyedropper and preset swatches — goodbye default browser popup',
+      'New custom-theme color picker: KlyroSC\'s own panel with saturation area, hue bar, hex field, screen eyedropper and preset swatches  goodbye default browser popup',
       '"Back to listening" and "Continue where you left off" cards are now transparent, blending with the background like the other cards'
     ]
   },
   {
     version: '2.6.0',
     pt: [
-      'Reprodução reconstruída: falhas de carregamento agora são detectadas em segundos e o app se recupera sozinho — chega de música carregando para sempre',
+      'Reprodução reconstruída: falhas de carregamento agora são detectadas em segundos e o app se recupera sozinho  chega de música carregando para sempre',
       'Bypass de região definitivo: faixas bloqueadas no seu país passam automaticamente pela rota do player embarcado do SoundCloud, que destrava a versão completa',
       'Músicas Go+ e indisponíveis: o app busca um reupload completo e limpo da mesma faixa antes de aceitar a prévia de 30s',
       'Se o áudio travar no meio da música, o KlyroSC pega um novo link e continua de onde parou automaticamente'
     ],
     en: [
-      'Playback rebuilt: loading failures are now detected within seconds and the app recovers on its own — no more tracks loading forever',
+      'Playback rebuilt: loading failures are now detected within seconds and the app recovers on its own  no more tracks loading forever',
       'Definitive region bypass: tracks blocked in your country automatically go through the SoundCloud embedded-player route, which unlocks the full version',
       'Go+ and unavailable songs: the app searches for a clean full-length reupload of the same track before settling for the 30s preview',
       'If audio stalls mid-song, KlyroSC grabs a fresh link and resumes right where it stopped automatically'
@@ -60,12 +73,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     pt: [
       'A tela de login do SoundCloud agora abre maximizada, sem o formulário apertado e cortado',
       'Cabeçalho das letras corrigido: capa, título e botão fechar ficam fixos enquanto somente as linhas rolam',
-      'Letras muito mais confiáveis: artista, título, duração e intervalo de sincronia agora precisam combinar — resultados de outra música são rejeitados'
+      'Letras muito mais confiáveis: artista, título, duração e intervalo de sincronia agora precisam combinar  resultados de outra música são rejeitados'
     ],
     en: [
       'The SoundCloud login screen now opens maximized, without a cramped or clipped form',
       'Fixed the lyrics header: cover, title and close button stay fixed while only the lines scroll',
-      'Much more reliable lyrics: artist, title, duration and timing range must now match — results from another song are rejected'
+      'Much more reliable lyrics: artist, title, duration and timing range must now match  results from another song are rejected'
     ]
   },
   {
@@ -83,32 +96,32 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.5.3',
     pt: [
       'Login com SoundCloud corrigido: quem via a tela “You have been blocked” agora consegue entrar normalmente',
-      'A proteção anti-bô do SoundCloud reprovava a identidade desatualizada do app e o bloqueador de anúncios dentro da janela de login — os dois foram corrigidos'
+      'A proteção anti-bô do SoundCloud reprovava a identidade desatualizada do app e o bloqueador de anúncios dentro da janela de login  os dois foram corrigidos'
     ],
     en: [
       'SoundCloud sign-in fixed: if you saw the “You have been blocked” screen, you can now log in normally',
-      'SoundCloud’s bot protection rejected the app’s outdated identity and the ad blocker inside the login window — both fixed'
+      'SoundCloud’s bot protection rejected the app’s outdated identity and the ad blocker inside the login window  both fixed'
     ]
   },
   {
     version: '2.5.2',
     pt: [
-      'Player 100% transparente no tema Capa da música: sem linha e sem vidro — os controles flutuam direto sobre a capa'
+      'Player 100% transparente no tema Capa da música: sem linha e sem vidro  os controles flutuam direto sobre a capa'
     ],
     en: [
-      'Fully transparent player bar in the Album art theme: no line, no glass — the controls float right over the cover'
+      'Fully transparent player bar in the Album art theme: no line, no glass  the controls float right over the cover'
     ]
   },
   {
     version: '2.5.1',
     pt: [
       'Início mais limpa: a saudação agora fica direto sobre o fundo, sem caixa',
-      '“Boa madrugada” entre meia-noite e 5h — chega de “bom dia” às 3 da manhã',
+      '“Boa madrugada” entre meia-noite e 5h  chega de “bom dia” às 3 da manhã',
       'Bordas da miniatura do tema “Capa da música” corrigidas no seletor de temas'
     ],
     en: [
       'Cleaner Home: the greeting now sits directly on the background, no box',
-      '“Up late” greeting between midnight and 5am — no more “good morning” at 3am',
+      '“Up late” greeting between midnight and 5am  no more “good morning” at 3am',
       'Fixed the blurred edges of the “Album art” theme preview in the theme picker'
     ]
   },
@@ -144,24 +157,24 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.0',
     pt: [
       'Em alta do seu país de verdade: o ranking agora vem das músicas mais tocadas do dia no Brasil (fonte real, atualizada diariamente), casadas com o SoundCloud',
-      'Compartilhe seu equalizador: botões de exportar e importar preset — mande o arquivo para um amigo e ele aplica na hora',
+      'Compartilhe seu equalizador: botões de exportar e importar preset  mande o arquivo para um amigo e ele aplica na hora',
       'Selo “30s” removido das listas: agora só aparece “Prévia” no player quando a faixa realmente não tem versão completa nem por bypass'
     ],
     en: [
       'Real country trending: the chart now comes from your country’s actual most-played songs of the day (real source, updated daily), matched to SoundCloud',
-      'Share your equalizer: export and import preset buttons — send the file to a friend and it applies instantly',
+      'Share your equalizer: export and import preset buttons  send the file to a friend and it applies instantly',
       '“30s” badge removed from lists: only the player’s “Preview” badge shows, when a track truly has no full version even via bypass'
     ]
   },
   {
     version: '2.3.1',
     pt: [
-      'Menus de seleção corrigidos: abriam no canto esquerdo por cima da barra lateral — agora abrem colados no botão, em todos os lugares',
-      'Histórico de buscas no Pesquisar: suas buscas recentes aparecem quando o campo está vazio — clique para repetir ou remova uma no X'
+      'Menus de seleção corrigidos: abriam no canto esquerdo por cima da barra lateral  agora abrem colados no botão, em todos os lugares',
+      'Histórico de buscas no Pesquisar: suas buscas recentes aparecem quando o campo está vazio  clique para repetir ou remova uma no X'
     ],
     en: [
-      'Select menus fixed: they opened at the left corner over the sidebar — now they open attached to the button, everywhere',
-      'Search history in Search: your recent searches show when the field is empty — click to repeat or remove one with the X'
+      'Select menus fixed: they opened at the left corner over the sidebar  now they open attached to the button, everywhere',
+      'Search history in Search: your recent searches show when the field is empty  click to repeat or remove one with the X'
     ]
   },
   {
@@ -171,14 +184,14 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Curtir, republicar e comentar agora valem de verdade no SoundCloud quando você está logado',
       'Corrigido o volume que resetava ao trocar de música',
       'Menus (botão direito e seleção) não cortam mais nas bordas e cantos da janela',
-      'Arraste playlists para reordená-las na biblioteca e na barra lateral — a ordem vai junto no exportar/importar, incluindo seus presets do equalizador'
+      'Arraste playlists para reordená-las na biblioteca e na barra lateral  a ordem vai junto no exportar/importar, incluindo seus presets do equalizador'
     ],
     en: [
       'Professional 10-band equalizer in Settings: ready-made presets (Rock, Bass, Treble…), unlimited named presets of your own, all applied live to the music',
       'Like, repost and comment now truly land on SoundCloud when you are signed in',
       'Fixed the volume resetting when switching tracks',
       'Menus (right-click and selects) no longer get cut off at window edges and corners',
-      'Drag playlists to reorder them in the library and sidebar — the order ships with export/import, including your equalizer presets'
+      'Drag playlists to reorder them in the library and sidebar  the order ships with export/import, including your equalizer presets'
     ]
   },
   {
@@ -196,12 +209,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.2.1',
     pt: [
       'Faixas Go+ (aquelas que só tocavam 30s): o Region Unblock agora procura e toca um reupload completo e limpo da mesma música quando existe',
-      'Quando não dá para liberar, o app avisa claramente que é uma faixa Go+ com só prévia — sem mais loading infinito',
+      'Quando não dá para liberar, o app avisa claramente que é uma faixa Go+ com só prévia  sem mais loading infinito',
       'Para o original completo dessas faixas, entre com uma conta SoundCloud Go+'
     ],
     en: [
       'Go+ tracks (the 30s-only ones): Region Unblock now finds and plays a clean full-length reupload of the same song when one exists',
-      'When it truly can’t, the app clearly says it’s a Go+ preview — no more infinite loading',
+      'When it truly can’t, the app clearly says it’s a Go+ preview  no more infinite loading',
       'For the full original of those tracks, sign in with a SoundCloud Go+ account'
     ]
   },
@@ -209,14 +222,14 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.2.0',
     pt: [
       'Region Unblock agora toca a faixa INTEIRA: músicas que viravam prévia de 30s no seu país tocam completas com o plugin ativo',
-      'Comente e republique direto do app quando estiver logado — republicações aparecem no seu perfil',
+      'Comente e republique direto do app quando estiver logado  republicações aparecem no seu perfil',
       'Perfis clicáveis nos comentários e seção Republicadas nos perfis',
       'Comentários com visual corrigido (fotos de perfil redondinhas de novo)',
       'Sem login, as ações sociais convidam você a entrar para a experiência completa'
     ],
     en: [
       'Region Unblock now plays the FULL track: songs degraded to 30s previews in your country play complete with the plugin on',
-      'Comment and repost right from the app when signed in — reposts show on your profile',
+      'Comment and repost right from the app when signed in  reposts show on your profile',
       'Clickable profiles in comments and a Reposts section on profiles',
       'Comments visual fixed (round avatars again)',
       'Logged-out social actions invite you to sign in for the full experience'
@@ -272,11 +285,11 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '2.0.0',
     pt: [
-      'KlyroSC reconstruído do zero como cliente nativo — sem site embutido, sem anúncios',
+      'KlyroSC reconstruído do zero como cliente nativo  sem site embutido, sem anúncios',
       'Tema Light Yagami, AdBlock, Region Unblock, letras sincronizadas e Discord RPC'
     ],
     en: [
-      'KlyroSC rebuilt from scratch as a native client — no embedded site, no ads',
+      'KlyroSC rebuilt from scratch as a native client  no embedded site, no ads',
       'Light Yagami theme, AdBlock, Region Unblock, synced lyrics and Discord RPC'
     ]
   }

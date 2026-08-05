@@ -235,7 +235,7 @@ export class AudioEngine {
     hls.on(HlsCtor.Events.ERROR, (_event, data) => {
       if (!data.fatal) {
         // Non-fatal network errors = individual segment failures (geo-block, CDN expiry).
-        // Accumulating 5+ means the CDN is systematically refusing us — trigger retry chain.
+        // Accumulating 5+ means the CDN is systematically refusing us  trigger retry chain.
         if (data.type === 'networkError' && ++nonFatalNetErrors >= 5) {
           if (generation === this.generation)
             this.emitError(`hls segment failure: ${data.details}`)

@@ -2,7 +2,7 @@
   "name": "klyrosc-social-server",
   "private": true,
   "version": "1.0.0",
-  "description": "KlyroSC Socials API — Mullvad-style accounts, friends, presence and listening jams.",
+  "description": "KlyroSC Socials API  Mullvad-style accounts, friends, presence and listening jams.",
   "type": "module",
   "engines": {
     "node": ">=22"

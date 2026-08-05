@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomInt } from 'node:crypto'
 
-/** 16 random digits, Mullvad style. The number is the credential — never stored in plain text. */
+/** 16 random digits, Mullvad style. The number is the credential  never stored in plain text. */
 export function generateAccountNumber(): string {
   let digits = ''
   for (let i = 0; i < 16; i++) digits += String(randomInt(10))

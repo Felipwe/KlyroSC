@@ -52,7 +52,8 @@ const parseCredentials = (raw: unknown): SocialCredentials => {
       ? {
           id: raw.user.id,
           name: raw.user.name,
-          publicId: typeof raw.user.publicId === 'number' ? raw.user.publicId : 0
+          publicId: typeof raw.user.publicId === 'number' ? raw.user.publicId : 0,
+          avatar: typeof raw.user.avatar === 'string' ? raw.user.avatar : null
         }
       : null
   const chatKeys =
@@ -122,7 +123,7 @@ export class SocialService {
     this.store.flush()
   }
 
-  // ————— HTTP helper —————
+  //  HTTP helper 
 
   private async request<T>(
     method: string,
@@ -156,7 +157,7 @@ export class SocialService {
       const code =
         isRecord(payload) && typeof payload.error === 'string' ? payload.error : `http_${response.status}`
       if (response.status === 401 && !tokenOverride && this.store.get().token) {
-        // stale session — drop credentials so the UI falls back to onboarding
+        // stale session  drop credentials so the UI falls back to onboarding
         log.warn('session rejected by server, logging out')
         this.clearCredentials()
       }
@@ -165,7 +166,7 @@ export class SocialService {
     return payload as T
   }
 
-  // ————— account lifecycle —————
+  //  account lifecycle 
 
   async createAccount(): Promise<NewSocialAccount> {
     const data = await this.request<{ user: SocialUser; accountNumber: string; token: string }>(
@@ -226,7 +227,7 @@ export class SocialService {
     this.emit()
   }
 
-  // ————— friends —————
+  //  friends 
 
   async addFriend(publicId: number): Promise<void> {
     await this.request<unknown>('POST', '/friends/requests', { publicId })
@@ -244,7 +245,7 @@ export class SocialService {
     await this.refreshState()
   }
 
-  // ————— jams —————
+  //  jams 
 
   async createJam(): Promise<void> {
     const state = await this.request<Record<string, unknown>>('POST', '/jams')
@@ -282,7 +283,7 @@ export class SocialService {
     await this.request<unknown>('PATCH', '/jams/current', { allowGuestControl: allow })
   }
 
-  // ————— realtime out —————
+  //  realtime out 
 
   setNowPlaying(listening: ListeningInfo | null): void {
     const changed =
@@ -318,7 +319,7 @@ export class SocialService {
     void this.connect()
   }
 
-  // ————— e2e chat —————
+  //  e2e chat 
 
   private async ensureChatKeys(): Promise<ChatKeyPair | null> {
     const creds = this.store.get()
@@ -347,7 +348,7 @@ export class SocialService {
   private async chatKeyFor(friendId: string): Promise<CryptoKey | null> {
     let friend = this.snapshot.friends.find((item) => item.id === friendId)
     if (!friend?.chatKey) {
-      // maybe the snapshot is stale (friend rotated keys) — refresh once
+      // maybe the snapshot is stale (friend rotated keys)  refresh once
       try {
         await this.refreshState()
       } catch {
@@ -382,7 +383,7 @@ export class SocialService {
     const result: ChatMessage[] = []
     for (const row of data.messages) {
       const text = await decryptChatMessage(key, row.iv, row.ct)
-      if (text === null) continue // other key generation — unreadable, skip honestly
+      if (text === null) continue // other key generation  unreadable, skip honestly
       result.push({ id: row.id, fromMe: row.fromId === me.id, text, at: row.at })
     }
     return result
@@ -406,7 +407,21 @@ export class SocialService {
     this.sendWs({ t: 'chat:typing', to: friendId })
   }
 
-  // ————— connection —————
+  // ————— profile avatar —————
+
+  async setAvatar(dataUrl: string | null): Promise<void> {
+    await this.request<unknown>('POST', '/avatar', { avatar: dataUrl })
+    const account = this.snapshot.account
+    if (account) {
+      this.snapshot = { ...this.snapshot, account: { ...account, avatar: dataUrl } }
+      const creds = this.store.get()
+      if (creds.user) this.store.set({ ...creds, user: { ...creds.user, avatar: dataUrl } })
+      this.emit()
+    }
+    await this.refreshState()
+  }
+
+  //  connection 
 
   private async connect(): Promise<void> {
     if (this.destroyed) return
@@ -417,7 +432,7 @@ export class SocialService {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (message === 'unauthorized') return // credentials were cleared
-      log.warn(`state fetch failed (${message}) — retrying`)
+      log.warn(`state fetch failed (${message})  retrying`)
       this.scheduleReconnect()
       return
     }
@@ -593,7 +608,10 @@ export class SocialService {
       const creds = this.store.get()
       if (
         creds.token &&
-        (creds.user?.id !== user.id || creds.user?.name !== user.name || creds.user?.publicId !== user.publicId)
+        (creds.user?.id !== user.id ||
+          creds.user?.name !== user.name ||
+          creds.user?.publicId !== user.publicId ||
+          creds.user?.avatar !== user.avatar)
       )
         this.store.set({ ...creds, user })
     }

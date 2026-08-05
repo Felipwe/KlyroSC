@@ -19,7 +19,15 @@ import { Artwork } from '@renderer/components/Artwork'
 import { Switch } from '@renderer/components/controls'
 import { ChatPanel } from '@renderer/components/ChatPanel'
 
-export function SocialAvatar({ name, size = 38 }: { name: string; size?: number }): JSX.Element {
+export function SocialAvatar({
+  name,
+  avatar = null,
+  size = 38
+}: {
+  name: string
+  avatar?: string | null
+  size?: number
+}): JSX.Element {
   const hue = avatarHue(name)
   return (
     <span
@@ -28,10 +36,12 @@ export function SocialAvatar({ name, size = 38 }: { name: string; size?: number 
         width: size,
         height: size,
         fontSize: size * 0.36,
-        background: `linear-gradient(135deg, hsl(${hue} 62% 46%), hsl(${(hue + 42) % 360} 68% 34%))`
+        background: avatar
+          ? 'transparent'
+          : `linear-gradient(135deg, hsl(${hue} 62% 46%), hsl(${(hue + 42) % 360} 68% 34%))`
       }}
     >
-      {initialsOf(name)}
+      {avatar ? <img src={avatar} alt="" draggable={false} /> : initialsOf(name)}
     </span>
   )
 }
@@ -40,7 +50,7 @@ export function SocialAvatar({ name, size = 38 }: { name: string; size?: number 
 const formatCodeInput = (raw: string): string =>
   formatAccountNumber(normalizeAccountNumber(raw).slice(0, 16))
 
-// ————————————————————— onboarding —————————————————————
+//  onboarding 
 
 type OnboardStep = 'intro' | 'code' | 'confirm' | 'login'
 
@@ -235,7 +245,7 @@ function Onboarding(): JSX.Element {
   )
 }
 
-// ————————————————————— jam —————————————————————
+//  jam 
 
 function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends: Friend[] }): JSX.Element {
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -285,7 +295,7 @@ function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends:
         <div className="social-member-stack" title={jam.members.map((member) => member.name).join(', ')}>
           {jam.members.map((member) => (
             <span key={member.id} className="social-stack-item">
-              <SocialAvatar name={member.name} size={30} />
+              <SocialAvatar name={member.name} avatar={member.avatar} size={30} />
               {member.owner && (
                 <span className="social-crown">
                   <Icon name="crown" size={9} />
@@ -339,7 +349,7 @@ function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends:
                   setInviteOpen(false)
                 }}
               >
-                <SocialAvatar name={friend.name} size={26} />
+                <SocialAvatar name={friend.name} avatar={friend.avatar} size={26} />
                 <span>{friend.name}</span>
                 <span className="social-id-chip">#{friend.publicId}</span>
                 <Icon name="plus" size={14} />
@@ -378,7 +388,7 @@ function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends:
   )
 }
 
-// ————————————————————— hub —————————————————————
+//  hub 
 
 function FriendRow({ friend, inJam }: { friend: Friend; inJam: boolean }): JSX.Element {
   const { presence } = friend
@@ -409,7 +419,7 @@ function FriendRow({ friend, inJam }: { friend: Friend; inJam: boolean }): JSX.E
       }}
     >
       <div className="social-friend-avatar">
-        <SocialAvatar name={friend.name} />
+        <SocialAvatar name={friend.name} avatar={friend.avatar} />
         <span className={cx('social-status-dot', presence.online && 'online')} />
       </div>
       <div className="social-friend-main">
@@ -475,6 +485,7 @@ function FriendRow({ friend, inJam }: { friend: Friend; inJam: boolean }): JSX.E
 
 function Hub(): JSX.Element {
   const snapshot = useSocial((state) => state.snapshot)
+  const openChats = useSocial((state) => state.openChats)
   const [friendId, setFriendId] = useState('')
   const account = snapshot.account!
   const incoming = snapshot.requests.filter((request) => request.direction === 'in')
@@ -514,11 +525,45 @@ function Hub(): JSX.Element {
       onConfirm: () => void useSocial.getState().deleteAccount()
     })
 
+  const openAvatarMenu = (event: MouseEvent): void => {
+    const items = [
+      {
+        id: 'avatar-change',
+        label: t('social.avatarChange'),
+        icon: 'edit',
+        action: () => void useSocial.getState().setAvatar()
+      },
+      ...(account.avatar
+        ? [
+            {
+              id: 'avatar-remove',
+              label: t('social.avatarRemove'),
+              icon: 'trash',
+              danger: true,
+              action: () => void useSocial.getState().removeAvatar()
+            }
+          ]
+        : [])
+    ]
+    const rect = event.currentTarget.getBoundingClientRect()
+    useUi.getState().openMenu(rect.left, rect.bottom + 6, items)
+  }
+
   return (
     <>
       <div className="social-header social-card">
         <div className="social-me">
-          <SocialAvatar name={account.name} size={44} />
+          <button
+            className="social-avatar-btn"
+            onClick={openAvatarMenu}
+            title={t('social.avatarChange')}
+            aria-label={t('social.avatarChange')}
+          >
+            <SocialAvatar name={account.name} avatar={account.avatar} size={44} />
+            <span className="social-avatar-edit">
+              <Icon name="edit" size={12} />
+            </span>
+          </button>
           <div>
             <div className="social-me-name">
               {account.name}
@@ -565,7 +610,7 @@ function Hub(): JSX.Element {
 
       {snapshot.invites.map((invite) => (
         <div key={invite.id} className="social-card social-invite-banner">
-          <SocialAvatar name={invite.from.name} size={34} />
+          <SocialAvatar name={invite.from.name} avatar={invite.from.avatar} size={34} />
           <div className="social-invite-text">{t('social.jam.inviteFrom', { name: invite.from.name })}</div>
           <div className="social-invite-actions">
             <button
@@ -604,7 +649,7 @@ function Hub(): JSX.Element {
           <h3 className="social-section-title">{t('social.requests')}</h3>
           {incoming.map((request) => (
             <div key={request.id} className="social-request-row">
-              <SocialAvatar name={request.user.name} size={32} />
+              <SocialAvatar name={request.user.name} avatar={request.user.avatar} size={32} />
               <div className="social-request-text">
                 <strong>{request.user.name}</strong>{' '}
                 <span className="social-id-chip">#{request.user.publicId}</span> {t('social.incoming')}
@@ -627,7 +672,7 @@ function Hub(): JSX.Element {
           ))}
           {outgoing.map((request) => (
             <div key={request.id} className="social-request-row muted">
-              <SocialAvatar name={request.user.name} size={32} />
+              <SocialAvatar name={request.user.name} avatar={request.user.avatar} size={32} />
               <div className="social-request-text">{t('social.outgoing', { name: request.user.name })}</div>
               <button className="btn small" onClick={() => void useSocial.getState().respondRequest(request.id, false)}>
                 {t('social.cancelRequest')}
@@ -677,7 +722,9 @@ function Hub(): JSX.Element {
         )}
       </section>
 
-      <ChatPanel />
+      {openChats.map((id, index) => (
+        <ChatPanel key={id} friendId={id} zIndex={index} />
+      ))}
     </>
   )
 }

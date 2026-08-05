@@ -5,7 +5,7 @@ import { generateAccountNumber, generateSessionToken, isAccountNumber, sha256 } 
 import { randomName } from './names.js'
 import { type Hub } from './hub.js'
 import { JAM_MAX_MEMBERS, type JamService } from './jams.js'
-import { type SocialUser } from './types.js'
+import { isValidAvatar, type SocialUser } from './types.js'
 
 const SESSION_DAYS = 180
 
@@ -35,8 +35,8 @@ export function authMiddleware() {
     }
     const tokenHash = sha256(token)
     try {
-      const result = await pool.query<{ user_id: string; name: string; public_id: string }>(
-        `SELECT s.user_id, u.name, u.public_id FROM sessions s
+      const result = await pool.query<{ user_id: string; name: string; public_id: string; avatar: string | null }>(
+        `SELECT s.user_id, u.name, u.public_id, u.avatar FROM sessions s
          JOIN users u ON u.id = s.user_id
          WHERE s.token_hash = $1 AND s.expires_at > now()`,
         [tokenHash]
@@ -46,7 +46,7 @@ export function authMiddleware() {
         fail(res, 401, 'unauthorized')
         return
       }
-      req.user = { id: row.user_id, name: row.name, publicId: Number(row.public_id) }
+      req.user = { id: row.user_id, name: row.name, publicId: Number(row.public_id), avatar: row.avatar }
       req.tokenHash = tokenHash
       // sliding renewal, cheap no-op most of the time
       void pool.query(
@@ -71,9 +71,10 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
     name: string
     public_id: string
     pubkey: string | null
+    avatar: string | null
     created_at: string
   }>(
-    `SELECT u.id, u.name, u.public_id, u.pubkey, f.created_at FROM friendships f
+    `SELECT u.id, u.name, u.public_id, u.pubkey, u.avatar, f.created_at FROM friendships f
      JOIN users u ON u.id = CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END
      WHERE f.user_a = $1 OR f.user_b = $1
      ORDER BY u.name`,
@@ -87,10 +88,13 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
     to_name: string
     from_public: string
     to_public: string
+    from_avatar: string | null
+    to_avatar: string | null
     created_at: string
   }>(
     `SELECT r.id, r.from_id, r.to_id, uf.name AS from_name, ut.name AS to_name,
-            uf.public_id AS from_public, ut.public_id AS to_public, r.created_at
+            uf.public_id AS from_public, ut.public_id AS to_public,
+            uf.avatar AS from_avatar, ut.avatar AS to_avatar, r.created_at
      FROM friend_requests r
      JOIN users uf ON uf.id = r.from_id
      JOIN users ut ON ut.id = r.to_id
@@ -104,12 +108,14 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
     const online = hub.userOf(id)
     if (online) return online
     const row = (
-      await pool.query<{ id: string; name: string; public_id: string }>(
-        'SELECT id, name, public_id FROM users WHERE id = $1',
+      await pool.query<{ id: string; name: string; public_id: string; avatar: string | null }>(
+        'SELECT id, name, public_id, avatar FROM users WHERE id = $1',
         [id]
       )
     ).rows[0]
-    return row ? { id: row.id, name: row.name, publicId: Number(row.public_id) } : { id, name: 'Unknown', publicId: 0 }
+    return row
+      ? { id: row.id, name: row.name, publicId: Number(row.public_id), avatar: row.avatar }
+      : { id, name: 'Unknown', publicId: 0, avatar: null }
   }
 
   const jam = jams.jamOf(userId)
@@ -139,6 +145,7 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
       id: row.id,
       name: row.name,
       publicId: Number(row.public_id),
+      avatar: row.avatar,
       chatKey: row.pubkey,
       since: row.created_at,
       presence: hub.presenceOf(row.id)
@@ -147,8 +154,8 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
       id: row.id,
       user:
         row.from_id === userId
-          ? { id: row.to_id, name: row.to_name, publicId: Number(row.to_public) }
-          : { id: row.from_id, name: row.from_name, publicId: Number(row.from_public) },
+          ? { id: row.to_id, name: row.to_name, publicId: Number(row.to_public), avatar: row.to_avatar }
+          : { id: row.from_id, name: row.from_name, publicId: Number(row.from_public), avatar: row.from_avatar },
       direction: row.from_id === userId ? 'out' : 'in',
       createdAt: row.created_at
     })),
@@ -191,7 +198,7 @@ export function createRouter(services: Services): Router {
       fn(req, res).catch(next)
     }
 
-  // ————— account —————
+  //  account 
   router.post(
     '/account',
     createAccountLimiter,
@@ -225,7 +232,7 @@ export function createRouter(services: Services): Router {
         `INSERT INTO sessions(token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '${SESSION_DAYS} days')`,
         [sha256(token), userId]
       )
-      res.status(201).json({ user: { id: userId, name, publicId }, accountNumber, token })
+      res.status(201).json({ user: { id: userId, name, publicId, avatar: null }, accountNumber, token })
     })
   )
 
@@ -238,8 +245,8 @@ export function createRouter(services: Services): Router {
         fail(res, 400, 'invalid_account')
         return
       }
-      const result = await pool.query<{ id: string; name: string; public_id: string }>(
-        'SELECT id, name, public_id FROM users WHERE account_hash = $1',
+      const result = await pool.query<{ id: string; name: string; public_id: string; avatar: string | null }>(
+        'SELECT id, name, public_id, avatar FROM users WHERE account_hash = $1',
         [sha256(number)]
       )
       const row = result.rows[0]
@@ -252,7 +259,10 @@ export function createRouter(services: Services): Router {
         `INSERT INTO sessions(token_hash, user_id, expires_at) VALUES ($1, $2, now() + interval '${SESSION_DAYS} days')`,
         [sha256(token), row.id]
       )
-      res.json({ user: { id: row.id, name: row.name, publicId: Number(row.public_id) }, token })
+      res.json({
+        user: { id: row.id, name: row.name, publicId: Number(row.public_id), avatar: row.avatar },
+        token
+      })
     })
   )
 
@@ -281,7 +291,7 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // ————— state —————
+  //  state 
   router.get(
     '/state',
     auth,
@@ -290,7 +300,25 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // ————— e2e chat keys —————
+  router.post(
+    '/avatar',
+    auth,
+    socialWriteLimiter,
+    wrap(async (req, res) => {
+      const me = req.user!
+      const avatar = (req.body as Record<string, unknown> | undefined)?.avatar
+      if (avatar !== null && !isValidAvatar(avatar)) {
+        fail(res, 400, 'invalid_avatar')
+        return
+      }
+      await pool.query('UPDATE users SET avatar = $1 WHERE id = $2', [avatar, me.id])
+      hub.setAvatar(me.id, avatar as string | null)
+      for (const friendId of await friendIdsOf(me.id)) hub.send(friendId, { t: 'sync' })
+      res.json({ result: 'updated' })
+    })
+  )
+
+  //  e2e chat keys 
   router.post(
     '/keys',
     auth,
@@ -308,7 +336,7 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // ————— chat history (ciphertext only — server cannot read it) —————
+  //  chat history (ciphertext only  server cannot read it) 
   router.get(
     '/chat/:friendId',
     auth,
@@ -351,7 +379,7 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // ————— friends —————
+  //  friends 
   router.post(
     '/friends/requests',
     auth,
@@ -386,7 +414,7 @@ export function createRouter(services: Services): Router {
         ])
       ).rows[0]
       if (reverse) {
-        // they already asked us — accept instead of duplicating
+        // they already asked us  accept instead of duplicating
         const [a, b] = orderPair(me.id, target.id)
         await pool.query('BEGIN')
         try {
@@ -493,7 +521,7 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // ————— jams —————
+  //  jams 
   router.post(
     '/jams',
     auth,

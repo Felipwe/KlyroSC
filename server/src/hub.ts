@@ -57,6 +57,12 @@ export class Hub {
     return this.clients.get(userId)?.user ?? null
   }
 
+  /** keeps the cached identity fresh when the user changes their picture */
+  setAvatar(userId: string, avatar: string | null): void {
+    const client = this.clients.get(userId)
+    if (client) client.user = { ...client.user, avatar }
+  }
+
   presenceOf(userId: string): FriendPresence {
     const client = this.clients.get(userId)
     return client ? { online: true, listening: client.listening } : { online: false, listening: null }
@@ -104,7 +110,7 @@ export class Hub {
     try {
       client.socket.send(JSON.stringify(message))
     } catch {
-      /* socket teardown race — ignore */
+      /* socket teardown race  ignore */
     }
   }
 

@@ -78,7 +78,7 @@ export class UpdaterService {
   private scheduleAutoInstall(): void {
     if (this.autoInstallScheduled) return
     this.autoInstallScheduled = true
-    log.info('update downloaded automatically — installing and relaunching')
+    log.info('update downloaded automatically  installing and relaunching')
     this.setStatus({ autoInstalling: true })
     setTimeout(() => {
       this.onBeforeInstall?.()

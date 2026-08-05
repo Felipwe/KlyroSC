@@ -4,6 +4,17 @@ export interface SocialUser {
   id: string
   name: string
   publicId: number
+  /** small data-url picture, or null for the generated initials avatar */
+  avatar: string | null
+}
+
+/** data:image/(jpeg|png|webp);base64 payload, small enough for state snapshots */
+export function isValidAvatar(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length <= 90_000 &&
+    /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value)
+  )
 }
 
 export interface ListeningInfo {

@@ -43,7 +43,7 @@ export class ScAuthService {
   }
 
   async init(): Promise<void> {
-    // language must match the system locale — bot checks score UA/locale coherence
+    // language must match the system locale  bot checks score UA/locale coherence
     this.session.setUserAgent(SC_UA, app.getLocale() || 'en-US')
     this.token = await this.readTokenCookie()
     if (this.token) {

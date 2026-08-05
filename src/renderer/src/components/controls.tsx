@@ -75,7 +75,7 @@ export function Select({ value, options, onChange, ariaLabel }: SelectProps): JS
   const menuRef = useRef<HTMLDivElement>(null)
 
   // the menu renders in a body portal with fixed positioning, so it can never be
-  // clipped by scroll containers or cut off at the window edges — it flips and clamps
+  // clipped by scroll containers or cut off at the window edges  it flips and clamps
   useLayoutEffect(() => {
     if (!open) {
       setPlaced(null)

@@ -173,6 +173,8 @@ export interface KlyroApi {
     chatHistory(friendId: string, before?: number): Promise<Result<ChatMessage[]>>
     chatSend(friendId: string, text: string, tempId: string): Promise<Result<void>>
     chatTyping(friendId: string): void
+    setAvatar(): Promise<Result<boolean | null>>
+    removeAvatar(): Promise<Result<void>>
     onState(cb: (snapshot: SocialSnapshot) => void): Unsubscribe
     onJamPlayback(cb: (playback: JamPlayback) => void): Unsubscribe
     onChatMessage(cb: (payload: ChatEventPayload) => void): Unsubscribe
@@ -288,6 +290,8 @@ export const IPC = {
   socialChatHistory: 'social:chat-history',
   socialChatSend: 'social:chat-send',
   socialChatTyping: 'social:chat-typing',
+  socialSetAvatar: 'social:set-avatar',
+  socialRemoveAvatar: 'social:remove-avatar',
   socialState: 'social:state',
   socialJamPlayback: 'social:jam-playback',
   socialChatMessage: 'social:chat-message',

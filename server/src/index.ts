@@ -39,7 +39,7 @@ async function main(): Promise<void> {
   app.disable('x-powered-by')
   app.set('trust proxy', 1) // Railway edge proxy
   app.use(helmet())
-  app.use(express.json({ limit: '32kb' }))
+  app.use(express.json({ limit: '128kb' })) // avatars travel as small data urls
   app.use(
     rateLimit({
       windowMs: 5 * 60 * 1000,

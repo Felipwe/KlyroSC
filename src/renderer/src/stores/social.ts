@@ -41,14 +41,50 @@ export function socialError(code: string): string {
 const TYPING_TTL = 3_500
 let tempCounter = 0
 
+export interface ChatWindowRect {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+const CHAT_MIN_W = 280
+const CHAT_MIN_H = 320
+
+export const clampChatRect = (rect: ChatWindowRect): ChatWindowRect => {
+  const maxW = Math.max(CHAT_MIN_W, window.innerWidth - 24)
+  const maxH = Math.max(CHAT_MIN_H, window.innerHeight - 70)
+  const w = Math.min(Math.max(rect.w, CHAT_MIN_W), maxW)
+  const h = Math.min(Math.max(rect.h, CHAT_MIN_H), maxH)
+  return {
+    w,
+    h,
+    x: Math.min(Math.max(rect.x, 8 - w + 60), window.innerWidth - 60),
+    y: Math.min(Math.max(rect.y, 48), window.innerHeight - 60)
+  }
+}
+
+const defaultChatRect = (index: number): ChatWindowRect => {
+  const w = 330
+  const h = Math.min(520, Math.max(CHAT_MIN_H, window.innerHeight - 170))
+  return clampChatRect({
+    x: window.innerWidth - w - 16 - index * 40,
+    y: 58 + index * 30,
+    w,
+    h
+  })
+}
+
 interface SocialStore {
   snapshot: SocialSnapshot
   loaded: boolean
   busy: boolean
   /** friendId → loaded message window (oldest→newest) */
   chats: Record<string, ChatMessage[]>
-  chatOpen: string | null
-  chatLoading: boolean
+  /** open chat windows; array order = stacking order (last on top) */
+  openChats: string[]
+  chatWindows: Record<string, ChatWindowRect>
+  chatLoading: Record<string, boolean>
   unread: Record<string, number>
   /** friendId → epoch ms when the typing hint expires */
   typing: Record<string, number>
@@ -68,9 +104,13 @@ interface SocialStore {
   endJam(): Promise<void>
   setJamControl(allow: boolean): Promise<void>
   openChat(friendId: string): Promise<void>
-  closeChat(): void
-  sendChat(text: string): Promise<void>
-  notifyTyping(): void
+  closeChat(friendId: string): void
+  focusChat(friendId: string): void
+  setChatRect(friendId: string, rect: ChatWindowRect): void
+  sendChat(friendId: string, text: string): Promise<void>
+  notifyTyping(friendId: string): void
+  setAvatar(): Promise<void>
+  removeAvatar(): Promise<void>
 }
 
 export const useSocial = create<SocialStore>((set, get) => ({
@@ -78,8 +118,9 @@ export const useSocial = create<SocialStore>((set, get) => ({
   loaded: false,
   busy: false,
   chats: {},
-  chatOpen: null,
-  chatLoading: false,
+  openChats: [],
+  chatWindows: {},
+  chatLoading: {},
   unread: {},
   typing: {},
 
@@ -90,9 +131,8 @@ export const useSocial = create<SocialStore>((set, get) => ({
       // drop chat state for people no longer in the friend list
       const validIds = new Set(snapshot.friends.map((friend) => friend.id))
       const state = get()
-      const chatOpen = state.chatOpen && validIds.has(state.chatOpen) ? state.chatOpen : null
-      set({ snapshot, chatOpen })
-      if (!snapshot.account) set({ chats: {}, unread: {}, typing: {} })
+      set({ snapshot, openChats: state.openChats.filter((id) => validIds.has(id)) })
+      if (!snapshot.account) set({ chats: {}, unread: {}, typing: {}, openChats: [], chatWindows: {} })
     })
     api.social.onChatMessage(({ friendId, message }) => {
       const state = get()
@@ -100,10 +140,9 @@ export const useSocial = create<SocialStore>((set, get) => ({
       set({
         chats: { ...state.chats, [friendId]: [...list, message].slice(-300) },
         typing: { ...state.typing, [friendId]: 0 },
-        unread:
-          state.chatOpen === friendId
-            ? state.unread
-            : { ...state.unread, [friendId]: (state.unread[friendId] ?? 0) + 1 }
+        unread: state.openChats.includes(friendId)
+          ? state.unread
+          : { ...state.unread, [friendId]: (state.unread[friendId] ?? 0) + 1 }
       })
     })
     api.social.onChatSent(({ friendId, tempId, id, at }) => {
@@ -242,30 +281,49 @@ export const useSocial = create<SocialStore>((set, get) => ({
   },
 
   openChat: async (friendId) => {
+    const state = get()
+    if (state.openChats.includes(friendId)) {
+      get().focusChat(friendId)
+      set({ unread: { ...get().unread, [friendId]: 0 } })
+      return
+    }
     set({
-      chatOpen: friendId,
-      chatLoading: true,
-      unread: { ...get().unread, [friendId]: 0 }
+      openChats: [...state.openChats, friendId],
+      chatWindows: {
+        ...state.chatWindows,
+        [friendId]: state.chatWindows[friendId] ?? defaultChatRect(state.openChats.length)
+      },
+      chatLoading: { ...state.chatLoading, [friendId]: true },
+      unread: { ...state.unread, [friendId]: 0 }
     })
     const result = await api.social.chatHistory(friendId)
-    if (get().chatOpen !== friendId) return
+    if (!get().openChats.includes(friendId)) return
     if (result.ok) {
       // keep any optimistic/pending messages that arrived while loading
       const existing = (get().chats[friendId] ?? []).filter((message) => message.pending)
       set({
         chats: { ...get().chats, [friendId]: [...result.data, ...existing] },
-        chatLoading: false
+        chatLoading: { ...get().chatLoading, [friendId]: false }
       })
     } else {
-      set({ chatLoading: false })
+      set({ chatLoading: { ...get().chatLoading, [friendId]: false } })
       toast(socialError(result.error), 'error')
     }
   },
 
-  closeChat: () => set({ chatOpen: null }),
+  closeChat: (friendId) =>
+    set({ openChats: get().openChats.filter((id) => id !== friendId) }),
 
-  sendChat: async (text) => {
-    const friendId = get().chatOpen
+  focusChat: (friendId) => {
+    const { openChats } = get()
+    if (openChats[openChats.length - 1] === friendId || !openChats.includes(friendId)) return
+    set({ openChats: [...openChats.filter((id) => id !== friendId), friendId] })
+  },
+
+  setChatRect: (friendId, rect) =>
+    set({ chatWindows: { ...get().chatWindows, [friendId]: rect } }),
+
+  sendChat: async (friendId, text) => {
     const trimmed = text.trim()
     if (!friendId || trimmed.length === 0) return
     const tempId = `t${Date.now()}-${tempCounter++}`
@@ -292,8 +350,18 @@ export const useSocial = create<SocialStore>((set, get) => ({
     }
   },
 
-  notifyTyping: () => {
-    const friendId = get().chatOpen
+  notifyTyping: (friendId) => {
     if (friendId) api.social.chatTyping(friendId)
+  },
+
+  setAvatar: async () => {
+    const result = await api.social.setAvatar()
+    if (!result.ok) toast(socialError(result.error), 'error')
+    else if (result.data === true) toast(t('social.avatarUpdated'), 'success')
+  },
+
+  removeAvatar: async () => {
+    const result = await api.social.removeAvatar()
+    if (!result.ok) toast(socialError(result.error), 'error')
   }
 }))

@@ -334,7 +334,7 @@ export class SoundCloudApi {
     let source: StreamSource | null = null
 
     // On first load only: try the primary API for non-snipped tracks.
-    // On retries (fresh=true) the primary CDN has already failed — skip it
+    // On retries (fresh=true) the primary CDN has already failed  skip it
     // and go straight to the bypass chain which uses different CDN auth tokens.
     if (!fresh && !snippedOnly) {
       source = await this.resolveFrom(raw, quality)

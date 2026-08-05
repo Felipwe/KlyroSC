@@ -1,11 +1,11 @@
-/** KlyroSC Socials — shared types between main, renderer and (mirrored by) the server. */
+/** KlyroSC Socials  shared types between main, renderer and (mirrored by) the server. */
 
 export interface SocialUser {
   id: string
   name: string
-  /** short sequential account number shown as #42 — how friends find you */
-  publicId: number
-}
+  /** short sequential account number shown as #42  how friends find you */
+  publicId: number  /** small data-url profile picture, or null for the generated initials avatar */
+  avatar: string | null}
 
 export interface ListeningInfo {
   trackId: number

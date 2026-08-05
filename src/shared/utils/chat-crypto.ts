@@ -7,7 +7,7 @@
 export interface ChatKeyPair {
   /** raw X25519 public key, base64 (32 bytes) */
   publicKey: string
-  /** pkcs8 private key, base64 — never leaves the device */
+  /** pkcs8 private key, base64  never leaves the device */
   privateKey: string
 }
 

@@ -16,14 +16,16 @@ interface Services {
 
 async function authenticate(token: unknown): Promise<SocialUser | null> {
   if (typeof token !== 'string' || token.length < 20 || token.length > 128) return null
-  const result = await pool.query<{ user_id: string; name: string; public_id: string }>(
-    `SELECT s.user_id, u.name, u.public_id FROM sessions s
+  const result = await pool.query<{ user_id: string; name: string; public_id: string; avatar: string | null }>(
+    `SELECT s.user_id, u.name, u.public_id, u.avatar FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = $1 AND s.expires_at > now()`,
     [sha256(token)]
   )
   const row = result.rows[0]
-  return row ? { id: row.user_id, name: row.name, publicId: Number(row.public_id) } : null
+  return row
+    ? { id: row.user_id, name: row.name, publicId: Number(row.public_id), avatar: row.avatar }
+    : null
 }
 
 const UUID_RE = /^[0-9a-f-]{36}$/i

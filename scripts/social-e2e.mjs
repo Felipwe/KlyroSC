@@ -94,7 +94,7 @@ async function main() {
   const health = await fetch(`${BASE}/health`).then((response) => response.json())
   check('health endpoint', health.ok === true)
 
-  // ————— accounts —————
+  //  accounts 
   const a = (await api('POST', '/account')).data
   const b = (await api('POST', '/account')).data
   check('account A created', /^[0-9]{16}$/.test(a?.accountNumber ?? '') && a.user.name.includes(' '))
@@ -119,7 +119,7 @@ async function main() {
   const badAuth = await api('GET', '/state', { token: 'invalid-token-aaaaaaaaaaaaaaaaaaaa' })
   check('bad token rejected', badAuth.status === 401)
 
-  // ————— friends (by public id) —————
+  //  friends (by public id) 
   const wrongId = await api('POST', '/friends/requests', { token: tokenA, body: { publicId: 999999999 } })
   check('unknown friend id 404', wrongId.status === 404)
   const selfAdd = await api('POST', '/friends/requests', { token: tokenA, body: { publicId: a.user.publicId } })
@@ -144,7 +144,7 @@ async function main() {
   const again = await api('POST', '/friends/requests', { token: tokenA, body: { publicId: b.user.publicId } })
   check('cannot re-request a friend', again.status === 409)
 
-  // ————— e2e chat keys —————
+  //  e2e chat keys 
   const cryptoMod = await import('node:crypto')
   const makePair = () => {
     const { publicKey, privateKey } = cryptoMod.generateKeyPairSync('x25519')
@@ -164,7 +164,22 @@ async function main() {
   const stateA1b = (await api('GET', '/state', { token: tokenA })).data
   check('friend chatKey visible in state', stateA1b.friends[0]?.chatKey === keyB.pub)
 
-  // ————— websockets + presence —————
+  // ————— profile avatar —————
+  const tinyJpeg = 'data:image/jpeg;base64,' + Buffer.from([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00, ...Array(60).fill(16), 0xff, 0xd9]).toString('base64')
+  const setAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: tinyJpeg } })
+  check('A uploaded avatar', setAvatar.status === 200)
+  const badAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: 'data:text/html;base64,PGI+' } })
+  check('invalid avatar rejected', badAvatar.status === 400)
+  const hugeAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: 'data:image/jpeg;base64,' + 'A'.repeat(95_000) } })
+  check('oversized avatar rejected', hugeAvatar.status === 400 || hugeAvatar.status === 413)
+  const stateB1c = (await api('GET', '/state', { token: tokenB })).data
+  check('B sees A avatar', stateB1c.friends[0]?.avatar === tinyJpeg)
+  const stateA1c = (await api('GET', '/state', { token: tokenA })).data
+  check('A own avatar in state', stateA1c.user.avatar === tinyJpeg)
+  const clearAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: null } })
+  check('avatar removed', clearAvatar.status === 200)
+
+  //  websockets + presence 
   const wsA = await connectWs(tokenA)
   const wsB = await connectWs(tokenB)
   check('ws A + B connected', true)
@@ -177,7 +192,7 @@ async function main() {
   const presence = await presencePromise
   check('B received A presence', presence.presence.online === true && presence.presence.listening.playing === true)
 
-  // ————— live chat (ciphertext relay + typing) —————
+  //  live chat (ciphertext relay + typing) 
   const typingPromise = waitFor(wsB, (m) => m.t === 'chat:typing', 8000, 'typing at B')
   wsA.send({ t: 'chat:typing', to: b.user.id })
   const typingEvent = await typingPromise
@@ -198,7 +213,7 @@ async function main() {
   const strangerHistory = await api('GET', `/chat/${a.user.id}`, { token: tokenA })
   check('cannot read chat with self path', strangerHistory.status === 403 || strangerHistory.status === 400)
 
-  // ————— jam —————
+  //  jam 
   const createJam = await api('POST', '/jams', { token: tokenA })
   check('A created jam', createJam.status === 201 && createJam.data.jam?.members.length === 1)
 
@@ -286,7 +301,7 @@ async function main() {
   // rate limit headers exist (sanity)
   check('rate limit headers present', true)
 
-  // ————— cleanup —————
+  //  cleanup 
   wsA.socket.close()
   wsB.socket.close()
   const deleteA = await api('DELETE', '/account', { token: tokenA })

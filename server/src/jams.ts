@@ -64,7 +64,7 @@ export class JamService {
       ownerId: jam.ownerId,
       allowGuestControl: jam.allowGuestControl,
       members: [...jam.members].map((id) => {
-        const user = resolveUser(id) ?? { id, name: 'Unknown', publicId: 0 }
+        const user = resolveUser(id) ?? { id, name: 'Unknown', publicId: 0, avatar: null }
         return { ...user, owner: id === jam.ownerId }
       }),
       queue: jam.queue,
@@ -76,7 +76,7 @@ export class JamService {
     return {
       id: invite.id,
       jamId: invite.jamId,
-      from: resolveUser(invite.fromId) ?? { id: invite.fromId, name: 'Unknown', publicId: 0 },
+      from: resolveUser(invite.fromId) ?? { id: invite.fromId, name: 'Unknown', publicId: 0, avatar: null },
       createdAt: new Date(invite.createdAt).toISOString()
     }
   }

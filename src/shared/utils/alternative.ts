@@ -17,7 +17,7 @@ export interface AltCandidate {
   playbackCount: number
 }
 
-// words that mark a remix / edit / different rendition — never a clean master
+// words that mark a remix / edit / different rendition  never a clean master
 const EDIT_RE =
   /\b(slowed|reverb|sped|speed\s*up|nightcore|8d|acoustic|remix|bass\s*boost|mashup|instrumental|karaoke|cover|loop|tiktok|edit|rework|flip|vip|bootleg|snippet|unreleased|demo|leak|version|remaster|part\s*\d|pt\.?\s*\d|\bv\d\b|live|freestyle|1950s|jazz)\b/i
 
@@ -25,7 +25,7 @@ const stripArtist = (value: string): string => normalizeText(cleanTitle(value))
 
 /**
  * Picks a clean, full-length reupload of the same song when one clearly exists.
- * Returns the candidate id, or null when nothing is confident enough — in which
+ * Returns the candidate id, or null when nothing is confident enough  in which
  * case the caller should keep the official preview rather than play the wrong thing.
  */
 export function pickAlternative(original: AltOriginal, candidates: AltCandidate[]): number | null {

@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type JSX, type PointerEvent } from 'react'
 import { type ChatMessage } from '@shared/types/social'
 import { avatarHue, initialsOf } from '@shared/utils/social'
 import { t, useLanguage } from '@renderer/i18n'
-import { useSocial } from '@renderer/stores/social'
+import { clampChatRect, useSocial } from '@renderer/stores/social'
 import { cx } from '@renderer/utils/format'
 import { Icon } from './Icon'
 
@@ -12,62 +12,136 @@ function timeOf(at: number): string {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export function ChatPanel(): JSX.Element | null {
+interface ChatPanelProps {
+  friendId: string
+  /** stacking position — last one is on top */
+  zIndex: number
+}
+
+export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | null {
   useLanguage()
-  const chatOpen = useSocial((state) => state.chatOpen)
-  const chatLoading = useSocial((state) => state.chatLoading)
-  const friend = useSocial((state) => state.snapshot.friends.find((item) => item.id === state.chatOpen) ?? null)
-  const messages = useSocial((state) =>
-    state.chatOpen ? (state.chats[state.chatOpen] ?? NO_MESSAGES) : NO_MESSAGES
-  )
+  const friend = useSocial((state) => state.snapshot.friends.find((item) => item.id === friendId) ?? null)
+  const messages = useSocial((state) => state.chats[friendId] ?? NO_MESSAGES)
+  const loading = useSocial((state) => state.chatLoading[friendId] ?? false)
   // store clears the flag via timeout, so non-zero means "typing right now"
-  const typing = useSocial((state) => (state.chatOpen ? (state.typing[state.chatOpen] ?? 0) > 0 : false))
+  const typing = useSocial((state) => (state.typing[friendId] ?? 0) > 0)
+  const rect = useSocial((state) => state.chatWindows[friendId])
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null)
+  const resizeRef = useRef<{ pointerId: number; startX: number; startY: number; startW: number; startH: number } | null>(
+    null
+  )
 
   useLayoutEffect(() => {
     const body = bodyRef.current
     if (body) body.scrollTop = body.scrollHeight
-  }, [messages.length, chatOpen, chatLoading, typing])
+  }, [messages.length, loading, typing])
 
   useEffect(() => {
-    setDraft('')
-    if (chatOpen) inputRef.current?.focus()
-  }, [chatOpen])
+    inputRef.current?.focus()
+  }, [friendId])
 
-  useEffect(() => {
-    if (!chatOpen) return
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') useSocial.getState().closeChat()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [chatOpen])
-
-  if (!chatOpen || !friend) return null
+  if (!friend || !rect) return null
 
   const hue = avatarHue(friend.name)
   const send = (): void => {
     if (draft.trim().length === 0) return
-    void useSocial.getState().sendChat(draft)
+    void useSocial.getState().sendChat(friendId, draft)
     setDraft('')
     inputRef.current?.focus()
   }
 
+  const focus = (): void => useSocial.getState().focusChat(friendId)
+
+  const onHeadPointerDown = (event: PointerEvent<HTMLDivElement>): void => {
+    if ((event.target as HTMLElement).closest('button')) return
+    dragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.x,
+      offsetY: event.clientY - rect.y
+    }
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* synthetic events have no active pointer */
+    }
+  }
+
+  const onHeadPointerMove = (event: PointerEvent<HTMLDivElement>): void => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    useSocial.getState().setChatRect(
+      friendId,
+      clampChatRect({ ...rect, x: event.clientX - drag.offsetX, y: event.clientY - drag.offsetY })
+    )
+  }
+
+  const onHeadPointerUp = (event: PointerEvent<HTMLDivElement>): void => {
+    if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
+  }
+
+  const onResizePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
+    event.stopPropagation()
+    resizeRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startW: rect.w,
+      startH: rect.h
+    }
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      /* synthetic events have no active pointer */
+    }
+  }
+
+  const onResizePointerMove = (event: PointerEvent<HTMLDivElement>): void => {
+    const resize = resizeRef.current
+    if (!resize || resize.pointerId !== event.pointerId) return
+    useSocial.getState().setChatRect(
+      friendId,
+      clampChatRect({
+        ...rect,
+        w: resize.startW + (event.clientX - resize.startX),
+        h: resize.startH + (event.clientY - resize.startY)
+      })
+    )
+  }
+
+  const onResizePointerUp = (event: PointerEvent<HTMLDivElement>): void => {
+    if (resizeRef.current?.pointerId === event.pointerId) resizeRef.current = null
+  }
+
   return (
-    <div className="chat-panel glass" role="dialog" aria-label={t('social.chat.title')}>
-      <div className="chat-head">
+    <div
+      className="chat-panel glass"
+      role="dialog"
+      aria-label={`${t('social.chat.title')} — ${friend.name}`}
+      style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 30 + zIndex }}
+      onPointerDown={focus}
+    >
+      <div
+        className="chat-head"
+        onPointerDown={onHeadPointerDown}
+        onPointerMove={onHeadPointerMove}
+        onPointerUp={onHeadPointerUp}
+        onPointerCancel={onHeadPointerUp}
+      >
         <span
           className="social-avatar"
           style={{
             width: 34,
             height: 34,
             fontSize: 12,
-            background: `linear-gradient(135deg, hsl(${hue} 62% 46%), hsl(${(hue + 42) % 360} 68% 34%))`
+            background: friend.avatar
+              ? undefined
+              : `linear-gradient(135deg, hsl(${hue} 62% 46%), hsl(${(hue + 42) % 360} 68% 34%))`
           }}
         >
-          {initialsOf(friend.name)}
+          {friend.avatar ? <img src={friend.avatar} alt="" draggable={false} /> : initialsOf(friend.name)}
         </span>
         <div className="chat-head-main">
           <div className="chat-head-name">
@@ -81,13 +155,17 @@ export function ChatPanel(): JSX.Element | null {
         <span className="chat-lock" title={t('social.chat.encrypted')}>
           <Icon name="lock" size={13} />
         </span>
-        <button className="icon-btn" onClick={() => useSocial.getState().closeChat()} aria-label={t('common.close')}>
+        <button
+          className="icon-btn"
+          onClick={() => useSocial.getState().closeChat(friendId)}
+          aria-label={t('common.close')}
+        >
           <Icon name="close" size={16} />
         </button>
       </div>
 
       <div className="chat-body" ref={bodyRef}>
-        {chatLoading ? (
+        {loading ? (
           <div className="chat-empty">
             <div className="spinner small" />
           </div>
@@ -130,12 +208,14 @@ export function ChatPanel(): JSX.Element | null {
           spellCheck
           onChange={(event) => {
             setDraft(event.currentTarget.value)
-            useSocial.getState().notifyTyping()
+            useSocial.getState().notifyTyping(friendId)
           }}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
               send()
+            } else if (event.key === 'Escape') {
+              useSocial.getState().closeChat(friendId)
             }
           }}
         />
@@ -148,6 +228,15 @@ export function ChatPanel(): JSX.Element | null {
           <Icon name="send" size={16} />
         </button>
       </div>
+
+      <div
+        className="chat-resize"
+        aria-hidden="true"
+        onPointerDown={onResizePointerDown}
+        onPointerMove={onResizePointerMove}
+        onPointerUp={onResizePointerUp}
+        onPointerCancel={onResizePointerUp}
+      />
     </div>
   )
 }

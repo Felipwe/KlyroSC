@@ -25,7 +25,7 @@ interface PlayerState {
   shuffle: boolean
   repeat: RepeatMode
   previewActive: boolean
-  /** true when following a jam without control permission — transport is locked */
+  /** true when following a jam without control permission  transport is locked */
   jamLocked: boolean
 
   playTracks(tracks: Track[], startIndex?: number): void
@@ -149,7 +149,7 @@ function startTrack(index: number, autoplay = true, startAt = 0, fresh = false):
     .load(track.id, autoplay, startAt, fresh)
     .then((ok) => {
       // Source-setup failure (e.g. IPC error) counts as an error immediately.
-      // Successful setup does NOT reset the counter — that only happens on real playback.
+      // Successful setup does NOT reset the counter  that only happens on real playback.
       if (!ok) consecutiveErrors++
     })
 }

@@ -1,3 +1,4 @@
+import { dialog, nativeImage } from 'electron'
 import { IPC } from '@shared/types/ipc'
 import { type JamTrackRef } from '@shared/types/social'
 import { handle, handleResult, on } from './core'
@@ -89,4 +90,32 @@ export function registerSocialIpc(ctx: AppContext): void {
     if (!Array.isArray(queue)) return
     social.sendJamQueue(queue.filter(isTrackRef))
   })
+
+  handleResult(IPC.socialSetAvatar, async () => {
+    const window = ctx.mainWindow.get()
+    if (!window) return null
+    const result = await dialog.showOpenDialog(window, {
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'] }]
+    })
+    const file = result.filePaths[0]
+    if (result.canceled || !file) return null
+    const image = nativeImage.createFromPath(file)
+    if (image.isEmpty()) throw new Error('invalid_avatar')
+    const size = image.getSize()
+    const side = Math.min(size.width, size.height)
+    // center-crop to a square before shrinking so faces stay centered
+    const cropped = image.crop({
+      x: Math.floor((size.width - side) / 2),
+      y: Math.floor((size.height - side) / 2),
+      width: side,
+      height: side
+    })
+    const resized = cropped.resize({ width: 128, height: 128, quality: 'best' })
+    const dataUrl = `data:image/jpeg;base64,${resized.toJPEG(80).toString('base64')}`
+    if (dataUrl.length > 90_000) throw new Error('invalid_avatar')
+    await social.setAvatar(dataUrl)
+    return true
+  })
+  handleResult(IPC.socialRemoveAvatar, () => social.setAvatar(null))
 }

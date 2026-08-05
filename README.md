@@ -68,7 +68,7 @@ SoundCloud Modded by: Felipe and Yusuro
 2. Roda. Ele instala em segundos e abre sozinho.
 3. Só isso. Atualizações chegam automaticamente.
 
-> Se o Windows mostrar “fornecedor desconhecido”, clique em **Mais informações → Executar assim mesmo** — é só porque o app ainda não tem assinatura digital paga.
+> Se o Windows mostrar “fornecedor desconhecido”, clique em **Mais informações → Executar assim mesmo**  é só porque o app ainda não tem assinatura digital paga.
 >
 > Tinha o KlyroSC 1.x? O instalador remove a versão antiga sozinho, sem duplicar nada.
 
@@ -92,10 +92,11 @@ Free code signing on Windows provided by [SignPath.io](https://signpath.io), cer
 
 A aba **Social** conecta você aos amigos sem pedir nenhum dado pessoal:
 
-- **Conta em 1 clique**: o app gera um nome aleatório (“Bold Zebra”), um ID público (#42) e um código secreto de 16 dígitos — igual Mullvad. O código é a única chave da conta: sem e-mail, sem senha, sem recuperação.
+- **Conta em 1 clique**: o app gera um nome aleatório (“Bold Zebra”), um ID público (#42) e um código secreto de 16 dígitos  igual Mullvad. O código é a única chave da conta: sem e-mail, sem senha, sem recuperação.
 - **Amigos**: adicione pelo #ID, aceite ou recuse pedidos, veja quem está online e o que estão ouvindo ao vivo.
 - **Jam**: até 8 pessoas ouvindo a mesma música em tempo real. O dono convida, controla e decide se os convidados podem pausar/trocar música. Jam parada encerra sozinha.
-- **Chat E2E**: mensagens criptografadas de ponta a ponta (X25519 + HKDF + AES-256-GCM). As chaves privadas nunca saem do seu computador — o servidor só armazena e repassa texto cifrado.
+- **Chat E2E**: mensagens criptografadas de ponta a ponta (X25519 + HKDF + AES-256-GCM) em janelas flutuantes — arraste, redimensione e mantenha várias conversas abertas ao mesmo tempo. As chaves privadas nunca saem do seu computador — o servidor só armazena e repassa texto cifrado.
+- **Perfil do seu jeito**: foto de perfil opcional (recortada e comprimida localmente) junto do nome aleatório e do #ID.
 - **Backend privado** em Railway (Node + Postgres + WebSocket), com rate limiting, sessões com hash e zero endpoints públicos sem autenticação.
 
 ## Stack
