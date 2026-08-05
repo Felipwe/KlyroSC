@@ -154,7 +154,6 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
               </div>
               <ThemePicker />
               {settings.appearance.accent === 'custom' && <ThemeStudio />}
-              {settings.appearance.accent === 'custom' && <ThemeStudio />}
               <SettingRow label={t('settings.appearance.glass')} desc={t('settings.appearance.glassDesc')}>
                 <Select
                   value={settings.appearance.glass}

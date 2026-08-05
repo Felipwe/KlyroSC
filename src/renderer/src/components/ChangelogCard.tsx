@@ -11,6 +11,15 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.8.1',
+    pt: [
+      'Corrigido: as opções do tema personalizado apareciam duplicadas nas configurações'
+    ],
+    en: [
+      'Fixed: custom theme options were showing up duplicated in settings'
+    ]
+  },
+  {
     version: '2.8.0',
     pt: [
       'Chat da Jam: converse com todo mundo da jam em grupo, com aviso de não lidas',
