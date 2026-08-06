@@ -284,6 +284,16 @@ export class SocialService {
     await this.request<unknown>('PATCH', '/jams/current', { allowGuestControl: allow })
   }
 
+  async kickFromJam(userId: string): Promise<void> {
+    await this.request<unknown>('POST', '/jams/current/kick', { userId })
+    await this.refreshState()
+  }
+
+  async transferJam(userId: string): Promise<void> {
+    await this.request<unknown>('POST', '/jams/current/transfer', { userId })
+    await this.refreshState()
+  }
+
   //  realtime out 
 
   setNowPlaying(listening: ListeningInfo | null): void {

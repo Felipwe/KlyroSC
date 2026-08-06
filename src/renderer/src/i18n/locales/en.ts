@@ -343,7 +343,14 @@ export const en = {
       nothingPlaying: 'Nothing is playing in this Jam yet — start a track!',
       chatTitle: 'Jam chat',
       chatEmpty: 'Talk with everyone in the Jam — messages live only while it lasts.',
-      addedBy: 'Added by {name}'
+      addedBy: 'Added by {name}',
+      manage: 'Manage Jam',
+      inJamNow: 'In a Jam — {count} listening together',
+      kick: 'Remove from Jam',
+      kickConfirm: 'Remove {name} from this Jam?',
+      makeHost: 'Make host',
+      makeHostConfirm: 'Hand this Jam over to {name}? They will control the music.',
+      needAccount: 'Create your Socials account to start a Jam'
     },
     errors: {
       generic: 'Something went wrong. Try again.',
@@ -366,6 +373,7 @@ export const en = {
       already_invited: 'Already invited.',
       already_member: 'Already in the Jam.',
       not_in_jam: 'You are not in a Jam.',
+      not_member: 'That person is not in the Jam anymore.',
       owner_only: 'Only the Jam host can do that.',
       invite_not_found: 'That invite expired.',
       jam_gone: 'That Jam no longer exists.',
@@ -403,15 +411,6 @@ export const en = {
         yagami: 'Classic black & red',
         custom: 'Your colors and background'
       },
-      glass: 'Glass intensity',
-      glassDesc: 'How translucent panels and blur effects look.',
-      glassLow: 'Subtle',
-      glassMedium: 'Balanced',
-      glassHigh: 'Vivid',
-      motion: 'Motion',
-      motionDesc: 'Level of interface animations.',
-      motionFull: 'Fluid',
-      motionReduced: 'Reduced',
       fontScale: 'Interface scale',
       fontScaleDesc: 'Adjusts the size of text and controls.'
     },
@@ -463,14 +462,7 @@ export const en = {
       autoplay: 'Autoplay related tracks',
       autoplayDesc: 'Keep the music going when the queue ends.',
       resume: 'Resume on launch',
-      resumeDesc: 'Restore your queue and position when the app opens.',
-      quality: 'Stream preference',
-      qualityDesc: 'Progressive is lighter; HLS can be more resilient.',
-      qualityAuto: 'Automatic',
-      qualityProgressive: 'Progressive',
-      qualityHls: 'HLS',
-      fade: 'Fade duration',
-      fadeDesc: 'Soft volume ramp when playing and pausing ({ms} ms).'
+      resumeDesc: 'Restore your queue and position when the app opens.'
     },
     eq: {
       enable: 'Enable equalizer',

@@ -167,6 +167,8 @@ export interface KlyroApi {
     leaveJam(): Promise<Result<void>>
     endJam(): Promise<Result<void>>
     setJamControl(allow: boolean): Promise<Result<void>>
+    kickFromJam(userId: string): Promise<Result<void>>
+    transferJam(userId: string): Promise<Result<void>>
     reconnect(): void
     sendJamPlayback(payload: { track: JamTrackRef | null; playing: boolean; position: number }): void
     sendJamQueue(queue: JamTrackRef[]): void
@@ -287,6 +289,8 @@ export const IPC = {
   socialLeaveJam: 'social:leave-jam',
   socialEndJam: 'social:end-jam',
   socialSetJamControl: 'social:set-jam-control',
+  socialJamKick: 'social:jam-kick',
+  socialJamTransfer: 'social:jam-transfer',
   socialReconnect: 'social:reconnect',
   socialJamPlaybackSend: 'social:jam-playback-send',
   socialJamQueueSend: 'social:jam-queue-send',

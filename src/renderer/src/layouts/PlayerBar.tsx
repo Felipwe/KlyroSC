@@ -8,6 +8,7 @@ import { cx, formatTime } from '@renderer/utils/format'
 import { Artwork } from '@renderer/components/Artwork'
 import { Icon } from '@renderer/components/Icon'
 import { Slider } from '@renderer/components/controls'
+import { JamMenuButton } from '@renderer/components/JamMenu'
 import { openTrackMenuAt } from '@renderer/hooks/track-menu'
 
 export function PlayerBar(): JSX.Element {
@@ -153,6 +154,7 @@ export function PlayerBar(): JSX.Element {
       </div>
 
       <div className="pb-side">
+        <JamMenuButton />
         <button
           className={cx('icon-btn', ui.lyricsOpen && 'active')}
           onClick={() => ui.toggleLyrics()}

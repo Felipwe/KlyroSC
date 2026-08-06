@@ -60,6 +60,14 @@ export function registerSocialIpc(ctx: AppContext): void {
   handleResult(IPC.socialLeaveJam, () => social.leaveJam())
   handleResult(IPC.socialEndJam, () => social.endJam())
   handleResult(IPC.socialSetJamControl, (allow) => social.setJamControl(allow === true))
+  handleResult(IPC.socialJamKick, (userId) => {
+    if (typeof userId !== 'string') throw new Error('invalid_payload')
+    return social.kickFromJam(userId)
+  })
+  handleResult(IPC.socialJamTransfer, (userId) => {
+    if (typeof userId !== 'string') throw new Error('invalid_payload')
+    return social.transferJam(userId)
+  })
 
   on(IPC.socialReconnect, () => social.reconnectNow())
   handleResult(IPC.socialChatHistory, (payload) => {

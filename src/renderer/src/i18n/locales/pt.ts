@@ -345,7 +345,14 @@ export const pt: Dict = {
       nothingPlaying: 'Nada tocando nesta Jam ainda — toque alguma coisa!',
       chatTitle: 'Chat da Jam',
       chatEmpty: 'Converse com todo mundo da Jam — as mensagens duram só enquanto ela existir.',
-      addedBy: 'Adicionada por {name}'
+      addedBy: 'Adicionada por {name}',
+      manage: 'Gerenciar Jam',
+      inJamNow: 'Em uma Jam — {count} ouvindo juntos',
+      kick: 'Remover da Jam',
+      kickConfirm: 'Remover {name} desta Jam?',
+      makeHost: 'Passar a posse',
+      makeHostConfirm: 'Passar esta Jam para {name}? A pessoa vai controlar a música.',
+      needAccount: 'Crie sua conta do Socials para iniciar uma Jam'
     },
     errors: {
       generic: 'Algo deu errado. Tente de novo.',
@@ -368,6 +375,7 @@ export const pt: Dict = {
       already_invited: 'Já convidado.',
       already_member: 'Já está na Jam.',
       not_in_jam: 'Você não está em uma Jam.',
+      not_member: 'Essa pessoa não está mais na Jam.',
       owner_only: 'Só o dono da Jam pode fazer isso.',
       invite_not_found: 'Esse convite expirou.',
       jam_gone: 'Essa Jam não existe mais.',
@@ -405,15 +413,6 @@ export const pt: Dict = {
         yagami: 'Preto e vermelho clássico',
         custom: 'Suas cores e seu fundo'
       },
-      glass: 'Intensidade do vidro',
-      glassDesc: 'O quão translúcidos ficam os painéis e efeitos de blur.',
-      glassLow: 'Sutil',
-      glassMedium: 'Equilibrado',
-      glassHigh: 'Vívido',
-      motion: 'Animações',
-      motionDesc: 'Nível de animações da interface.',
-      motionFull: 'Fluidas',
-      motionReduced: 'Reduzidas',
       fontScale: 'Escala da interface',
       fontScaleDesc: 'Ajusta o tamanho de textos e controles.'
     },
@@ -465,14 +464,7 @@ export const pt: Dict = {
       autoplay: 'Tocar faixas relacionadas',
       autoplayDesc: 'Continue a música quando a fila terminar.',
       resume: 'Retomar ao abrir',
-      resumeDesc: 'Restaura sua fila e posição ao abrir o aplicativo.',
-      quality: 'Preferência de stream',
-      qualityDesc: 'Progressivo é mais leve; HLS pode ser mais resiliente.',
-      qualityAuto: 'Automático',
-      qualityProgressive: 'Progressivo',
-      qualityHls: 'HLS',
-      fade: 'Duração do fade',
-      fadeDesc: 'Rampa suave de volume ao tocar e pausar ({ms} ms).'
+      resumeDesc: 'Restaura sua fila e posição ao abrir o aplicativo.'
     },
     eq: {
       enable: 'Ativar equalizador',

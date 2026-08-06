@@ -17,9 +17,6 @@ import { cx } from '@renderer/utils/format'
 import { Icon } from '@renderer/components/Icon'
 import { Artwork } from '@renderer/components/Artwork'
 import { Switch } from '@renderer/components/controls'
-import { ChatPanel } from '@renderer/components/ChatPanel'
-import { JamChatPanel } from '@renderer/components/JamChatPanel'
-import { JAM_CHAT_KEY } from '@renderer/stores/social'
 
 export function SocialAvatar({
   name,
@@ -503,7 +500,6 @@ function FriendRow({ friend, inJam }: { friend: Friend; inJam: boolean }): JSX.E
 
 function Hub(): JSX.Element {
   const snapshot = useSocial((state) => state.snapshot)
-  const openChats = useSocial((state) => state.openChats)
   const [friendId, setFriendId] = useState('')
   const account = snapshot.account!
   const incoming = snapshot.requests.filter((request) => request.direction === 'in')
@@ -759,14 +755,6 @@ function Hub(): JSX.Element {
           </div>
         )}
       </section>
-
-      {openChats.map((id, index) =>
-        id === JAM_CHAT_KEY ? (
-          <JamChatPanel key={id} zIndex={index} />
-        ) : (
-          <ChatPanel key={id} friendId={id} zIndex={index} />
-        )
-      )}
     </>
   )
 }

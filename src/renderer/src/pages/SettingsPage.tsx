@@ -154,33 +154,6 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
               </div>
               <ThemePicker />
               {settings.appearance.accent === 'custom' && <ThemeStudio />}
-              <SettingRow label={t('settings.appearance.glass')} desc={t('settings.appearance.glassDesc')}>
-                <Select
-                  value={settings.appearance.glass}
-                  ariaLabel={t('settings.appearance.glass')}
-                  options={[
-                    { value: 'low', label: t('settings.appearance.glassLow') },
-                    { value: 'medium', label: t('settings.appearance.glassMedium') },
-                    { value: 'high', label: t('settings.appearance.glassHigh') }
-                  ]}
-                  onChange={(value) =>
-                    void update({ appearance: { glass: value as 'low' | 'medium' | 'high' } })
-                  }
-                />
-              </SettingRow>
-              <SettingRow label={t('settings.appearance.motion')} desc={t('settings.appearance.motionDesc')}>
-                <Select
-                  value={settings.appearance.motion}
-                  ariaLabel={t('settings.appearance.motion')}
-                  options={[
-                    { value: 'full', label: t('settings.appearance.motionFull') },
-                    { value: 'reduced', label: t('settings.appearance.motionReduced') }
-                  ]}
-                  onChange={(value) =>
-                    void update({ appearance: { motion: value as 'full' | 'reduced' } })
-                  }
-                />
-              </SettingRow>
               <SettingRow label={t('settings.appearance.fontScale')} desc={t('settings.appearance.fontScaleDesc')}>
                 <Select
                   value={String(settings.appearance.fontScale)}
@@ -224,31 +197,6 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
                   on={settings.playback.resumeOnLaunch}
                   ariaLabel={t('settings.playback.resume')}
                   onToggle={(on) => void update({ playback: { resumeOnLaunch: on } })}
-                />
-              </SettingRow>
-              <SettingRow label={t('settings.playback.quality')} desc={t('settings.playback.qualityDesc')}>
-                <Select
-                  value={settings.playback.quality}
-                  ariaLabel={t('settings.playback.quality')}
-                  options={[
-                    { value: 'auto', label: t('settings.playback.qualityAuto') },
-                    { value: 'progressive', label: t('settings.playback.qualityProgressive') },
-                    { value: 'hls', label: t('settings.playback.qualityHls') }
-                  ]}
-                  onChange={(value) =>
-                    void update({ playback: { quality: value as 'auto' | 'progressive' | 'hls' } })
-                  }
-                />
-              </SettingRow>
-              <SettingRow
-                label={t('settings.playback.fade')}
-                desc={t('settings.playback.fadeDesc', { ms: settings.playback.fadeMs })}
-              >
-                <Select
-                  value={String(settings.playback.fadeMs)}
-                  ariaLabel={t('settings.playback.fade')}
-                  options={[0, 120, 220, 400, 700].map((ms) => ({ value: String(ms), label: `${ms} ms` }))}
-                  onChange={(value) => void update({ playback: { fadeMs: Number(value) } })}
                 />
               </SettingRow>
             </>

@@ -30,6 +30,7 @@ export function socialError(code: string): string {
     'already_invited',
     'already_member',
     'not_in_jam',
+    'not_member',
     'owner_only',
     'invite_not_found',
     'jam_gone',
@@ -119,6 +120,8 @@ interface SocialStore {
   leaveJam(): Promise<void>
   endJam(): Promise<void>
   setJamControl(allow: boolean): Promise<void>
+  kickFromJam(userId: string): Promise<void>
+  transferJam(userId: string): Promise<void>
   openChat(friendId: string): Promise<void>
   openJamChat(): void
   closeChat(friendId: string): void
@@ -341,6 +344,16 @@ export const useSocial = create<SocialStore>((set, get) => ({
 
   setJamControl: async (allow) => {
     const result = await api.social.setJamControl(allow)
+    if (!result.ok) toast(socialError(result.error), 'error')
+  },
+
+  kickFromJam: async (userId) => {
+    const result = await api.social.kickFromJam(userId)
+    if (!result.ok) toast(socialError(result.error), 'error')
+  },
+
+  transferJam: async (userId) => {
+    const result = await api.social.transferJam(userId)
     if (!result.ok) toast(socialError(result.error), 'error')
   },
 

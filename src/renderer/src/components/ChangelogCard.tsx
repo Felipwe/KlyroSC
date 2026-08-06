@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.9.0',
+    pt: [
+      'Jam na barra do player: um clique no novo botão ao lado das letras inicia uma jam na hora',
+      'Menu da jam sem sair da tela: veja quem está ouvindo, remova alguém, passe a posse e abra o chat — tudo pelo player',
+      'O chat da jam agora abre em qualquer página do app',
+      'Configurações mais enxutas: opções técnicas de vidro, animações, stream e fade foram removidas'
+    ],
+    en: [
+      'Jam from the player bar: one click on the new button next to lyrics starts a jam instantly',
+      'Jam menu without leaving your screen: see who is listening, remove someone, hand over the crown and open the chat — right from the player',
+      'The jam chat now opens on any page of the app',
+      'Leaner settings: technical glass, animations, stream and fade options were removed'
+    ]
+  },
+  {
     version: '2.8.3',
     pt: [
       'Jams agora sobrevivem a reinícios do servidor: manutenções e atualizações não encerram mais a sua jam — a sincronização retoma sozinha em segundos'

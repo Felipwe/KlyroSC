@@ -667,5 +667,35 @@ export function createRouter(services: Services): Router {
     })
   )
 
+  const jamMemberAction =
+    (action: (ownerId: string, targetId: string) => { ok: true } | { ok: false; error: string }) =>
+    wrap(async (req, res) => {
+      const target = (req.body as Record<string, unknown> | undefined)?.userId
+      if (typeof target !== 'string' || !/^[0-9a-f-]{36}$/i.test(target)) {
+        fail(res, 400, 'invalid_user')
+        return
+      }
+      const result = action(req.user!.id, target)
+      if (!result.ok) {
+        fail(res, result.error === 'owner_only' ? 403 : 409, result.error)
+        return
+      }
+      res.json({ result: 'ok' })
+    })
+
+  router.post(
+    '/jams/current/kick',
+    auth,
+    socialWriteLimiter,
+    jamMemberAction((ownerId, targetId) => jams.kick(ownerId, targetId))
+  )
+
+  router.post(
+    '/jams/current/transfer',
+    auth,
+    socialWriteLimiter,
+    jamMemberAction((ownerId, targetId) => jams.transferTo(ownerId, targetId))
+  )
+
   return router
 }

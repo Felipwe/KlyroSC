@@ -128,6 +128,47 @@ describe('JamService', () => {
     expect(service.setGuestControl('owner', true)).toBe(true)
   })
 
+  it('owner can kick a member; the target is notified with an ended event', () => {
+    const { service, events } = makeService()
+    service.create('owner')
+    service.invite('owner', 'guest')
+    service.acceptInvite('guest', service.invitesFor('guest')[0]!.id)
+    events.length = 0
+
+    expect(service.kick('guest', 'owner')).toEqual({ ok: false, error: 'owner_only' })
+    expect(service.kick('owner', 'owner')).toEqual({ ok: false, error: 'not_member' })
+    expect(service.kick('owner', 'stranger')).toEqual({ ok: false, error: 'not_member' })
+
+    expect(service.kick('owner', 'guest')).toEqual({ ok: true })
+    expect(service.jamOf('guest')).toBeNull()
+    expect(service.jamOf('owner')?.members.size).toBe(1)
+    const ended = events.find((event) => event.kind === 'ended')
+    expect(ended?.userIds).toEqual(['guest'])
+    // kicked users can be invited again
+    expect(service.invite('owner', 'guest').ok).toBe(true)
+  })
+
+  it('owner can hand the crown to another member', () => {
+    const { service, events } = makeService()
+    service.create('owner')
+    service.invite('owner', 'guest')
+    service.acceptInvite('guest', service.invitesFor('guest')[0]!.id)
+    events.length = 0
+
+    expect(service.transferTo('guest', 'owner')).toEqual({ ok: false, error: 'owner_only' })
+    expect(service.transferTo('owner', 'owner')).toEqual({ ok: false, error: 'not_member' })
+    expect(service.transferTo('owner', 'stranger')).toEqual({ ok: false, error: 'not_member' })
+
+    expect(service.transferTo('owner', 'guest')).toEqual({ ok: true })
+    const jam = service.jamOf('owner')
+    expect(jam?.ownerId).toBe('guest')
+    expect(jam?.members.size).toBe(2)
+    expect(events.some((event) => event.kind === 'sync')).toBe(true)
+    // old owner is now a guest and cannot manage
+    expect(service.kick('owner', 'guest')).toEqual({ ok: false, error: 'owner_only' })
+    expect(service.setGuestControl('guest', true)).toBe(true)
+  })
+
   it('playback updates are broadcast to other members only', () => {
     const { service, events } = makeService()
     service.create('owner')

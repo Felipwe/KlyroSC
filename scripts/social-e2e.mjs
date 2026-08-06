@@ -316,6 +316,43 @@ async function main() {
   const stateA2c = (await api('GET', '/state', { token: tokenA })).data
   check('spam capped in history', stateA2c.jam.chat.filter((m) => m.text.startsWith('spam')).length <= 8)
 
+  // ————— kick & transfer ownership —————
+  const kickByGuest = await api('POST', '/jams/current/kick', { token: tokenB, body: { userId: a.user.id } })
+  check('guest cannot kick', kickByGuest.status === 403)
+  const transferByGuest = await api('POST', '/jams/current/transfer', { token: tokenB, body: { userId: b.user.id } })
+  check('guest cannot transfer', transferByGuest.status === 403)
+  const selfKick = await api('POST', '/jams/current/kick', { token: tokenA, body: { userId: a.user.id } })
+  check('cannot kick yourself', selfKick.status === 409)
+
+  const transfer = await api('POST', '/jams/current/transfer', { token: tokenA, body: { userId: b.user.id } })
+  check('owner transferred crown', transfer.status === 200)
+  const stateBCrown = (await api('GET', '/state', { token: tokenB })).data
+  check('B is now owner', stateBCrown.jam.ownerId === b.user.id)
+  check('old owner still member', stateBCrown.jam.members.length === 2)
+
+  const kickEndedPromise = waitFor(wsA, (m) => m.t === 'jam:ended', 8000, 'jam:ended at kicked member')
+  const kick = await api('POST', '/jams/current/kick', { token: tokenB, body: { userId: a.user.id } })
+  check('new owner kicked old owner', kick.status === 200)
+  await kickEndedPromise
+  check('kicked member got jam:ended', true)
+  const stateAKicked = (await api('GET', '/state', { token: tokenA })).data
+  check('kicked member out of jam', stateAKicked.jam === null)
+  const stateBSolo = (await api('GET', '/state', { token: tokenB })).data
+  check('jam survives kick with 1 member', stateBSolo.jam.members.length === 1 && stateBSolo.jam.ownerId === b.user.id)
+
+  // rebuild the original cast: B re-invites A, crown goes back to A
+  const reinvite = await api('POST', '/jams/current/invites', { token: tokenB, body: { userId: a.user.id } })
+  check('kicked member can be re-invited', reinvite.status === 201)
+  const stateARe = (await api('GET', '/state', { token: tokenA })).data
+  const backInvite = stateARe.invites[0]
+  check('re-invite visible', typeof backInvite?.id === 'string')
+  const rejoin = await api('POST', `/invites/${backInvite.id}/accept`, { token: tokenA })
+  check('kicked member rejoined', rejoin.status === 200 && rejoin.data.jam.members.length === 2)
+  const transferBack = await api('POST', '/jams/current/transfer', { token: tokenB, body: { userId: a.user.id } })
+  check('crown transferred back', transferBack.status === 200)
+  const stateABack = (await api('GET', '/state', { token: tokenA })).data
+  check('A owns the jam again', stateABack.jam.ownerId === a.user.id)
+
   // B leaves, owner ends
   const leave = await api('POST', '/jams/current/leave', { token: tokenB })
   check('B left jam', leave.status === 204)

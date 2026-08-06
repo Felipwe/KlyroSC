@@ -285,6 +285,34 @@ export class JamService {
     this.emit({ kind: 'ended', userIds: memberIds, jamId })
   }
 
+  /** Owner throws a member out. The target sees the jam as ended on their side. */
+  kick(ownerId: string, targetId: string): { ok: true } | { ok: false; error: string } {
+    const jam = this.jamOf(ownerId)
+    if (!jam) return { ok: false, error: 'not_in_jam' }
+    if (jam.ownerId !== ownerId) return { ok: false, error: 'owner_only' }
+    if (ownerId === targetId || !jam.members.has(targetId)) return { ok: false, error: 'not_member' }
+    jam.members.delete(targetId)
+    this.memberIndex.delete(targetId)
+    jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
+    this.emit({ kind: 'ended', userIds: [targetId], jamId: jam.id })
+    this.emit({ kind: 'sync', userIds: [targetId, ...jam.members.keys()] })
+    return { ok: true }
+  }
+
+  /** Owner voluntarily hands the crown to another member. */
+  transferTo(ownerId: string, targetId: string): { ok: true } | { ok: false; error: string } {
+    const jam = this.jamOf(ownerId)
+    if (!jam) return { ok: false, error: 'not_in_jam' }
+    if (jam.ownerId !== ownerId) return { ok: false, error: 'owner_only' }
+    if (ownerId === targetId || !jam.members.has(targetId)) return { ok: false, error: 'not_member' }
+    jam.ownerId = targetId
+    jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
+    this.emit({ kind: 'sync', userIds: [...jam.members.keys()] })
+    return { ok: true }
+  }
+
   setGuestControl(userId: string, allow: boolean): boolean {
     const jam = this.jamOf(userId)
     if (!jam || jam.ownerId !== userId) return false

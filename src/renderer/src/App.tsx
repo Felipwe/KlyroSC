@@ -28,8 +28,10 @@ import {
 import { LoginPrompt } from '@renderer/components/LoginPrompt'
 import { ChangelogCard } from '@renderer/components/ChangelogCard'
 import { BootSplash } from '@renderer/components/BootSplash'
+import { ChatPanel } from '@renderer/components/ChatPanel'
+import { JamChatPanel } from '@renderer/components/JamChatPanel'
 import { useAuth } from '@renderer/stores/auth'
-import { useSocial } from '@renderer/stores/social'
+import { JAM_CHAT_KEY, useSocial } from '@renderer/stores/social'
 import { HomePage } from '@renderer/pages/HomePage'
 import { SearchPage } from '@renderer/pages/SearchPage'
 import { FavoritesPage, HistoryPage } from '@renderer/pages/LibraryPages'
@@ -66,6 +68,22 @@ function PageRouter({ route }: { route: Route }): JSX.Element {
     case 'settings':
       return <SettingsPage initialSection={route.section} />
   }
+}
+
+/** Floating chat windows live above every page, so the jam chat can open from the player bar. */
+function ChatWindows(): JSX.Element {
+  const openChats = useSocial((state) => state.openChats)
+  return (
+    <>
+      {openChats.map((id, index) =>
+        id === JAM_CHAT_KEY ? (
+          <JamChatPanel key={id} zIndex={index} />
+        ) : (
+          <ChatPanel key={id} friendId={id} zIndex={index} />
+        )
+      )}
+    </>
+  )
 }
 
 const splashStart = Date.now()
@@ -185,6 +203,7 @@ export default function App(): JSX.Element {
       </div>
       <QueuePanel />
       <LyricsOverlay />
+      <ChatWindows />
       <LoginPrompt />
       {changelogVersion && (
         <ChangelogCard
