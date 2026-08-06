@@ -25,9 +25,43 @@ export interface ListeningInfo {
   playing: boolean
 }
 
+export type PresenceStatus = 'online' | 'away' | 'dnd'
+
+export function isPresenceStatus(value: unknown): value is PresenceStatus {
+  return value === 'online' || value === 'away' || value === 'dnd'
+}
+
 export interface FriendPresence {
   online: boolean
+  status: PresenceStatus
   listening: ListeningInfo | null
+}
+
+/** Small self-reported listening stats shown on profiles. */
+export interface UserStats {
+  listeningMs: number
+  topTrack: { title: string; artist: string; artwork: string | null; plays: number } | null
+}
+
+export function isUserStats(value: unknown): value is UserStats {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  if (typeof v.listeningMs !== 'number' || !Number.isFinite(v.listeningMs) || v.listeningMs < 0) return false
+  if (v.topTrack === null) return true
+  if (typeof v.topTrack !== 'object' || v.topTrack === null) return false
+  const track = v.topTrack as Record<string, unknown>
+  return (
+    typeof track.title === 'string' &&
+    track.title.length > 0 &&
+    track.title.length <= 400 &&
+    typeof track.artist === 'string' &&
+    track.artist.length <= 400 &&
+    (track.artwork === null || (typeof track.artwork === 'string' && track.artwork.length <= 1000)) &&
+    typeof track.plays === 'number' &&
+    Number.isInteger(track.plays) &&
+    track.plays >= 0 &&
+    track.plays <= 1_000_000
+  )
 }
 
 export interface JamTrackRef {

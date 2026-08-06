@@ -309,6 +309,28 @@ export const en = {
     renameTitle: 'Change display name',
     renamePlaceholder: '3 to 24 characters',
     renamed: 'Name updated',
+    tabs: {
+      friends: 'Friends',
+      profile: 'Profile'
+    },
+    statusTitle: 'Status',
+    status: {
+      online: 'Online',
+      away: 'Away',
+      dnd: 'Do not disturb'
+    },
+    profile: {
+      view: 'View profile',
+      message: 'Message',
+      friendSince: 'Friends since {date}',
+      statsTitle: 'Listening',
+      listeningTime: 'Time listening to music',
+      topTrack: 'Most played track',
+      plays: '{count} plays',
+      noStats: 'Nothing on record yet',
+      hoursShort: '{hours}h {minutes}min',
+      minutesShort: '{minutes} min'
+    },
     chat: {
       title: 'Chat',
       open: 'Open chat',
@@ -316,8 +338,11 @@ export const en = {
       placeholder: 'Message…',
       send: 'Send',
       typing: '{name} is typing…',
-      empty: 'Say hi  messages are end-to-end encrypted.',
-      offlineNote: 'Messages are delivered when your friend comes back online.'
+      empty: 'Say hi — messages are end-to-end encrypted.',
+      offlineNote: 'Messages are delivered when your friend comes back online.',
+      pendingState: 'Sending…',
+      sentState: 'Sent',
+      seenState: 'Seen'
     },
     jam: {
       title: 'Jam',

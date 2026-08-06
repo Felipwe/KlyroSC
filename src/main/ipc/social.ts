@@ -69,6 +69,18 @@ export function registerSocialIpc(ctx: AppContext): void {
     return social.transferJam(userId)
   })
 
+  on(IPC.socialSetStatus, (status) => {
+    if (status === 'online' || status === 'away' || status === 'dnd') social.setStatus(status)
+  })
+  on(IPC.socialChatRead, (payload) => {
+    const p = payload as { friendId?: unknown; upTo?: unknown }
+    if (typeof p?.friendId === 'string' && typeof p?.upTo === 'number') social.chatRead(p.friendId, p.upTo)
+  })
+  handle(IPC.socialMyStats, () => ({
+    listeningMs: ctx.stats.listeningMs(),
+    topTrack: ctx.stats.topTrack(ctx.library.get().history)
+  }))
+
   on(IPC.socialReconnect, () => social.reconnectNow())
   handleResult(IPC.socialChatHistory, (payload) => {
     const p = payload as { friendId?: unknown; before?: unknown }

@@ -29,7 +29,9 @@ import {
   type JamPlayback,
   type JamTrackRef,
   type NewSocialAccount,
-  type SocialSnapshot
+  type PresenceStatus,
+  type SocialSnapshot,
+  type UserStats
 } from './social'
 
 export interface AppInfo {
@@ -169,6 +171,9 @@ export interface KlyroApi {
     setJamControl(allow: boolean): Promise<Result<void>>
     kickFromJam(userId: string): Promise<Result<void>>
     transferJam(userId: string): Promise<Result<void>>
+    setStatus(status: PresenceStatus): void
+    chatRead(friendId: string, upTo: number): void
+    myStats(): Promise<UserStats>
     reconnect(): void
     sendJamPlayback(payload: { track: JamTrackRef | null; playing: boolean; position: number }): void
     sendJamQueue(queue: JamTrackRef[]): void
@@ -291,6 +296,9 @@ export const IPC = {
   socialSetJamControl: 'social:set-jam-control',
   socialJamKick: 'social:jam-kick',
   socialJamTransfer: 'social:jam-transfer',
+  socialSetStatus: 'social:set-status',
+  socialChatRead: 'social:chat-read',
+  socialMyStats: 'social:my-stats',
   socialReconnect: 'social:reconnect',
   socialJamPlaybackSend: 'social:jam-playback-send',
   socialJamQueueSend: 'social:jam-queue-send',

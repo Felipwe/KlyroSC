@@ -3,6 +3,7 @@ import {
   EMPTY_SOCIAL,
   type ChatMessage,
   type NewSocialAccount,
+  type PresenceStatus,
   type SocialSnapshot
 } from '@shared/types/social'
 import { api } from '@renderer/services/ipc'
@@ -133,6 +134,9 @@ interface SocialStore {
   setAvatar(): Promise<void>
   removeAvatar(): Promise<void>
   rename(name: string): Promise<boolean>
+  setStatus(status: PresenceStatus): void
+  /** report to the sender that we've seen their messages in this conversation */
+  markRead(friendId: string): void
   /** unread jam-chat messages while the jam chat window is closed */
   jamUnread: number
 }
@@ -192,12 +196,12 @@ export const useSocial = create<SocialStore>((set, get) => ({
     api.social.onChatMessage(({ friendId, message }) => {
       const state = get()
       const list = state.chats[friendId] ?? []
+      const open = state.openChats.includes(friendId)
+      if (open) api.social.chatRead(friendId, message.id)
       set({
         chats: { ...state.chats, [friendId]: [...list, message].slice(-300) },
         typing: { ...state.typing, [friendId]: 0 },
-        unread: state.openChats.includes(friendId)
-          ? state.unread
-          : { ...state.unread, [friendId]: (state.unread[friendId] ?? 0) + 1 }
+        unread: open ? state.unread : { ...state.unread, [friendId]: (state.unread[friendId] ?? 0) + 1 }
       })
     })
     api.social.onChatSent(({ friendId, tempId, id, at }) => {
@@ -357,6 +361,23 @@ export const useSocial = create<SocialStore>((set, get) => ({
     if (!result.ok) toast(socialError(result.error), 'error')
   },
 
+  setStatus: (status) => {
+    api.social.setStatus(status)
+    // optimistic: the authoritative value comes back through onState
+    set({ snapshot: { ...get().snapshot, myStatus: status } })
+  },
+
+  markRead: (friendId) => {
+    const list = get().chats[friendId] ?? []
+    for (let i = list.length - 1; i >= 0; i--) {
+      const message = list[i]!
+      if (!message.fromMe && !message.pending && typeof message.id === 'number' && message.id > 0) {
+        api.social.chatRead(friendId, message.id)
+        return
+      }
+    }
+  },
+
   openChat: async (friendId) => {
     const state = get()
     if (state.openChats.includes(friendId)) {
@@ -382,6 +403,7 @@ export const useSocial = create<SocialStore>((set, get) => ({
         chats: { ...get().chats, [friendId]: [...result.data, ...existing] },
         chatLoading: { ...get().chatLoading, [friendId]: false }
       })
+      get().markRead(friendId)
     } else {
       set({ chatLoading: { ...get().chatLoading, [friendId]: false } })
       toast(socialError(result.error), 'error')

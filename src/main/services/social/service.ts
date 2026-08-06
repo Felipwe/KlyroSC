@@ -12,8 +12,10 @@ import {
   type JamTrackRef,
   type ListeningInfo,
   type NewSocialAccount,
+  type PresenceStatus,
   type SocialSnapshot,
-  type SocialUser
+  type SocialUser,
+  type UserStats
 } from '@shared/types/social'
 import {
   decryptChatMessage,
@@ -36,6 +38,8 @@ interface SocialCredentials {
   chatKeys: ChatKeyPair | null
   /** which public key we already uploaded, to avoid redundant POST /keys */
   uploadedKey: string | null
+  /** manual presence status, survives restarts */
+  status: PresenceStatus
 }
 
 interface PendingAccount {
@@ -45,7 +49,7 @@ interface PendingAccount {
 }
 
 const parseCredentials = (raw: unknown): SocialCredentials => {
-  const empty: SocialCredentials = { token: null, user: null, chatKeys: null, uploadedKey: null }
+  const empty: SocialCredentials = { token: null, user: null, chatKeys: null, uploadedKey: null, status: 'online' }
   if (!isRecord(raw)) return empty
   const user =
     isRecord(raw.user) && typeof raw.user.id === 'string' && typeof raw.user.name === 'string'
@@ -66,7 +70,8 @@ const parseCredentials = (raw: unknown): SocialCredentials => {
     token: typeof raw.token === 'string' && raw.token.length > 0 ? raw.token : null,
     user,
     chatKeys,
-    uploadedKey: typeof raw.uploadedKey === 'string' ? raw.uploadedKey : null
+    uploadedKey: typeof raw.uploadedKey === 'string' ? raw.uploadedKey : null,
+    status: raw.status === 'away' || raw.status === 'dnd' ? raw.status : 'online'
   }
 }
 
@@ -113,7 +118,7 @@ export class SocialService {
   init(): void {
     const creds = this.store.get()
     if (creds.token && creds.user) {
-      this.snapshot = { ...EMPTY_SOCIAL, account: creds.user }
+      this.snapshot = { ...EMPTY_SOCIAL, account: creds.user, myStatus: creds.status }
       void this.connect()
     }
   }
@@ -182,7 +187,7 @@ export class SocialService {
     if (!this.pending) throw new Error('no_pending_account')
     const digits = typedNumber.replace(/[^0-9]/g, '')
     if (digits !== this.pending.accountNumber) throw new Error('code_mismatch')
-    this.store.set({ token: this.pending.token, user: this.pending.user, chatKeys: null, uploadedKey: null })
+    this.store.set({ token: this.pending.token, user: this.pending.user, chatKeys: null, uploadedKey: null, status: 'online' })
     this.store.flush()
     this.snapshot = { ...EMPTY_SOCIAL, account: this.pending.user }
     this.pending = null
@@ -196,7 +201,7 @@ export class SocialService {
     const data = await this.request<{ user: SocialUser; token: string }>('POST', '/auth/login', {
       accountNumber: digits
     })
-    this.store.set({ token: data.token, user: data.user, chatKeys: null, uploadedKey: null })
+    this.store.set({ token: data.token, user: data.user, chatKeys: null, uploadedKey: null, status: 'online' })
     this.store.flush()
     this.snapshot = { ...EMPTY_SOCIAL, account: data.user }
     await this.connect()
@@ -220,7 +225,7 @@ export class SocialService {
   }
 
   private clearCredentials(): void {
-    this.store.set({ token: null, user: null, chatKeys: null, uploadedKey: null })
+    this.store.set({ token: null, user: null, chatKeys: null, uploadedKey: null, status: 'online' })
     this.store.flush()
     this.chatKeyCache.clear()
     this.teardownSocket()
@@ -307,8 +312,33 @@ export class SocialService {
       this.presenceTimer = null
       if (!this.presenceDirty) return
       this.presenceDirty = false
-      this.sendWs({ t: 'presence', listening: this.lastListening })
+      this.sendWs({ t: 'presence', listening: this.lastListening, status: this.snapshot.myStatus })
     }, 900)
+  }
+
+  /** Manual Discord-style status; persisted and broadcast to friends. */
+  setStatus(status: PresenceStatus): void {
+    if (this.snapshot.myStatus === status) return
+    this.snapshot = { ...this.snapshot, myStatus: status }
+    this.store.set({ ...this.store.get(), status })
+    this.sendWs({ t: 'presence', listening: this.lastListening, status })
+    this.emit()
+  }
+
+  /** Tells the server (and the sender) that we read their messages up to `upTo`. */
+  chatRead(friendId: string, upTo: number): void {
+    if (!Number.isInteger(upTo) || upTo <= 0) return
+    this.sendWs({ t: 'chat:read', peer: friendId, upTo })
+  }
+
+  /** Self-reported listening stats for the profile (fire-and-forget). */
+  async reportStats(stats: UserStats): Promise<void> {
+    if (!this.store.get().token) return
+    try {
+      await this.request<unknown>('PATCH', '/profile', { stats })
+    } catch (error) {
+      log.warn(`stats report failed: ${String(error)}`)
+    }
   }
 
   sendJamPlayback(payload: { track: JamTrackRef | null; playing: boolean; position: number }): void {
@@ -516,8 +546,8 @@ export class SocialService {
         this.emit()
         this.startTimers()
         void this.uploadChatKeyIfNeeded()
-        // re-announce what we're listening to after reconnects
-        if (this.lastListening) this.sendWs({ t: 'presence', listening: this.lastListening })
+        // re-announce presence (status + listening) after reconnects
+        this.sendWs({ t: 'presence', listening: this.lastListening, status: this.snapshot.myStatus })
         break
       }
       case 'pong': {
@@ -596,6 +626,16 @@ export class SocialService {
         if (from) this.emitChatTyping({ friendId: from })
         break
       }
+      case 'chat:read': {
+        const from = typeof message.from === 'string' ? message.from : null
+        const upTo = typeof message.upTo === 'number' ? message.upTo : 0
+        if (!from || upTo <= 0) break
+        const current = this.snapshot.reads[from] ?? 0
+        if (upTo <= current) break
+        this.snapshot = { ...this.snapshot, reads: { ...this.snapshot.reads, [from]: upTo } }
+        this.emit()
+        break
+      }
       case 'chat:rejected': {
         this.emitChatRejected({
           friendId: typeof message.to === 'string' ? message.to : undefined,
@@ -650,12 +690,19 @@ export class SocialService {
     const user = state.user as SocialUser | undefined
     const jamRaw = state.jam as JamState | null | undefined
     const jam = jamRaw ? { ...jamRaw, playback: this.toLocalPlayback(jamRaw.playback) } : null
+    const reads = isRecord(state.reads)
+      ? Object.fromEntries(
+          Object.entries(state.reads).filter(([, value]) => typeof value === 'number') as [string, number][]
+        )
+      : {}
     this.snapshot = {
       account: user ?? this.snapshot.account,
       connected: this.snapshot.connected,
+      myStatus: this.snapshot.myStatus,
       friends: (state.friends as Friend[] | undefined) ?? [],
       requests: (state.requests as FriendRequest[] | undefined) ?? [],
       invites: (state.invites as JamInvite[] | undefined) ?? [],
+      reads: { ...reads, ...this.snapshot.reads },
       jam
     }
     if (user) {

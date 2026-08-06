@@ -1,11 +1,12 @@
 import { type WebSocket } from 'ws'
-import { type FriendPresence, type ListeningInfo, type SocialUser } from './types.js'
+import { type FriendPresence, type ListeningInfo, type PresenceStatus, type SocialUser } from './types.js'
 
 interface Client {
   socket: WebSocket
   user: SocialUser
   friends: Set<string>
   listening: ListeningInfo | null
+  status: PresenceStatus
   lastSeen: number
   msgWindowStart: number
   msgCount: number
@@ -31,6 +32,7 @@ export class Hub {
       user,
       friends: new Set(friends),
       listening: existing?.listening ?? null,
+      status: existing?.status ?? 'online',
       lastSeen: Date.now(),
       msgWindowStart: Date.now(),
       msgCount: 0,
@@ -48,7 +50,7 @@ export class Hub {
       this.send(friendId, {
         t: 'presence',
         userId,
-        presence: { online: false, listening: null } satisfies FriendPresence
+        presence: { online: false, status: 'online', listening: null } satisfies FriendPresence
       })
     }
   }
@@ -75,13 +77,24 @@ export class Hub {
 
   presenceOf(userId: string): FriendPresence {
     const client = this.clients.get(userId)
-    return client ? { online: true, listening: client.listening } : { online: false, listening: null }
+    return client
+      ? { online: true, status: client.status, listening: client.listening }
+      : { online: false, status: 'online', listening: null }
   }
 
   setListening(userId: string, listening: ListeningInfo | null): void {
     const client = this.clients.get(userId)
     if (!client) return
     client.listening = listening
+    client.lastSeen = Date.now()
+    this.broadcastPresence(userId)
+  }
+
+  /** Manual Discord-style status (online / away / do-not-disturb). */
+  setStatus(userId: string, status: PresenceStatus): void {
+    const client = this.clients.get(userId)
+    if (!client || client.status === status) return
+    client.status = status
     client.lastSeen = Date.now()
     this.broadcastPresence(userId)
   }

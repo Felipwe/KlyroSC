@@ -8,6 +8,7 @@ import { type PresenceManager } from '../integrations/discord/presence'
 import { type PluginManager } from '../plugins/manager'
 import { type UpdaterService } from '../updater'
 import { type SocialService } from '../services/social/service'
+import { type StatsService } from '../services/stats'
 import { registerAppIpc } from './app'
 import { registerDataIpc } from './data'
 import { registerSoundCloudIpc } from './soundcloud'
@@ -25,6 +26,7 @@ export interface AppContext {
   plugins: PluginManager
   updater: UpdaterService
   social: SocialService
+  stats: StatsService
   flushers: (() => void)[]
 }
 

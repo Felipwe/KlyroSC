@@ -2567,3 +2567,321 @@ kbd {
   opacity: 0.4;
   cursor: default;
 }
+
+/* ————— social v2: tabs, profile, friend profile, status, ticks ————— */
+
+.social-card,
+.update-card,
+.search-bar,
+.tabs {
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01) 50%),
+    rgba(16, 18, 28, 0.3);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.social-tabs {
+  margin-bottom: 16px;
+}
+
+.social-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.social-tabs .social-unread {
+  position: static;
+}
+
+.social-status-dot.away {
+  background: #f0b232;
+  box-shadow: 0 0 8px rgba(240, 178, 50, 0.5);
+}
+
+.social-status-dot.dnd {
+  background: #f23f43;
+  box-shadow: 0 0 8px rgba(242, 63, 67, 0.5);
+}
+
+.social-friend-sub .st-away {
+  color: #f0b232;
+}
+
+.social-friend-sub .st-dnd {
+  color: #f23f43;
+}
+
+/* my profile tab */
+
+.social-profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+  border-radius: var(--radius-l);
+  margin-bottom: 18px;
+}
+
+.social-avatar-btn.big .social-avatar-edit {
+  width: 24px;
+  height: 24px;
+  right: 0;
+  bottom: 0;
+}
+
+.sp-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sp-status-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sp-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+
+.sp-status-pill:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.sp-status-pill.active {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--surface-active);
+}
+
+.sp-status-pill.active.online {
+  box-shadow: 0 0 12px rgba(61, 220, 151, 0.25);
+}
+
+.sp-status-pill.active.away {
+  box-shadow: 0 0 12px rgba(240, 178, 50, 0.25);
+}
+
+.sp-status-pill.active.dnd {
+  box-shadow: 0 0 12px rgba(242, 63, 67, 0.25);
+}
+
+.sp-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.sp-stat {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  min-width: 0;
+}
+
+.sp-stat .artwork {
+  width: 44px;
+  flex: 0 0 auto;
+}
+
+.sp-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.sp-stat-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sp-stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sp-stat-main strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.sp-stat-track {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-stat-sub {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-account-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* friend profile modal */
+
+.friend-profile {
+  width: min(400px, calc(100vw - 48px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.social-friend-avatar.big .social-status-dot {
+  width: 16px;
+  height: 16px;
+  border-width: 3px;
+  right: 2px;
+  bottom: 2px;
+}
+
+.fp-id {
+  min-width: 0;
+  flex: 1;
+}
+
+.fp-id h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px !important;
+}
+
+.fp-status {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.fp-status.online {
+  color: var(--success);
+}
+
+.fp-status.away {
+  color: #f0b232;
+}
+
+.fp-status.dnd {
+  color: #f23f43;
+}
+
+.fp-since {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  margin-top: 3px;
+}
+
+.fp-close {
+  flex: 0 0 auto;
+}
+
+.fp-listening {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: var(--radius-m);
+  background: var(--accent-soft);
+}
+
+.fp-listening .artwork {
+  width: 42px;
+  flex: 0 0 auto;
+}
+
+.fp-listening-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fp-listening-main strong {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fp-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.fp-actions .btn {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* chat delivery ticks */
+
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chat-msg.mine .chat-meta {
+  justify-content: flex-end;
+}
+
+.chat-ticks {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+}
+
+.chat-ticks.seen {
+  color: #53a6ff;
+}
+
+.chat-ticks.pending {
+  opacity: 0.8;
+}

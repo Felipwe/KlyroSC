@@ -11,6 +11,27 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.10.0',
+    pt: [
+      'Confirmação de leitura no chat: relógio enviando, ✓✓ cinza entregue e ✓✓ azul quando o amigo vê, igual WhatsApp',
+      'Status manual estilo Discord: Online, Ausente ou Não perturbe — seus amigos veem na hora',
+      'Social reorganizado em abas: Amigos e Perfil, com foto, nome e status em um só lugar',
+      'Perfil dos amigos: clique em alguém para ver status, o que está ouvindo, tempo de escuta e a música mais repetida',
+      'Seu perfil mostra o tempo total ouvindo música e sua faixa mais ouvida',
+      'Visual liquid glass no app inteiro: menus, cards e painéis translúcidos com blur estilo iOS',
+      'A barra grande de Jam saiu do Social — tudo pelo menu compacto no player'
+    ],
+    en: [
+      'Read receipts in chat: clock while sending, gray ✓✓ delivered and blue ✓✓ when your friend sees it, WhatsApp style',
+      'Discord-style manual status: Online, Away or Do not disturb — friends see it instantly',
+      'Social reorganized into tabs: Friends and Profile, with photo, name and status in one place',
+      'Friend profiles: click someone to see their status, what they are listening to, listening time and most repeated track',
+      'Your profile shows total time listening to music and your most played track',
+      'Liquid glass look across the whole app: translucent blurred menus, cards and panels, iOS style',
+      'The big Jam bar left the Social page — everything lives in the compact player menu'
+    ]
+  },
+  {
     version: '2.9.1',
     pt: [
       'Visual liquid glass: botões que seguem a cor da música agora são vidro translúcido com blur, no estilo iOS',

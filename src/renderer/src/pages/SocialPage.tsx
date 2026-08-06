@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type JSX, type MouseEvent } from 'react'
-import { type Friend, type JamState, JAM_MAX_MEMBERS } from '@shared/types/social'
+import { createPortal } from 'react-dom'
+import { type Friend, type PresenceStatus, type UserStats } from '@shared/types/social'
 import {
   avatarHue,
   formatAccountNumber,
@@ -16,7 +17,6 @@ import { toast } from '@renderer/stores/toasts'
 import { cx } from '@renderer/utils/format'
 import { Icon } from '@renderer/components/Icon'
 import { Artwork } from '@renderer/components/Artwork'
-import { Switch } from '@renderer/components/controls'
 
 export function SocialAvatar({
   name,
@@ -246,297 +246,90 @@ function Onboarding(): JSX.Element {
 
 //  jam 
 
-function JamCard({ jam, meId, friends }: { jam: JamState; meId: string; friends: Friend[] }): JSX.Element {
-  const [inviteOpen, setInviteOpen] = useState(false)
-  const jamUnread = useSocial((state) => state.jamUnread)
-  const isOwner = jam.ownerId === meId
-  const playback = jam.playback
-  const onlineFriends = friends.filter(
-    (friend) => friend.presence.online && !jam.members.some((member) => member.id === friend.id)
-  )
+function statusOf(friend: Friend): 'offline' | PresenceStatus {
+  return friend.presence.online ? friend.presence.status : 'offline'
+}
 
-  const endJam = (): void =>
-    useUi.getState().openModal({
-      kind: 'confirm',
-      title: t('social.jam.end'),
-      body: t('social.jam.endConfirm'),
-      danger: true,
-      confirmLabel: t('social.jam.end'),
-      onConfirm: () => void useSocial.getState().endJam()
-    })
+function statusLabel(status: 'offline' | PresenceStatus): string {
+  return status === 'offline' ? t('social.offlineStatus') : t(`social.status.${status}`)
+}
 
+function formatListeningTime(ms: number): string {
+  const totalMinutes = Math.floor(ms / 60_000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return hours > 0
+    ? t('social.profile.hoursShort', { hours, minutes })
+    : t('social.profile.minutesShort', { minutes })
+}
+
+/** Listening time + most repeated track, shared by my profile and friend profiles. */
+function StatsCards({ stats }: { stats: UserStats | null }): JSX.Element {
   return (
-    <div className="social-card social-jam-live">
-      <div className="social-jam-head">
-        <span className="social-live-dot" />
-        <span className="social-jam-name">{t('social.jam.live')}</span>
-        <span className="social-jam-count">{t('social.jam.members', { count: jam.members.length })}</span>
-        {isOwner && (
-          <span className="social-host-badge" title={t('social.jam.youAreHost')}>
-            <Icon name="crown" size={12} />
-          </span>
-        )}
-        <div className="social-jam-head-actions">
-          <button
-            className="icon-btn social-jam-chat-btn"
-            title={t('social.jam.chatTitle')}
-            aria-label={t('social.jam.chatTitle')}
-            onClick={() => useSocial.getState().openJamChat()}
-          >
-            <Icon name="comment" size={16} />
-            {jamUnread > 0 && <span className="social-unread">{jamUnread > 9 ? '9+' : jamUnread}</span>}
-          </button>
-          {isOwner ? (
-            <button className="btn small danger" onClick={endJam}>
-              <Icon name="power" size={13} />
-              {t('social.jam.end')}
-            </button>
-          ) : (
-            <button className="btn small" onClick={() => void useSocial.getState().leaveJam()}>
-              <Icon name="logout" size={13} />
-              {t('social.jam.leave')}
-            </button>
-          )}
+    <div className="sp-stats">
+      <div className="sp-stat">
+        <span className="sp-stat-icon">
+          <Icon name="clock" size={16} />
+        </span>
+        <div className="sp-stat-main">
+          <span className="sp-stat-label">{t('social.profile.listeningTime')}</span>
+          <strong>{stats ? formatListeningTime(stats.listeningMs) : '—'}</strong>
         </div>
       </div>
-
-      <div className="social-jam-body">
-        <div className="social-member-stack" title={jam.members.map((member) => member.name).join(', ')}>
-          {jam.members.map((member) => (
-            <span key={member.id} className="social-stack-item">
-              <SocialAvatar name={member.name} avatar={member.avatar} size={30} />
-              {member.owner && (
-                <span className="social-crown">
-                  <Icon name="crown" size={9} />
-                </span>
-              )}
-            </span>
-          ))}
-          {jam.members.length < JAM_MAX_MEMBERS && (
-            <button
-              className="social-stack-add"
-              onClick={() => setInviteOpen((open) => !open)}
-              title={t('social.jam.invite')}
-              aria-label={t('social.jam.invite')}
-            >
-              <Icon name="userPlus" size={14} />
-            </button>
-          )}
-        </div>
-
-        <div className="social-jam-now">
-          {playback.track ? (
-            <>
-              <Artwork src={playback.track.artwork} alt="" />
-              <div className="social-jam-track">
-                <div className="social-jam-track-title">{playback.track.title}</div>
-                <div className="social-jam-track-artist">{playback.track.artist}</div>
-              </div>
-              <div className={cx('eq mini', !playback.playing && 'paused')} aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-            </>
-          ) : (
-            <div className="social-muted">{t('social.jam.nothingPlaying')}</div>
-          )}
-        </div>
-      </div>
-
-      {inviteOpen && (
-        <div className="social-invite-list">
-          {onlineFriends.length === 0 ? (
-            <div className="social-muted">{t('social.jam.noOneToInvite')}</div>
-          ) : (
-            onlineFriends.map((friend) => (
-              <button
-                key={friend.id}
-                className="social-invite-row"
-                onClick={() => {
-                  void useSocial.getState().inviteToJam(friend.id)
-                  setInviteOpen(false)
-                }}
-              >
-                <SocialAvatar name={friend.name} avatar={friend.avatar} size={26} />
-                <span>{friend.name}</span>
-                <span className="social-id-chip">#{friend.publicId}</span>
-                <Icon name="plus" size={14} />
-              </button>
-            ))
-          )}
-        </div>
-      )}
-
-      {jam.queue.length > 0 && (
-        <div className="social-jam-queue">
-          {jam.queue.slice(0, 3).map((track, index) => (
-            <div key={`${track.trackId}-${index}`} className="social-jam-queue-row">
-              <span className="social-queue-num">{index + 1}</span>
-              <span className="social-queue-title">{track.title}</span>
-              {track.addedByName && (
-                <span className="social-queue-added" title={t('social.jam.addedBy', { name: track.addedByName })}>
-                  <Icon name="user" size={10} />
-                  {track.addedByName}
-                </span>
-              )}
-              <span className="social-queue-artist">{track.artist}</span>
+      <div className="sp-stat">
+        {stats?.topTrack ? (
+          <>
+            <Artwork src={stats.topTrack.artwork} alt="" />
+            <div className="sp-stat-main">
+              <span className="sp-stat-label">{t('social.profile.topTrack')}</span>
+              <strong className="sp-stat-track" title={stats.topTrack.title}>
+                {stats.topTrack.title}
+              </strong>
+              <span className="sp-stat-sub">
+                {stats.topTrack.artist} · {t('social.profile.plays', { count: stats.topTrack.plays })}
+              </span>
             </div>
-          ))}
-        </div>
-      )}
-
-      {isOwner && (
-        <div className="social-jam-footer">
-          <div className="social-toggle-label">
-            {t('social.jam.guestsCanControl')}
-            <span className="social-toggle-hint">{t('social.jam.guestsCanControlHint')}</span>
-          </div>
-          <Switch
-            on={jam.allowGuestControl}
-            onToggle={(on) => void useSocial.getState().setJamControl(on)}
-            ariaLabel={t('social.jam.guestsCanControl')}
-          />
-        </div>
-      )}
-    </div>
-  )
-}
-
-//  hub 
-
-function FriendRow({ friend, inJam }: { friend: Friend; inJam: boolean }): JSX.Element {
-  const { presence } = friend
-  const unread = useSocial((state) => state.unread[friend.id] ?? 0)
-  // store clears the flag via timeout, so non-zero means "typing right now"
-  const typing = useSocial((state) => (state.typing[friend.id] ?? 0) > 0)
-
-  const remove = (event: MouseEvent): void => {
-    event.stopPropagation()
-    useUi.getState().openModal({
-      kind: 'confirm',
-      title: t('social.removeFriend'),
-      body: t('social.removeFriendConfirm', { name: friend.name }),
-      danger: true,
-      confirmLabel: t('social.removeFriend'),
-      onConfirm: () => void useSocial.getState().removeFriend(friend.id)
-    })
-  }
-
-  return (
-    <div
-      className="social-friend-row"
-      role="button"
-      tabIndex={0}
-      onClick={() => void useSocial.getState().openChat(friend.id)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') void useSocial.getState().openChat(friend.id)
-      }}
-    >
-      <div className="social-friend-avatar">
-        <SocialAvatar name={friend.name} avatar={friend.avatar} />
-        <span className={cx('social-status-dot', presence.online && 'online')} />
-      </div>
-      <div className="social-friend-main">
-        <div className="social-friend-name">
-          {friend.name}
-          <span className="social-id-chip">#{friend.publicId}</span>
-        </div>
-        <div className="social-friend-sub">
-          {typing ? (
-            <span className="social-typing-text">
-              {t('social.chat.typing', { name: friend.name.split(' ')[0] ?? '' })}
+          </>
+        ) : (
+          <>
+            <span className="sp-stat-icon">
+              <Icon name="music" size={16} />
             </span>
-          ) : presence.online ? (
-            presence.listening ? (
-              <>
-                <span className={cx('eq mini', !presence.listening.playing && 'paused')} aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-                <span className="social-listening-text">
-                  {presence.listening.title} · {presence.listening.artist}
-                </span>
-              </>
-            ) : (
-              <span className="social-online-text">{t('social.online')}</span>
-            )
-          ) : (
-            <span>{t('social.offlineStatus')}</span>
-          )}
-        </div>
-      </div>
-      <div className="social-friend-actions">
-        {inJam && presence.online && (
-          <button
-            className="icon-btn"
-            title={t('social.jam.invite')}
-            aria-label={t('social.jam.invite')}
-            onClick={(event) => {
-              event.stopPropagation()
-              void useSocial.getState().inviteToJam(friend.id)
-            }}
-          >
-            <Icon name="radio" size={16} />
-          </button>
+            <div className="sp-stat-main">
+              <span className="sp-stat-label">{t('social.profile.topTrack')}</span>
+              <strong>{t('social.profile.noStats')}</strong>
+            </div>
+          </>
         )}
-        <button
-          className="icon-btn"
-          title={t('social.removeFriend')}
-          aria-label={t('social.removeFriend')}
-          onClick={remove}
-        >
-          <Icon name="trash" size={15} />
-        </button>
-      </div>
-      <div className="social-chat-open" aria-hidden="true">
-        <Icon name="comment" size={16} />
-        {unread > 0 && <span className="social-unread">{unread > 9 ? '9+' : unread}</span>}
       </div>
     </div>
   )
 }
 
-function Hub(): JSX.Element {
-  const snapshot = useSocial((state) => state.snapshot)
-  const [friendId, setFriendId] = useState('')
-  const account = snapshot.account!
-  const incoming = snapshot.requests.filter((request) => request.direction === 'in')
-  const outgoing = snapshot.requests.filter((request) => request.direction === 'out')
+function ProfileTab(): JSX.Element {
+  const account = useSocial((state) => state.snapshot.account)!
+  const myStatus = useSocial((state) => state.snapshot.myStatus)
+  const [stats, setStats] = useState<UserStats | null>(null)
 
-  const addFriend = async (): Promise<void> => {
-    const publicId = parsePublicId(friendId)
-    if (publicId === null) {
-      toast(t('social.errors.invalid_id'), 'error')
-      return
-    }
-    const ok = await useSocial.getState().addFriend(publicId)
-    if (ok) setFriendId('')
-  }
+  useEffect(() => {
+    void api.social.myStats().then(setStats)
+  }, [])
 
   const copyId = async (): Promise<void> => {
     await navigator.clipboard.writeText(`#${account.publicId}`)
     toast(t('social.idCopied'), 'success')
   }
 
-  const logout = (): void =>
+  const rename = (): void =>
     useUi.getState().openModal({
-      kind: 'confirm',
-      title: t('social.logoutSocial'),
-      body: t('social.loggedOut'),
-      confirmLabel: t('social.logoutSocial'),
-      onConfirm: () => void useSocial.getState().logout()
-    })
-
-  const deleteAccount = (): void =>
-    useUi.getState().openModal({
-      kind: 'confirm',
-      title: t('social.deleteAccount'),
-      body: t('social.deleteConfirm'),
-      danger: true,
-      confirmLabel: t('social.deleteAccount'),
-      onConfirm: () => void useSocial.getState().deleteAccount()
+      kind: 'prompt',
+      title: t('social.renameTitle'),
+      placeholder: t('social.renamePlaceholder'),
+      initialValue: account.name,
+      confirmLabel: t('common.save'),
+      onConfirm: (name) => {
+        if (name && name.trim() !== account.name) void useSocial.getState().rename(name)
+      }
     })
 
   const openAvatarMenu = (event: MouseEvent): void => {
@@ -563,75 +356,329 @@ function Hub(): JSX.Element {
     useUi.getState().openMenu(rect.left, rect.bottom + 6, items)
   }
 
-  const rename = (): void =>
+  const logout = (): void =>
     useUi.getState().openModal({
-      kind: 'prompt',
-      title: t('social.renameTitle'),
-      placeholder: t('social.renamePlaceholder'),
-      initialValue: account.name,
-      confirmLabel: t('common.save'),
-      onConfirm: (name) => {
-        if (name && name.trim() !== account.name) void useSocial.getState().rename(name)
-      }
+      kind: 'confirm',
+      title: t('social.logoutSocial'),
+      body: t('social.loggedOut'),
+      confirmLabel: t('social.logoutSocial'),
+      onConfirm: () => void useSocial.getState().logout()
+    })
+
+  const deleteAccount = (): void =>
+    useUi.getState().openModal({
+      kind: 'confirm',
+      title: t('social.deleteAccount'),
+      body: t('social.deleteConfirm'),
+      danger: true,
+      confirmLabel: t('social.deleteAccount'),
+      onConfirm: () => void useSocial.getState().deleteAccount()
     })
 
   return (
     <>
-      <div className="social-header social-card">
-        <div className="social-me">
-          <button
-            className="social-avatar-btn"
-            onClick={openAvatarMenu}
-            title={t('social.avatarChange')}
-            aria-label={t('social.avatarChange')}
-          >
-            <SocialAvatar name={account.name} avatar={account.avatar} size={44} />
-            <span className="social-avatar-edit">
+      <div className="social-card social-profile">
+        <button
+          className="social-avatar-btn big"
+          onClick={openAvatarMenu}
+          title={t('social.avatarChange')}
+          aria-label={t('social.avatarChange')}
+        >
+          <SocialAvatar name={account.name} avatar={account.avatar} size={76} />
+          <span className="social-avatar-edit">
+            <Icon name="edit" size={13} />
+          </span>
+        </button>
+        <div className="sp-identity">
+          <div className="social-me-name">
+            {account.name}
+            <button
+              className="icon-btn social-rename-btn"
+              onClick={rename}
+              title={t('social.renameTitle')}
+              aria-label={t('social.renameTitle')}
+            >
               <Icon name="edit" size={12} />
-            </span>
-          </button>
-          <div>
-            <div className="social-me-name">
-              {account.name}
-              <button
-                className="icon-btn social-rename-btn"
-                onClick={rename}
-                title={t('social.renameTitle')}
-                aria-label={t('social.renameTitle')}
-              >
-                <Icon name="edit" size={12} />
-              </button>
-              <button className="social-id-chip clickable" onClick={() => void copyId()} title={t('social.idCopied')}>
-                #{account.publicId}
-                <Icon name="copy" size={11} />
-              </button>
-            </div>
-            <div className="social-me-sub">
-              <span className={cx('social-status-dot inline', snapshot.connected && 'online')} />
-              {snapshot.connected ? t('social.online') : t('social.connecting')}
-            </div>
+            </button>
+            <button className="social-id-chip clickable" onClick={() => void copyId()} title={t('social.idCopied')}>
+              #{account.publicId}
+              <Icon name="copy" size={11} />
+            </button>
           </div>
-        </div>
-        <div className="social-header-actions">
-          <button
-            className="icon-btn"
-            title={t('social.logoutSocial')}
-            aria-label={t('social.logoutSocial')}
-            onClick={logout}
-          >
-            <Icon name="logout" size={16} />
-          </button>
-          <button
-            className="icon-btn"
-            title={t('social.deleteAccount')}
-            aria-label={t('social.deleteAccount')}
-            onClick={deleteAccount}
-          >
-            <Icon name="trash" size={16} />
-          </button>
+          <div className="sp-status-row" role="radiogroup" aria-label={t('social.statusTitle')}>
+            {(['online', 'away', 'dnd'] as PresenceStatus[]).map((status) => (
+              <button
+                key={status}
+                className={cx('sp-status-pill', status, myStatus === status && 'active')}
+                role="radio"
+                aria-checked={myStatus === status}
+                onClick={() => useSocial.getState().setStatus(status)}
+              >
+                <span className={cx('social-status-dot inline', status)} />
+                {t(`social.status.${status}`)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      <section className="social-section">
+        <h3 className="social-section-title">{t('social.profile.statsTitle')}</h3>
+        <StatsCards stats={stats} />
+      </section>
+
+      <section className="social-section">
+        <h3 className="social-section-title">{t('social.account')}</h3>
+        <div className="sp-account-actions">
+          <button className="btn" onClick={logout}>
+            <Icon name="logout" size={14} />
+            {t('social.logoutSocial')}
+          </button>
+          <button className="btn danger" onClick={deleteAccount}>
+            <Icon name="trash" size={14} />
+            {t('social.deleteAccount')}
+          </button>
+        </div>
+      </section>
+    </>
+  )
+}
+
+/** Discord-style profile card for a friend, opened from the friends list. */
+function FriendProfileModal({ friendId, onClose }: { friendId: string; onClose: () => void }): JSX.Element | null {
+  const friend = useSocial((state) => state.snapshot.friends.find((item) => item.id === friendId) ?? null)
+  const jam = useSocial((state) => state.snapshot.jam)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  if (!friend) return null
+  const status = statusOf(friend)
+  const listening = friend.presence.listening
+  const canInvite =
+    jam !== null && friend.presence.online && !jam.members.some((member) => member.id === friend.id)
+
+  const removeFriend = (): void =>
+    useUi.getState().openModal({
+      kind: 'confirm',
+      title: t('social.removeFriend'),
+      body: t('social.removeFriendConfirm', { name: friend.name }),
+      danger: true,
+      confirmLabel: t('social.removeFriend'),
+      onConfirm: () => {
+        onClose()
+        void useSocial.getState().removeFriend(friend.id)
+      }
+    })
+
+  return createPortal(
+    <div
+      className="scrim"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <div className="modal glass friend-profile" role="dialog" aria-modal="true" aria-label={friend.name}>
+        <div className="fp-head">
+          <div className="social-friend-avatar big">
+            <SocialAvatar name={friend.name} avatar={friend.avatar} size={72} />
+            <span className={cx('social-status-dot', status !== 'offline' && status)} />
+          </div>
+          <div className="fp-id">
+            <h3>
+              {friend.name} <span className="social-id-chip">#{friend.publicId}</span>
+            </h3>
+            <div className={cx('fp-status', status)}>{statusLabel(status)}</div>
+            <div className="fp-since">
+              {t('social.profile.friendSince', { date: new Date(friend.since).toLocaleDateString() })}
+            </div>
+          </div>
+          <button className="icon-btn fp-close" onClick={onClose} aria-label={t('common.close')}>
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+
+        {listening && (
+          <div className="fp-listening">
+            <Artwork src={listening.artwork} alt="" />
+            <div className="fp-listening-main">
+              <span className="sp-stat-label">{t('social.listeningNow')}</span>
+              <strong title={listening.title}>{listening.title}</strong>
+              <span className="sp-stat-sub">{listening.artist}</span>
+            </div>
+            <span className={cx('eq mini', !listening.playing && 'paused')} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
+        )}
+
+        <StatsCards stats={friend.stats} />
+
+        <div className="fp-actions">
+          <button
+            className="btn primary"
+            onClick={() => {
+              onClose()
+              void useSocial.getState().openChat(friend.id)
+            }}
+          >
+            <Icon name="comment" size={14} />
+            {t('social.profile.message')}
+          </button>
+          {canInvite && (
+            <button className="btn" onClick={() => void useSocial.getState().inviteToJam(friend.id)}>
+              <Icon name="radio" size={14} />
+              {t('social.jam.invite')}
+            </button>
+          )}
+          <button className="btn danger" onClick={removeFriend}>
+            <Icon name="trash" size={14} />
+            {t('social.removeFriend')}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+//  hub 
+
+function FriendRow({
+  friend,
+  inJam,
+  onProfile
+}: {
+  friend: Friend
+  inJam: boolean
+  onProfile: (id: string) => void
+}): JSX.Element {
+  const { presence } = friend
+  const unread = useSocial((state) => state.unread[friend.id] ?? 0)
+  // store clears the flag via timeout, so non-zero means "typing right now"
+  const typing = useSocial((state) => (state.typing[friend.id] ?? 0) > 0)
+  const status = statusOf(friend)
+
+  return (
+    <div
+      className="social-friend-row"
+      role="button"
+      tabIndex={0}
+      title={t('social.profile.view')}
+      onClick={() => onProfile(friend.id)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') onProfile(friend.id)
+      }}
+    >
+      <div className="social-friend-avatar">
+        <SocialAvatar name={friend.name} avatar={friend.avatar} />
+        <span className={cx('social-status-dot', status !== 'offline' && status)} />
+      </div>
+      <div className="social-friend-main">
+        <div className="social-friend-name">
+          {friend.name}
+          <span className="social-id-chip">#{friend.publicId}</span>
+        </div>
+        <div className="social-friend-sub">
+          {typing ? (
+            <span className="social-typing-text">
+              {t('social.chat.typing', { name: friend.name.split(' ')[0] ?? '' })}
+            </span>
+          ) : presence.online && presence.listening ? (
+            <>
+              <span className={cx('eq mini', !presence.listening.playing && 'paused')} aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </span>
+              <span className="social-listening-text">
+                {presence.listening.title} · {presence.listening.artist}
+              </span>
+            </>
+          ) : (
+            <span className={cx(status !== 'offline' && 'social-online-text', `st-${status}`)}>
+              {statusLabel(status)}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="social-friend-actions">
+        {inJam && presence.online && (
+          <button
+            className="icon-btn"
+            title={t('social.jam.invite')}
+            aria-label={t('social.jam.invite')}
+            onClick={(event) => {
+              event.stopPropagation()
+              void useSocial.getState().inviteToJam(friend.id)
+            }}
+          >
+            <Icon name="radio" size={16} />
+          </button>
+        )}
+        <button
+          className="icon-btn"
+          title={t('social.profile.view')}
+          aria-label={t('social.profile.view')}
+          onClick={(event) => {
+            event.stopPropagation()
+            onProfile(friend.id)
+          }}
+        >
+          <Icon name="user" size={15} />
+        </button>
+      </div>
+      <div
+        className="social-chat-open"
+        role="button"
+        tabIndex={0}
+        title={t('social.chat.open')}
+        aria-label={t('social.chat.open')}
+        onClick={(event) => {
+          event.stopPropagation()
+          void useSocial.getState().openChat(friend.id)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.stopPropagation()
+            void useSocial.getState().openChat(friend.id)
+          }
+        }}
+      >
+        <Icon name="comment" size={16} />
+        {unread > 0 && <span className="social-unread">{unread > 9 ? '9+' : unread}</span>}
+      </div>
+    </div>
+  )
+}
+
+function Hub(): JSX.Element {
+  const snapshot = useSocial((state) => state.snapshot)
+  const [tab, setTab] = useState<'friends' | 'profile'>('friends')
+  const [profileFriendId, setProfileFriendId] = useState<string | null>(null)
+  const [friendId, setFriendId] = useState('')
+  const incoming = snapshot.requests.filter((request) => request.direction === 'in')
+  const outgoing = snapshot.requests.filter((request) => request.direction === 'out')
+
+  const addFriend = async (): Promise<void> => {
+    const publicId = parsePublicId(friendId)
+    if (publicId === null) {
+      toast(t('social.errors.invalid_id'), 'error')
+      return
+    }
+    const ok = await useSocial.getState().addFriend(publicId)
+    if (ok) setFriendId('')
+  }
+
+  return (
+    <>
       {!snapshot.connected && (
         <div className="social-offline-banner">
           <Icon name="alert" size={15} />
@@ -660,101 +707,120 @@ function Hub(): JSX.Element {
         </div>
       ))}
 
-      {snapshot.jam ? (
-        <JamCard jam={snapshot.jam} meId={account.id} friends={snapshot.friends} />
-      ) : (
-        <div className="social-card social-jam-cta">
-          <div className="social-jam-cta-icon">
-            <Icon name="radio" size={22} />
-          </div>
-          <div className="social-jam-cta-main">
-            <h3>{t('social.jam.title')}</h3>
-            <p>{t('social.jam.hint')}</p>
-          </div>
-          <button className="btn primary" onClick={() => void useSocial.getState().createJam()}>
-            <Icon name="radio" size={15} />
-            {t('social.jam.create')}
-          </button>
-        </div>
-      )}
+      <div className="tabs social-tabs">
+        <button className={cx(tab === 'friends' && 'active')} onClick={() => setTab('friends')}>
+          <Icon name="users" size={14} />
+          {t('social.tabs.friends')}
+          {incoming.length > 0 && <span className="social-unread">{incoming.length}</span>}
+        </button>
+        <button className={cx(tab === 'profile' && 'active')} onClick={() => setTab('profile')}>
+          <Icon name="user" size={14} />
+          {t('social.tabs.profile')}
+        </button>
+      </div>
 
-      {incoming.length + outgoing.length > 0 && (
-        <section className="social-section">
-          <h3 className="social-section-title">{t('social.requests')}</h3>
-          {incoming.map((request) => (
-            <div key={request.id} className="social-request-row">
-              <SocialAvatar name={request.user.name} avatar={request.user.avatar} size={32} />
-              <div className="social-request-text">
-                <strong>{request.user.name}</strong>{' '}
-                <span className="social-id-chip">#{request.user.publicId}</span> {t('social.incoming')}
-              </div>
-              <div className="social-invite-actions">
-                <button
-                  className="btn small primary"
-                  onClick={() => void useSocial.getState().respondRequest(request.id, true)}
-                >
-                  {t('social.accept')}
-                </button>
+      {tab === 'profile' ? (
+        <ProfileTab />
+      ) : (
+        <>
+          {incoming.length + outgoing.length > 0 && (
+            <section className="social-section">
+              <h3 className="social-section-title">{t('social.requests')}</h3>
+              {incoming.map((request) => (
+                <div key={request.id} className="social-request-row">
+                  <SocialAvatar name={request.user.name} avatar={request.user.avatar} size={32} />
+                  <div className="social-request-text">
+                    <strong>{request.user.name}</strong>{' '}
+                    <span className="social-id-chip">#{request.user.publicId}</span> {t('social.incoming')}
+                  </div>
+                  <div className="social-invite-actions">
+                    <button
+                      className="btn small primary"
+                      onClick={() => void useSocial.getState().respondRequest(request.id, true)}
+                    >
+                      {t('social.accept')}
+                    </button>
+                    <button
+                      className="btn small"
+                      onClick={() => void useSocial.getState().respondRequest(request.id, false)}
+                    >
+                      {t('social.decline')}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {outgoing.map((request) => (
+                <div key={request.id} className="social-request-row muted">
+                  <SocialAvatar name={request.user.name} avatar={request.user.avatar} size={32} />
+                  <div className="social-request-text">{t('social.outgoing', { name: request.user.name })}</div>
+                  <button
+                    className="btn small"
+                    onClick={() => void useSocial.getState().respondRequest(request.id, false)}
+                  >
+                    {t('social.cancelRequest')}
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
+
+          <section className="social-section">
+            <div className="social-friends-head">
+              <h3 className="social-section-title">{t('social.friends')}</h3>
+              <div className="social-add-friend">
+                <div className="social-add-input">
+                  <Icon name="userPlus" size={15} />
+                  <input
+                    value={friendId}
+                    placeholder={t('social.addFriendPlaceholder')}
+                    spellCheck={false}
+                    onChange={(event) => setFriendId(event.currentTarget.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') void addFriend()
+                    }}
+                  />
+                </div>
                 <button
                   className="btn small"
-                  onClick={() => void useSocial.getState().respondRequest(request.id, false)}
+                  disabled={parsePublicId(friendId) === null}
+                  onClick={() => void addFriend()}
                 >
-                  {t('social.decline')}
+                  {t('social.add')}
                 </button>
               </div>
             </div>
-          ))}
-          {outgoing.map((request) => (
-            <div key={request.id} className="social-request-row muted">
-              <SocialAvatar name={request.user.name} avatar={request.user.avatar} size={32} />
-              <div className="social-request-text">{t('social.outgoing', { name: request.user.name })}</div>
-              <button className="btn small" onClick={() => void useSocial.getState().respondRequest(request.id, false)}>
-                {t('social.cancelRequest')}
-              </button>
-            </div>
-          ))}
-        </section>
+            <div className="social-add-hint">{t('social.addFriendHint')}</div>
+
+            {snapshot.friends.length === 0 ? (
+              <div className="social-empty">
+                <Icon name="users" size={26} />
+                <div>{t('social.noFriends')}</div>
+                <span>{t('social.noFriendsHint')}</span>
+              </div>
+            ) : (
+              <div className="social-friends-list">
+                {[...snapshot.friends]
+                  .sort(
+                    (a, b) =>
+                      Number(b.presence.online) - Number(a.presence.online) || a.name.localeCompare(b.name)
+                  )
+                  .map((friend) => (
+                    <FriendRow
+                      key={friend.id}
+                      friend={friend}
+                      inJam={snapshot.jam !== null}
+                      onProfile={setProfileFriendId}
+                    />
+                  ))}
+              </div>
+            )}
+          </section>
+        </>
       )}
 
-      <section className="social-section">
-        <div className="social-friends-head">
-          <h3 className="social-section-title">{t('social.friends')}</h3>
-          <div className="social-add-friend">
-            <div className="social-add-input">
-              <Icon name="userPlus" size={15} />
-              <input
-                value={friendId}
-                placeholder={t('social.addFriendPlaceholder')}
-                spellCheck={false}
-                onChange={(event) => setFriendId(event.currentTarget.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') void addFriend()
-                }}
-              />
-            </div>
-            <button className="btn small" disabled={parsePublicId(friendId) === null} onClick={() => void addFriend()}>
-              {t('social.add')}
-            </button>
-          </div>
-        </div>
-        <div className="social-add-hint">{t('social.addFriendHint')}</div>
-
-        {snapshot.friends.length === 0 ? (
-          <div className="social-empty">
-            <Icon name="users" size={26} />
-            <div>{t('social.noFriends')}</div>
-            <span>{t('social.noFriendsHint')}</span>
-          </div>
-        ) : (
-          <div className="social-friends-list">
-            {[...snapshot.friends]
-              .sort((a, b) => Number(b.presence.online) - Number(a.presence.online) || a.name.localeCompare(b.name))
-              .map((friend) => (
-                <FriendRow key={friend.id} friend={friend} inJam={snapshot.jam !== null} />
-              ))}
-          </div>
-        )}
-      </section>
+      {profileFriendId && (
+        <FriendProfileModal friendId={profileFriendId} onClose={() => setProfileFriendId(null)} />
+      )}
     </>
   )
 }

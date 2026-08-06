@@ -311,6 +311,28 @@ export const pt: Dict = {
     renameTitle: 'Alterar nome de exibição',
     renamePlaceholder: 'De 3 a 24 caracteres',
     renamed: 'Nome atualizado',
+    tabs: {
+      friends: 'Amigos',
+      profile: 'Perfil'
+    },
+    statusTitle: 'Status',
+    status: {
+      online: 'Online',
+      away: 'Ausente',
+      dnd: 'Não perturbe'
+    },
+    profile: {
+      view: 'Ver perfil',
+      message: 'Mensagem',
+      friendSince: 'Amigos desde {date}',
+      statsTitle: 'Escuta',
+      listeningTime: 'Tempo ouvindo música',
+      topTrack: 'Música mais ouvida',
+      plays: '{count} repetições',
+      noStats: 'Nada registrado ainda',
+      hoursShort: '{hours}h {minutes}min',
+      minutesShort: '{minutes} min'
+    },
     chat: {
       title: 'Chat',
       open: 'Abrir chat',
@@ -318,8 +340,11 @@ export const pt: Dict = {
       placeholder: 'Mensagem…',
       send: 'Enviar',
       typing: '{name} está digitando…',
-      empty: 'Diga oi  as mensagens são criptografadas de ponta a ponta.',
-      offlineNote: 'As mensagens chegam quando seu amigo voltar a ficar online.'
+      empty: 'Diga oi — as mensagens são criptografadas de ponta a ponta.',
+      offlineNote: 'As mensagens chegam quando seu amigo voltar a ficar online.',
+      pendingState: 'Enviando…',
+      sentState: 'Enviada',
+      seenState: 'Vista'
     },
     jam: {
       title: 'Jam',

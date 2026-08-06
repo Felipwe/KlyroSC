@@ -4,7 +4,7 @@ import { areFriends, friendIdsOf, pool } from './db.js'
 import { sha256 } from './security.js'
 import { type Hub } from './hub.js'
 import { type JamService } from './jams.js'
-import { isJamTrackRef, isListeningInfo, type SocialUser } from './types.js'
+import { isJamTrackRef, isListeningInfo, isPresenceStatus, type SocialUser } from './types.js'
 
 const HELLO_TIMEOUT_MS = 10_000
 const PING_INTERVAL_MS = 30_000
@@ -99,9 +99,25 @@ export function attachWebSocket(wss: WebSocketServer, services: Services): void 
             )
             break
           case 'presence': {
+            if (isPresenceStatus(message.status)) hub.setStatus(user.id, message.status)
             const listening = message.listening
             if (listening === null) hub.setListening(user.id, null)
             else if (isListeningInfo(listening)) hub.setListening(user.id, listening)
+            break
+          }
+          case 'chat:read': {
+            const peer = message.peer
+            const upTo = message.upTo
+            if (typeof peer !== 'string' || !UUID_RE.test(peer)) break
+            if (typeof upTo !== 'number' || !Number.isInteger(upTo) || upTo <= 0) break
+            if (!(await areFriends(user.id, peer))) break
+            await pool.query(
+              `INSERT INTO chat_reads(user_id, peer_id, last_read_id, updated_at) VALUES ($1, $2, $3, now())
+               ON CONFLICT (user_id, peer_id)
+               DO UPDATE SET last_read_id = GREATEST(chat_reads.last_read_id, EXCLUDED.last_read_id), updated_at = now()`,
+              [user.id, peer, upTo]
+            )
+            hub.send(peer, { t: 'chat:read', from: user.id, upTo })
             break
           }
           case 'jam:playback': {

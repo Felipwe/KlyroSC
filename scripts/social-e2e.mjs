@@ -224,6 +224,40 @@ async function main() {
   const strangerHistory = await api('GET', `/chat/${a.user.id}`, { token: tokenA })
   check('cannot read chat with self path', strangerHistory.status === 403 || strangerHistory.status === 400)
 
+  // ————— read receipts —————
+  const readPromise = waitFor(wsA, (m) => m.t === 'chat:read', 8000, 'read receipt at A')
+  wsB.send({ t: 'chat:read', peer: a.user.id, upTo: ack.id })
+  const readEvent = await readPromise
+  check('A got read receipt', readEvent.from === b.user.id && readEvent.upTo === ack.id)
+  const stateARead = (await api('GET', '/state', { token: tokenA })).data
+  check('reads persisted in state', stateARead.reads?.[b.user.id] === ack.id)
+  wsB.send({ t: 'chat:read', peer: a.user.id, upTo: ack.id - 1 })
+  await sleep(400)
+  const stateARead2 = (await api('GET', '/state', { token: tokenA })).data
+  check('read receipts never move backwards', stateARead2.reads?.[b.user.id] === ack.id)
+
+  // ————— manual presence status (online / away / dnd) —————
+  const dndPromise = waitFor(wsB, (m) => m.t === 'presence' && m.presence?.status === 'dnd', 8000, 'dnd presence at B')
+  wsA.send({ t: 'presence', listening: null, status: 'dnd' })
+  const dndEvent = await dndPromise
+  check('B sees A as dnd', dndEvent.presence.online === true && dndEvent.presence.status === 'dnd')
+  const stateB1e = (await api('GET', '/state', { token: tokenB })).data
+  check('status visible in state', stateB1e.friends[0]?.presence.status === 'dnd')
+  wsA.send({ t: 'presence', listening: null, status: 'nonsense' })
+  await sleep(400)
+  const stateB1f = (await api('GET', '/state', { token: tokenB })).data
+  check('invalid status ignored', stateB1f.friends[0]?.presence.status === 'dnd')
+  wsA.send({ t: 'presence', listening: null, status: 'online' })
+
+  // ————— profile listening stats —————
+  const statsPayload = { listeningMs: 5_400_000, topTrack: { title: 'Loop Song', artist: 'Looper', artwork: null, plays: 42 } }
+  const statsPatch = await api('PATCH', '/profile', { token: tokenA, body: { stats: statsPayload } })
+  check('stats accepted', statsPatch.status === 200)
+  const badStats = await api('PATCH', '/profile', { token: tokenA, body: { stats: { listeningMs: -5, topTrack: null } } })
+  check('invalid stats rejected', badStats.status === 400)
+  const stateB1g = (await api('GET', '/state', { token: tokenB })).data
+  check('friend sees stats', stateB1g.friends[0]?.stats?.topTrack?.plays === 42 && stateB1g.friends[0]?.stats?.listeningMs === 5_400_000)
+
   //  jam 
   const createJam = await api('POST', '/jams', { token: tokenA })
   check('A created jam', createJam.status === 201 && createJam.data.jam?.members.length === 1)

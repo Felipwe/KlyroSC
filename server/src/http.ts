@@ -5,7 +5,7 @@ import { generateAccountNumber, generateSessionToken, isAccountNumber, sha256 } 
 import { randomName } from './names.js'
 import { type Hub } from './hub.js'
 import { JAM_MAX_MEMBERS, type JamService } from './jams.js'
-import { isValidAvatar, type SocialUser } from './types.js'
+import { isUserStats, isValidAvatar, type SocialUser } from './types.js'
 
 const SESSION_DAYS = 180
 
@@ -72,9 +72,10 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
     public_id: string
     pubkey: string | null
     avatar: string | null
+    stats: unknown
     created_at: string
   }>(
-    `SELECT u.id, u.name, u.public_id, u.pubkey, u.avatar, f.created_at FROM friendships f
+    `SELECT u.id, u.name, u.public_id, u.pubkey, u.avatar, u.stats, f.created_at FROM friendships f
      JOIN users u ON u.id = CASE WHEN f.user_a = $1 THEN f.user_b ELSE f.user_a END
      WHERE f.user_a = $1 OR f.user_b = $1
      ORDER BY u.name`,
@@ -139,6 +140,14 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
     })
   )
 
+  // what each friend has already read of MY messages (for sent/seen ticks)
+  const readsResult = await pool.query<{ user_id: string; last_read_id: string }>(
+    'SELECT user_id, last_read_id FROM chat_reads WHERE peer_id = $1',
+    [userId]
+  )
+  const reads: Record<string, number> = {}
+  for (const row of readsResult.rows) reads[row.user_id] = Number(row.last_read_id)
+
   return {
     user: me,
     friends: friendsResult.rows.map((row) => ({
@@ -147,6 +156,7 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
       publicId: Number(row.public_id),
       avatar: row.avatar,
       chatKey: row.pubkey,
+      stats: isUserStats(row.stats) ? row.stats : null,
       since: row.created_at,
       presence: hub.presenceOf(row.id)
     })),
@@ -160,6 +170,7 @@ async function buildState(me: SocialUser, services: Services): Promise<Record<st
       createdAt: row.created_at
     })),
     invites,
+    reads,
     jam: jamDto,
     serverNow: Date.now()
   }
@@ -318,14 +329,27 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // optional custom display name — must stay unique
+  // optional custom display name — must stay unique; also accepts self-reported listening stats
   router.patch(
     '/profile',
     auth,
     socialWriteLimiter,
     wrap(async (req, res) => {
       const me = req.user!
-      const raw = (req.body as Record<string, unknown> | undefined)?.name
+      const body = req.body as Record<string, unknown> | undefined
+      const rawStats = body?.stats
+      if (rawStats !== undefined) {
+        if (!isUserStats(rawStats)) {
+          fail(res, 400, 'invalid_payload')
+          return
+        }
+        await pool.query('UPDATE users SET stats = $1 WHERE id = $2', [JSON.stringify(rawStats), me.id])
+        if (body?.name === undefined) {
+          res.json({ result: 'updated' })
+          return
+        }
+      }
+      const raw = body?.name
       if (typeof raw !== 'string' || raw.length > 64) {
         fail(res, 400, 'invalid_name')
         return

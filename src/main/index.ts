@@ -19,6 +19,7 @@ import { PresenceManager } from './integrations/discord/presence'
 import { PluginManager } from './plugins/manager'
 import { UpdaterService } from './updater'
 import { SocialService } from './services/social/service'
+import { StatsService } from './services/stats'
 import { registerIpc, type AppContext } from './ipc'
 import { runSmokeCapture } from './smoke'
 
@@ -103,6 +104,16 @@ function bootstrap(): void {
     (payload) => mainWindow.send(IPC.socialChatTypingEvent, payload),
     (payload) => mainWindow.send(IPC.socialChatRejected, payload)
   )
+  const stats = new StatsService()
+  // profile stats shared with friends: refresh shortly after boot, then periodically
+  const reportStats = (): void => {
+    void social.reportStats({
+      listeningMs: stats.listeningMs(),
+      topTrack: stats.topTrack(library.get().history)
+    })
+  }
+  setTimeout(reportStats, 20_000)
+  setInterval(reportStats, 5 * 60 * 1000)
 
   const ctx: AppContext = {
     mainWindow,
@@ -115,6 +126,7 @@ function bootstrap(): void {
     plugins,
     updater,
     social,
+    stats,
     flushers: []
   }
 
@@ -202,6 +214,7 @@ function bootstrap(): void {
     plugins.stopAll()
     trayPopup.destroy()
     social.destroy()
+    stats.destroy()
     settings.flush()
     library.flush()
     for (const flush of ctx.flushers) flush()

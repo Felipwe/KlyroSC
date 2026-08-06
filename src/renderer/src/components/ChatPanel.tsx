@@ -13,6 +13,21 @@ function timeOf(at: number): string {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+/** WhatsApp-style delivery state for my own bubbles. */
+function Ticks({ message, seen }: { message: ChatMessage; seen: boolean }): JSX.Element {
+  if (message.pending)
+    return (
+      <span className="chat-ticks pending" title={t('social.chat.pendingState')}>
+        <Icon name="clock" size={11} />
+      </span>
+    )
+  return (
+    <span className={cx('chat-ticks', seen && 'seen')} title={seen ? t('social.chat.seenState') : t('social.chat.sentState')}>
+      <Icon name="checks" size={13} />
+    </span>
+  )
+}
+
 interface ChatPanelProps {
   friendId: string
   /** stacking position — last one is on top */
@@ -26,6 +41,7 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
   const loading = useSocial((state) => state.chatLoading[friendId] ?? false)
   // store clears the flag via timeout, so non-zero means "typing right now"
   const typing = useSocial((state) => (state.typing[friendId] ?? 0) > 0)
+  const readUpTo = useSocial((state) => state.snapshot.reads[friendId] ?? 0)
   const { rect, focus, headHandlers, resizeHandlers } = useFloatingWindow(friendId)
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -39,6 +55,11 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
   useEffect(() => {
     inputRef.current?.focus()
   }, [friendId])
+
+  // reading happens by having the window open
+  useEffect(() => {
+    useSocial.getState().markRead(friendId)
+  }, [friendId, messages.length])
 
   if (!friend || !rect) return null
 
@@ -112,7 +133,12 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
                 className={cx('chat-msg', message.fromMe ? 'mine' : 'theirs', message.pending && 'pending')}
               >
                 <div className="chat-bubble">{message.text}</div>
-                <div className="chat-meta">{timeOf(message.at)}</div>
+                <div className="chat-meta">
+                  {timeOf(message.at)}
+                  {message.fromMe && (
+                    <Ticks message={message} seen={!message.pending && message.id <= readUpTo} />
+                  )}
+                </div>
               </div>
             ))}
             {typing && (

@@ -29,6 +29,7 @@ export function registerFeatureIpc(ctx: AppContext): void {
     const parsed = parsePresence(payload)
     ctx.presence.update(parsed)
     ctx.trayPopup.setNowPlaying(parsed)
+    ctx.stats.setPlaying(parsed?.playing === true)
     ctx.social.setNowPlaying(
       parsed && typeof parsed.trackId === 'number' && parsed.trackId > 0
         ? {

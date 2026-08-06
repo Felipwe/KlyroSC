@@ -15,14 +15,25 @@ export interface ListeningInfo {
   playing: boolean
 }
 
+/** Discord-style manual presence status. */
+export type PresenceStatus = 'online' | 'away' | 'dnd'
+
 export interface FriendPresence {
   online: boolean
+  status: PresenceStatus
   listening: ListeningInfo | null
+}
+
+/** Self-reported listening stats shown on profiles. */
+export interface UserStats {
+  listeningMs: number
+  topTrack: { title: string; artist: string; artwork: string | null; plays: number } | null
 }
 
 export interface Friend extends SocialUser {
   since: string
   presence: FriendPresence
+  stats: UserStats | null
   /** X25519 public key (base64) for end-to-end chat, when the friend has one */
   chatKey: string | null
 }
@@ -87,9 +98,13 @@ export interface SocialSnapshot {
   account: SocialUser | null
   /** live websocket connection established */
   connected: boolean
+  /** my own manual presence status */
+  myStatus: PresenceStatus
   friends: Friend[]
   requests: FriendRequest[]
   invites: JamInvite[]
+  /** friendId → highest message id of MINE that friend has read (seen ticks) */
+  reads: Record<string, number>
   jam: JamState | null
 }
 
@@ -114,9 +129,11 @@ export interface ChatEventPayload {
 export const EMPTY_SOCIAL: SocialSnapshot = {
   account: null,
   connected: false,
+  myStatus: 'online',
   friends: [],
   requests: [],
   invites: [],
+  reads: {},
   jam: null
 }
 
