@@ -202,8 +202,7 @@ export function ToastHost(): JSX.Element {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.id} className={cx('toast glass', toast.kind)} onClick={() => dismiss(toast.id)}>
-          <span className="toast-dot" />
+        <div key={toast.id} className={cx('toast', toast.kind)} onClick={() => dismiss(toast.id)}>
           {toast.message}
         </div>
       ))}

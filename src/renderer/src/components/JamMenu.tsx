@@ -35,20 +35,12 @@ export function JamMenuButton(): JSX.Element {
     }
   }, [open])
 
-  // the jam can end/kick us while the menu is open
-  useEffect(() => {
-    if (!jam) setOpen(false)
-  }, [jam])
-
   const meId = account?.id ?? ''
   const isOwner = jam !== null && jam.ownerId === meId
 
-  const onButtonClick = async (): Promise<void> => {
-    if (jam) {
-      setOpen((value) => !value)
-      return
-    }
+  const createJam = async (): Promise<void> => {
     if (!account) {
+      setOpen(false)
       toast(t('social.jam.needAccount'))
       useNav.getState().push({ name: 'social' })
       return
@@ -57,7 +49,6 @@ export function JamMenuButton(): JSX.Element {
     setBusy(true)
     await useSocial.getState().createJam()
     setBusy(false)
-    if (useSocial.getState().snapshot.jam) setOpen(true)
   }
 
   const confirmKick = (member: JamMember): void =>
@@ -79,13 +70,13 @@ export function JamMenuButton(): JSX.Element {
       onConfirm: () => void useSocial.getState().transferJam(member.id)
     })
 
-  const label = jam ? t('social.jam.manage') : t('social.jam.create')
+  const label = jam ? t('social.jam.manage') : t('social.jam.title')
 
   return (
     <div className="jam-wrap" ref={wrapRef}>
       <button
         className={cx('icon-btn', jam && 'active', open && 'active')}
-        onClick={() => void onButtonClick()}
+        onClick={() => setOpen((value) => !value)}
         aria-label={label}
         title={label}
         style={{ position: 'relative' }}
@@ -93,6 +84,28 @@ export function JamMenuButton(): JSX.Element {
         <Icon name="radio" size={16} />
         {jam && <span className={cx('jam-dot', jamUnread > 0 && 'unread')} />}
       </button>
+
+      {open && !jam && (
+        <div className="jam-pop" role="dialog" aria-label={t('social.jam.title')}>
+          <div className="jam-pop-cta">
+            <span className="jam-pop-cta-icon">
+              <Icon name="radio" size={17} />
+            </span>
+            <div className="jam-pop-cta-text">
+              <strong>{t('social.jam.title')}</strong>
+              <span>{t('social.jam.hint')}</span>
+            </div>
+          </div>
+          <button className="btn primary jam-pop-create" disabled={busy} onClick={() => void createJam()}>
+            {busy ? (
+              <div className="spinner small" style={{ borderTopColor: '#fff' }} />
+            ) : (
+              <Icon name="radio" size={14} />
+            )}
+            {t('social.jam.create')}
+          </button>
+        </div>
+      )}
 
       {open && jam && (
         <div className="jam-pop" role="dialog" aria-label={t('social.jam.manage')}>

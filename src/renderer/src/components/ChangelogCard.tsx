@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.9.1',
+    pt: [
+      'Visual liquid glass: botões que seguem a cor da música agora são vidro translúcido com blur, no estilo iOS',
+      'Notificações redesenhadas: pill transparente com blur, sem a bolinha colorida',
+      'O botão de Jam agora abre um menu com a opção “Criar Jam” — nada é criado sem você confirmar'
+    ],
+    en: [
+      'Liquid glass look: buttons that follow the music\u2019s color are now translucent blurred glass, iOS style',
+      'Redesigned notifications: transparent blurred pill, without the colored dot',
+      'The Jam button now opens a menu with a “Start a Jam” option — nothing is created until you confirm'
+    ]
+  },
+  {
     version: '2.9.0',
     pt: [
       'Jam na barra do player: um clique no novo botão ao lado das letras inicia uma jam na hora',

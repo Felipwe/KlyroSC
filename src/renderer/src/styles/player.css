@@ -206,6 +206,45 @@
   gap: 8px;
 }
 
+.jam-pop-cta {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.jam-pop-cta-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.jam-pop-cta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.jam-pop-cta-text strong {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.jam-pop-cta-text span {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.jam-pop-create {
+  width: 100%;
+}
+
 .jam-pop-title {
   font-size: 0.86rem;
   font-weight: 700;
