@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+  # manual fallback: attaches assets to the pre-created release for the version in package.json
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -37,7 +39,8 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           node scripts/make-setup.mjs
-          gh release upload ${{ github.ref_name }} (Get-ChildItem dist/KlyroSC-Setup-*.exe).FullName --clobber
+          $tag = "v$(node -p 'require(''./package.json'').version')"
+          gh release upload $tag (Get-ChildItem dist/KlyroSC-Setup-*.exe).FullName --clobber
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
