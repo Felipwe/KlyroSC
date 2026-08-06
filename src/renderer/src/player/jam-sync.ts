@@ -165,6 +165,20 @@ export function initJamSync(): void {
     const prevJam = previous.snapshot.jam
     syncLock()
 
+    // after a server restart/deploy the connection drops; when it returns, the owner
+    // re-announces the live position so everyone stays in sync seamlessly
+    if (
+      state.snapshot.connected &&
+      !previous.snapshot.connected &&
+      jam &&
+      jam.ownerId === state.snapshot.account?.id &&
+      usePlayer.getState().current
+    ) {
+      emitPlayback()
+      lastQueueSig = ''
+      emitQueue(true)
+    }
+
     if (jam && jam.id !== lastJamId) {
       lastJamId = jam.id
       lastQueueSig = ''

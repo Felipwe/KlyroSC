@@ -11,6 +11,15 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.8.3',
+    pt: [
+      'Jams agora sobrevivem a reinícios do servidor: manutenções e atualizações não encerram mais a sua jam — a sincronização retoma sozinha em segundos'
+    ],
+    en: [
+      'Jams now survive server restarts: maintenance and updates no longer end your jam — sync resumes on its own within seconds'
+    ]
+  },
+  {
     version: '2.8.2',
     pt: [
       'Nome de exibição editável no Socials: clique no lápis ao lado do seu nome — único e opcional, seus amigos veem na hora',

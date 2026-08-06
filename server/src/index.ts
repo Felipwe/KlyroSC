@@ -3,7 +3,7 @@ import express from 'express'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import { WebSocketServer } from 'ws'
-import { initDb, pool } from './db.js'
+import { initDb, jamPersistence, pool } from './db.js'
 import { Hub } from './hub.js'
 import { JamService, type JamEvent } from './jams.js'
 import { createRouter } from './http.js'
@@ -38,8 +38,11 @@ async function main(): Promise<void> {
           break
       }
     },
-    (userId) => hub.isOnline(userId)
+    (userId) => hub.isOnline(userId),
+    jamPersistence
   )
+  const restored = await jams.restore()
+  if (restored > 0) console.log(`restored ${restored} jam(s) after restart`)
 
   const app = express()
   app.disable('x-powered-by')

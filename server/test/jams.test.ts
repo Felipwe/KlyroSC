@@ -213,6 +213,52 @@ describe('JamService', () => {
     expect(service.jamOf('owner')?.queue[0]?.addedByName).toBe('Bold Zebra')
   })
 
+  it('restores persisted jams after a restart and hands over if the owner never returns', async () => {
+    vi.useFakeTimers()
+    try {
+      const online = new Set(['guest'])
+      const events: JamEvent[] = []
+      const saved: unknown[] = []
+      const persistence = {
+        loadAll: async () => [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            ownerId: 'owner',
+            allowGuestControl: false,
+            playback: { track: track(7), playing: true, position: 42, at: 123 },
+            queue: [track(8)],
+            chat: [{ id: 1, fromId: 'owner', fromName: 'Owner', text: 'oi', at: 1 }],
+            chatCounter: 1,
+            lastActivity: 1,
+            members: [
+              { userId: 'owner', joinedAt: 100 },
+              { userId: 'guest', joinedAt: 200 }
+            ]
+          }
+        ],
+        save: (row: unknown) => void saved.push(row),
+        remove: () => undefined
+      }
+      const service = new JamService((event) => events.push(event), (id) => online.has(id), persistence)
+      const restored = await service.restore()
+      expect(restored).toBe(1)
+      const jam = service.jamOf('guest')
+      expect(jam?.ownerId).toBe('owner')
+      expect(jam?.queue[0]?.trackId).toBe(8)
+      expect(jam?.chat[0]?.text).toBe('oi')
+      // the stamped moment is refreshed so followers do not fast-forward
+      expect(jam!.playback.at).toBeGreaterThan(1000)
+
+      // owner never reconnects → after the restore check + grace, guest takes over
+      vi.advanceTimersByTime(91_000)
+      vi.advanceTimersByTime(61_000)
+      expect(service.jamOf('guest')?.ownerId).toBe('guest')
+      expect(saved.length).toBeGreaterThan(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('idle jams are swept, active ones survive', () => {
     vi.useFakeTimers()
     try {

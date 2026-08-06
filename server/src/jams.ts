@@ -48,18 +48,102 @@ export type JamEvent =
   | { kind: 'ended'; userIds: string[]; jamId: string }
   | { kind: 'chat'; userIds: string[]; message: JamChatEntry }
 
+export interface PersistedJamRow {
+  id: string
+  ownerId: string
+  allowGuestControl: boolean
+  playback: JamPlayback
+  queue: JamTrackRef[]
+  chat: JamChatEntry[]
+  chatCounter: number
+  lastActivity: number
+  members: { userId: string; joinedAt: number }[]
+}
+
+/** Optional write-through store so jams survive restarts/deploys. */
+export interface JamPersistence {
+  loadAll(): Promise<PersistedJamRow[]>
+  save(row: PersistedJamRow): void
+  remove(jamId: string): void
+}
+
+const PERSIST_DEBOUNCE_MS = 1_200
+/** after a restart, give the restored owner this long to reconnect before the crown moves */
+const RESTORE_OWNER_CHECK_MS = 90 * 1000
+
 export class JamService {
   private jams = new Map<string, Jam>()
   private memberIndex = new Map<string, string>() // userId → jamId
   private invites = new Map<string, Invite>()
   private sweeper: NodeJS.Timeout
+  private persistTimers = new Map<string, NodeJS.Timeout>()
 
   constructor(
     private emit: (event: JamEvent) => void,
-    private isOnline: (userId: string) => boolean = () => true
+    private isOnline: (userId: string) => boolean = () => true,
+    private persistence: JamPersistence | null = null
   ) {
     this.sweeper = setInterval(() => this.sweep(), 60_000)
     this.sweeper.unref()
+  }
+
+  /** Rebuilds in-memory jams from the store after a restart; clients resync on reconnect. */
+  async restore(): Promise<number> {
+    if (!this.persistence) return 0
+    const rows = await this.persistence.loadAll()
+    for (const row of rows) {
+      if (row.members.length === 0) {
+        this.persistence.remove(row.id)
+        continue
+      }
+      const jam: Jam = {
+        id: row.id,
+        ownerId: row.ownerId,
+        allowGuestControl: row.allowGuestControl,
+        members: new Map(row.members.map((member) => [member.userId, member.joinedAt])),
+        queue: row.queue,
+        // freeze the position at the moment we went down — the controller re-emits on reconnect
+        playback: { ...row.playback, at: Date.now() },
+        chat: row.chat,
+        chatCounter: row.chatCounter,
+        lastActivity: Date.now(),
+        ownerOfflineTimer: null
+      }
+      this.jams.set(jam.id, jam)
+      for (const memberId of jam.members.keys()) this.memberIndex.set(memberId, jam.id)
+    }
+    if (rows.length > 0) {
+      const timer = setTimeout(() => {
+        for (const jam of this.jams.values()) {
+          if (!this.isOnline(jam.ownerId)) this.memberOffline(jam.ownerId)
+        }
+      }, RESTORE_OWNER_CHECK_MS)
+      timer.unref?.()
+    }
+    return this.jams.size
+  }
+
+  private schedulePersist(jam: Jam): void {
+    if (!this.persistence) return
+    if (this.persistTimers.has(jam.id)) return
+    this.persistTimers.set(
+      jam.id,
+      setTimeout(() => {
+        this.persistTimers.delete(jam.id)
+        if (!this.jams.has(jam.id) || !this.persistence) return
+        this.persistence.save({
+          id: jam.id,
+          ownerId: jam.ownerId,
+          allowGuestControl: jam.allowGuestControl,
+          playback: jam.playback,
+          queue: jam.queue,
+          chat: jam.chat,
+          chatCounter: jam.chatCounter,
+          lastActivity: jam.lastActivity,
+          members: [...jam.members.entries()].map(([userId, joinedAt]) => ({ userId, joinedAt }))
+        })
+      }, PERSIST_DEBOUNCE_MS)
+    )
   }
 
   jamOf(userId: string): Jam | null {
@@ -113,6 +197,7 @@ export class JamService {
     }
     this.jams.set(jam.id, jam)
     this.memberIndex.set(userId, jam.id)
+    this.schedulePersist(jam)
     this.emit({ kind: 'sync', userIds: [userId] })
     return jam
   }
@@ -150,6 +235,7 @@ export class JamService {
     jam.members.set(userId, Date.now())
     this.memberIndex.set(userId, jam.id)
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     this.emit({ kind: 'sync', userIds: [...jam.members.keys()] })
     return { ok: true, jam }
   }
@@ -178,6 +264,7 @@ export class JamService {
     jam.members.delete(userId)
     this.memberIndex.delete(userId)
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     this.emit({ kind: 'sync', userIds: [userId, ...jam.members.keys()] })
   }
 
@@ -185,6 +272,12 @@ export class JamService {
     const jam = this.jams.get(jamId)
     if (!jam) return
     if (jam.ownerOfflineTimer) clearTimeout(jam.ownerOfflineTimer)
+    const pending = this.persistTimers.get(jamId)
+    if (pending) {
+      clearTimeout(pending)
+      this.persistTimers.delete(jamId)
+    }
+    this.persistence?.remove(jamId)
     const memberIds = [...jam.members.keys()]
     this.jams.delete(jamId)
     for (const id of memberIds) this.memberIndex.delete(id)
@@ -197,6 +290,7 @@ export class JamService {
     if (!jam || jam.ownerId !== userId) return false
     jam.allowGuestControl = allow
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     this.emit({ kind: 'sync', userIds: [...jam.members.keys()] })
     return true
   }
@@ -218,6 +312,7 @@ export class JamService {
       at: Date.now()
     }
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     const others = [...jam.members.keys()].filter((id) => id !== userId)
     if (others.length > 0) this.emit({ kind: 'playback', userIds: others, playback: jam.playback })
   }
@@ -227,6 +322,7 @@ export class JamService {
     if (!jam || !this.canControl(jam, userId)) return
     jam.queue = queue.slice(0, QUEUE_LIMIT)
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     const others = [...jam.members.keys()].filter((id) => id !== userId)
     if (others.length > 0) this.emit({ kind: 'queue', userIds: others, queue: jam.queue })
   }
@@ -244,13 +340,17 @@ export class JamService {
     }
     jam.chat = [...jam.chat, message].slice(-CHAT_KEEP)
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     this.emit({ kind: 'chat', userIds: [...jam.members.keys()], message })
     return true
   }
 
   heartbeat(userId: string): void {
     const jam = this.jamOf(userId)
-    if (jam) jam.lastActivity = Date.now()
+    if (jam) {
+      jam.lastActivity = Date.now()
+      this.schedulePersist(jam)
+    }
   }
 
   /** Owner went offline (app closed / connection lost): after a grace period the
@@ -292,6 +392,7 @@ export class JamService {
     }
     jam.ownerId = next
     jam.lastActivity = Date.now()
+    this.schedulePersist(jam)
     const notify = previousOwner ? [previousOwner, ...jam.members.keys()] : [...jam.members.keys()]
     this.emit({ kind: 'sync', userIds: notify })
   }
