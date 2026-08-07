@@ -154,6 +154,16 @@ export class Hub {
     for (const id of userIds) this.send(id, message)
   }
 
+  /** Every connected client — admin broadcasts only. */
+  broadcastAll(message: Record<string, unknown>): number {
+    let sent = 0
+    for (const id of this.clients.keys()) {
+      this.send(id, message)
+      sent++
+    }
+    return sent
+  }
+
   private broadcastPresence(userId: string): void {
     const client = this.clients.get(userId)
     if (!client) return

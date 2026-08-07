@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.12.0',
+    pt: [
+      'Contador de notificações no ícone da barra de tarefas: mensagens, Jam, pedidos e atualizações (9+ quando passa de nove)',
+      'Corrigido: menus de seleção não abriam as opções ao clicar',
+      'Código de acesso do Socials em Configurações > Conta — borrado por padrão, passe o mouse para revelar e clique para copiar',
+      'O botão de excluir conta saiu do app: contas inativas por mais de 180 dias agora são excluídas automaticamente'
+    ],
+    en: [
+      'Notification counter on the taskbar icon: messages, Jam, requests and updates (9+ past nine)',
+      'Fixed: select menus were not opening their options on click',
+      'Socials access code in Settings > Account — blurred by default, hover to reveal and click to copy',
+      'The delete account button is gone: accounts inactive for over 180 days are now removed automatically'
+    ]
+  },
+  {
     version: '2.11.0',
     pt: [
       'Animações estilo iOS em tudo: cada botão, menu e clique responde com uma mola suave e sutil',

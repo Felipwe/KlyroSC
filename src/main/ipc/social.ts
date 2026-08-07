@@ -80,6 +80,9 @@ export function registerSocialIpc(ctx: AppContext): void {
     listeningMs: ctx.stats.listeningMs(),
     topTrack: ctx.stats.topTrack(ctx.library.get().history)
   }))
+  handleResult(IPC.socialAdminUsers, () => social.adminUsers())
+  handleResult(IPC.socialAdminForceUpdate, () => social.adminForceUpdate())
+  handle(IPC.socialAccountNumber, () => social.accountNumber())
 
   on(IPC.socialReconnect, () => social.reconnectNow())
   handleResult(IPC.socialChatHistory, (payload) => {

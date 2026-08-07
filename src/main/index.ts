@@ -102,7 +102,8 @@ function bootstrap(): void {
     (payload) => mainWindow.send(IPC.socialChatMessage, payload),
     (payload) => mainWindow.send(IPC.socialChatSent, payload),
     (payload) => mainWindow.send(IPC.socialChatTypingEvent, payload),
-    (payload) => mainWindow.send(IPC.socialChatRejected, payload)
+    (payload) => mainWindow.send(IPC.socialChatRejected, payload),
+    (action) => mainWindow.send(IPC.socialAdminEvent, action)
   )
   const stats = new StatsService()
   // profile stats shared with friends: refresh shortly after boot, then periodically

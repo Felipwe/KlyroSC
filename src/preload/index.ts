@@ -35,6 +35,7 @@ const api: KlyroApi = {
     isMaximized: () => invoke(IPC.windowIsMaximized),
     setMiniMode: (on) => invoke(IPC.windowSetMini, on),
     setIcon: (dataUrl) => send(IPC.windowSetIcon, dataUrl),
+    setBadge: (count, overlay) => send(IPC.windowSetBadge, { count, overlay }),
     onMaximized: (cb) => listen<boolean>(IPC.windowMaximized, cb)
   },
   app: {
@@ -151,6 +152,10 @@ const api: KlyroApi = {
     setStatus: (status) => send(IPC.socialSetStatus, status),
     chatRead: (friendId, upTo) => send(IPC.socialChatRead, { friendId, upTo }),
     myStats: () => invoke(IPC.socialMyStats),
+    adminUsers: () => invoke(IPC.socialAdminUsers),
+    adminForceUpdate: () => invoke(IPC.socialAdminForceUpdate),
+    onAdminEvent: (cb) => listen<string>(IPC.socialAdminEvent, cb),
+    accountNumber: () => invoke(IPC.socialAccountNumber),
     reconnect: () => send(IPC.socialReconnect),
     sendJamPlayback: (payload) => send(IPC.socialJamPlaybackSend, payload),
     sendJamQueue: (queue) => send(IPC.socialJamQueueSend, queue),

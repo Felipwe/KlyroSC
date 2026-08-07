@@ -15,8 +15,9 @@ export function ContextMenuHost(): JSX.Element | null {
   const [pos, setPos] = useState<{ x: number; y: number; origin: string } | null>(null)
 
   useLayoutEffect(() => {
-    // keep the last position while the exit animation plays
-    if (!menu.open) return
+    // keep the last position while the exit animation plays; `mounted` lags `menu.open`
+    // by one commit, so it must be a dep or the menu is measured before it renders
+    if (!menu.open || !mounted) return
     const el = ref.current
     if (!el) return
     // offsetWidth/Height ignore the scale-in transform, unlike getBoundingClientRect
@@ -28,7 +29,7 @@ export function ContextMenuHost(): JSX.Element | null {
     const x = Math.max(margin, Math.min(flipX ? menu.x - width : menu.x, window.innerWidth - width - margin))
     const y = Math.max(margin, Math.min(flipY ? menu.y - height : menu.y, window.innerHeight - height - margin))
     setPos({ x, y, origin: `${flipY ? 'bottom' : 'top'} ${flipX ? 'right' : 'left'}` })
-  }, [menu.open, menu.x, menu.y, menu.items])
+  }, [menu.open, mounted, menu.x, menu.y, menu.items])
 
   useEffect(() => {
     if (!menu.open) return

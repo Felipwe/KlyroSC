@@ -258,6 +258,12 @@ async function main() {
   const stateB1g = (await api('GET', '/state', { token: tokenB })).data
   check('friend sees stats', stateB1g.friends[0]?.stats?.topTrack?.plays === 42 && stateB1g.friends[0]?.stats?.listeningMs === 5_400_000)
 
+  // ————— admin endpoints locked to public id 1 (test accounts are never #1) —————
+  const adminUsers = await api('GET', '/admin/users', { token: tokenA })
+  check('admin users blocked for non-admin', adminUsers.status === 403)
+  const adminForce = await api('POST', '/admin/force-update', { token: tokenA })
+  check('admin force-update blocked for non-admin', adminForce.status === 403)
+
   //  jam 
   const createJam = await api('POST', '/jams', { token: tokenA })
   check('A created jam', createJam.status === 201 && createJam.data.jam?.members.length === 1)

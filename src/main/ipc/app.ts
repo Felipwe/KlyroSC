@@ -224,6 +224,26 @@ export function registerAppIpc(ctx: AppContext): void {
     }
   })
 
+  on(IPC.windowSetBadge, (payload) => {
+    const p = payload as { count?: unknown; overlay?: unknown }
+    const count = typeof p?.count === 'number' && Number.isFinite(p.count) ? Math.max(0, Math.floor(p.count)) : 0
+    const window = ctx.mainWindow.get()
+    try {
+      app.setBadgeCount(count) // macOS dock / Linux launcher
+      if (!window) return
+      if (count === 0) {
+        window.setOverlayIcon(null, '')
+        return
+      }
+      const overlay = typeof p.overlay === 'string' ? p.overlay : ''
+      if (!overlay.startsWith('data:image/png;base64,') || overlay.length > 200_000) return
+      const image = nativeImage.createFromDataURL(overlay)
+      if (!image.isEmpty()) window.setOverlayIcon(image, `${count} notifications`)
+    } catch (error) {
+      rendererLog.warn(`could not apply badge: ${String(error)}`)
+    }
+  })
+
   handleResult(IPC.librarySetCover, async (id) => {
     if (typeof id !== 'string') throw new Error('invalid playlist id')
     const window = ctx.mainWindow.get()

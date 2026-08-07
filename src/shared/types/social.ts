@@ -113,6 +113,19 @@ export interface NewSocialAccount {
   accountNumber: string
 }
 
+/** Admin (public id #1) overview of every account. */
+export interface AdminUserRow {
+  publicId: number
+  name: string
+  online: boolean
+}
+
+export interface AdminUsers {
+  active: number
+  inactive: number
+  users: AdminUserRow[]
+}
+
 export interface ChatMessage {
   id: number
   fromMe: boolean

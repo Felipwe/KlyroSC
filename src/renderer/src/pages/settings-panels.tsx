@@ -9,7 +9,9 @@ import { toast } from '@renderer/stores/toasts'
 import { useUi } from '@renderer/stores/ui'
 import { useSettings } from '@renderer/stores/settings'
 import { useAuth } from '@renderer/stores/auth'
+import { useSocial } from '@renderer/stores/social'
 import { useNav } from '@renderer/stores/nav'
+import { formatAccountNumber } from '@shared/utils/social'
 import { Icon } from '@renderer/components/Icon'
 import { Select, Switch } from '@renderer/components/controls'
 import { Empty, Loading } from '@renderer/components/Status'
@@ -49,6 +51,7 @@ export function AccountPanel(): JSX.Element {
             {t('auth.logout')}
           </button>
         </div>
+        <SocialsCodeCard />
       </>
     )
   }
@@ -72,7 +75,46 @@ export function AccountPanel(): JSX.Element {
         </div>
         <p className="pc-meta">{t('auth.promptHint')}</p>
       </div>
+      <SocialsCodeCard />
     </>
+  )
+}
+
+/** Socials access code, hidden behind a blur — hover reveals, click copies. */
+function SocialsCodeCard(): JSX.Element | null {
+  const account = useSocial((state) => state.snapshot.account)
+  const accountId = account?.id ?? null
+  const [code, setCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (accountId) void api.social.accountNumber().then(setCode)
+    else setCode(null)
+  }, [accountId])
+
+  if (!account) return null
+
+  const copy = async (): Promise<void> => {
+    if (!code) return
+    await navigator.clipboard.writeText(formatAccountNumber(code))
+    toast(t('social.codeCopied'), 'success')
+  }
+
+  return (
+    <div className="update-card" style={{ marginTop: 14 }}>
+      <div className="uc-row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div className="sr-text">
+          <div className="sr-label">
+            {t('social.accessCode')} · {account.name}
+          </div>
+          <div className="sr-desc">{code ? t('social.accessCodeHint') : t('social.accessCodeMissing')}</div>
+        </div>
+        {code && (
+          <button className="code-spoiler" onClick={() => void copy()} title={t('social.accessCodeHint')}>
+            {formatAccountNumber(code)}
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 

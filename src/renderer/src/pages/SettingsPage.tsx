@@ -1,12 +1,16 @@
-import { useState, type CSSProperties, type JSX, type ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type JSX, type ReactNode } from 'react'
 import { t, useLanguage } from '@renderer/i18n'
 import { useSettings } from '@renderer/stores/settings'
 import { usePlayer } from '@renderer/player/store'
+import { useSocial } from '@renderer/stores/social'
+import { useUi } from '@renderer/stores/ui'
+import { api } from '@renderer/services/ipc'
 import { cx } from '@renderer/utils/format'
 import { Icon, type IconName } from '@renderer/components/Icon'
 import { Select, Switch } from '@renderer/components/controls'
 import { toast } from '@renderer/stores/toasts'
 import { type AccentId } from '@shared/types/settings'
+import { type AdminUsers } from '@shared/types/social'
 import yagamiBg from '../assets/yagami-bg.png'
 import { PluginsPanel, UpdatesPanel, DataPanel, AboutPanel, ShortcutsPanel, AccountPanel } from './settings-panels'
 import { EqualizerPanel } from './EqualizerPanel'
@@ -27,6 +31,81 @@ const SECTIONS: { id: string; icon: IconName }[] = [
   { id: 'shortcuts', icon: 'keyboard' },
   { id: 'about', icon: 'info' }
 ]
+
+const ADMIN_SECTION: { id: string; icon: IconName } = { id: 'admin', icon: 'zap' }
+
+/** Remote administration — rendered only for the #1 account. */
+function AdminPanel(): JSX.Element {
+  const [users, setUsers] = useState<AdminUsers | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const load = async (): Promise<void> => {
+    setLoading(true)
+    const result = await api.social.adminUsers()
+    setLoading(false)
+    if (result.ok) setUsers(result.data)
+    else toast(t('social.errors.generic'), 'error')
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
+
+  const forceUpdate = (): void =>
+    useUi.getState().openModal({
+      kind: 'confirm',
+      title: t('settings.admin.forceUpdate'),
+      body: t('settings.admin.forceUpdateConfirm'),
+      danger: true,
+      confirmLabel: t('settings.admin.forceUpdate'),
+      onConfirm: () =>
+        void api.social.adminForceUpdate().then((result) => {
+          if (result.ok) toast(t('settings.admin.forceUpdateSent'), 'success')
+          else toast(t('social.errors.generic'), 'error')
+        })
+    })
+
+  return (
+    <>
+      <SettingRow label={t('settings.admin.forceUpdate')} desc={t('settings.admin.forceUpdateDesc')}>
+        <button className="btn danger" onClick={forceUpdate}>
+          <Icon name="zap" size={14} />
+          {t('settings.admin.forceUpdate')}
+        </button>
+      </SettingRow>
+
+      <div className="setting-row" style={{ alignItems: 'flex-start' }}>
+        <div className="sr-text">
+          <div className="sr-label">{t('settings.admin.users')}</div>
+          <div className="sr-desc">
+            {users
+              ? t('settings.admin.usersDesc', { active: users.active, inactive: users.inactive })
+              : '—'}
+          </div>
+        </div>
+        <button className="btn small" disabled={loading} onClick={() => void load()}>
+          {loading ? <div className="spinner small" /> : <Icon name="refresh" size={13} />}
+          {t('settings.admin.refresh')}
+        </button>
+      </div>
+
+      {users && (
+        <div className="admin-users">
+          {users.users.map((user) => (
+            <div key={user.publicId} className="admin-user-row">
+              <span className={cx('social-status-dot inline', user.online && 'online')} />
+              <span className="admin-user-name">{user.name}</span>
+              <span className="social-id-chip">#{user.publicId}</span>
+              <span className={cx('admin-user-state', user.online && 'online')}>
+                {user.online ? t('social.online') : t('social.offlineStatus')}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
 
 export function SettingRow({
   label,
@@ -114,6 +193,8 @@ function ThemePicker(): JSX.Element {
 
 export function SettingsPage({ initialSection }: { initialSection?: string }): JSX.Element {
   useLanguage()
+  const isAdmin = useSocial((state) => state.snapshot.account?.publicId === 1)
+  const sections = isAdmin ? [...SECTIONS, ADMIN_SECTION] : SECTIONS
   const [section, setSection] = useState(
     SECTIONS.some((item) => item.id === initialSection) ? (initialSection as string) : 'appearance'
   )
@@ -125,7 +206,7 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
       <p className="page-sub" />
       <div className="settings-layout">
         <nav className="settings-nav">
-          {SECTIONS.map((item) => (
+          {sections.map((item) => (
             <button
               key={item.id}
               className={cx(section === item.id && 'active')}
@@ -143,6 +224,8 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
           <h2 className="settings-section-title">{t(`settings.sections.${section}`)}</h2>
 
           {section === 'account' && <AccountPanel />}
+
+          {section === 'admin' && isAdmin && <AdminPanel />}
 
           {section === 'equalizer' && <EqualizerPanel />}
 

@@ -268,6 +268,10 @@ export const pt: Dict = {
     yourName: 'Seu nome',
     copyCode: 'Copiar código',
     codeCopied: 'Código copiado  guarde bem!',
+    accessCode: 'Código de acesso',
+    accessCodeHint: 'Passe o mouse para revelar · clique para copiar',
+    accessCodeMissing: 'Entre de novo no Socials para ver o código aqui.',
+    inactiveNote: 'Contas inativas por mais de 180 dias são excluídas automaticamente.',
     proceed: 'Salvei  continuar',
     confirmTitle: 'Confirme seu código',
     confirmBody: 'Digite o código que você acabou de salvar para confirmar que guardou.',
@@ -423,7 +427,20 @@ export const pt: Dict = {
       startup: 'Inicialização',
       data: 'Dados e armazenamento',
       shortcuts: 'Atalhos',
-      about: 'Sobre'
+      about: 'Sobre',
+      admin: 'Admin'
+    },
+    admin: {
+      forceUpdate: 'Forçar atualização geral',
+      forceUpdateDesc: 'Todos os aplicativos conectados buscam atualização, instalam e reiniciam se houver versão nova.',
+      forceUpdateConfirm: 'Enviar hard reset para TODOS os usuários conectados? Aplicativos com atualização pendente vão reiniciar.',
+      forceUpdateSent: 'Comando enviado para todos os aplicativos conectados',
+      users: 'Usuários',
+      usersDesc: '{active} ativos · {inactive} inativos',
+      refresh: 'Atualizar lista',
+      maintenanceTitle: 'Manutenção em andamento',
+      maintenanceBody: 'O KlyroSC está passando por uma manutenção. O aplicativo vai atualizar e reiniciar sozinho não feche esta janela.',
+      upToDate: 'Você já está na versão mais recente'
     },
     appearance: {
       accent: 'Tema',

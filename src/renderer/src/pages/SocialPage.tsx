@@ -365,16 +365,6 @@ function ProfileTab(): JSX.Element {
       onConfirm: () => void useSocial.getState().logout()
     })
 
-  const deleteAccount = (): void =>
-    useUi.getState().openModal({
-      kind: 'confirm',
-      title: t('social.deleteAccount'),
-      body: t('social.deleteConfirm'),
-      danger: true,
-      confirmLabel: t('social.deleteAccount'),
-      onConfirm: () => void useSocial.getState().deleteAccount()
-    })
-
   return (
     <>
       <div className="social-card social-profile">
@@ -434,11 +424,8 @@ function ProfileTab(): JSX.Element {
             <Icon name="logout" size={14} />
             {t('social.logoutSocial')}
           </button>
-          <button className="btn danger" onClick={deleteAccount}>
-            <Icon name="trash" size={14} />
-            {t('social.deleteAccount')}
-          </button>
         </div>
+        <div className="sp-account-note">{t('social.inactiveNote')}</div>
       </section>
     </>
   )

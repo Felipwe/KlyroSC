@@ -1,6 +1,7 @@
 import { SOCIAL_API_BASE } from '@shared/constants'
 import {
   EMPTY_SOCIAL,
+  type AdminUsers,
   type ChatEventPayload,
   type ChatMessage,
   type Friend,
@@ -40,6 +41,8 @@ interface SocialCredentials {
   uploadedKey: string | null
   /** manual presence status, survives restarts */
   status: PresenceStatus
+  /** the 16-digit access code, kept locally so the owner can re-copy it */
+  accountNumber: string | null
 }
 
 interface PendingAccount {
@@ -49,7 +52,14 @@ interface PendingAccount {
 }
 
 const parseCredentials = (raw: unknown): SocialCredentials => {
-  const empty: SocialCredentials = { token: null, user: null, chatKeys: null, uploadedKey: null, status: 'online' }
+  const empty: SocialCredentials = {
+    token: null,
+    user: null,
+    chatKeys: null,
+    uploadedKey: null,
+    status: 'online',
+    accountNumber: null
+  }
   if (!isRecord(raw)) return empty
   const user =
     isRecord(raw.user) && typeof raw.user.id === 'string' && typeof raw.user.name === 'string'
@@ -71,7 +81,9 @@ const parseCredentials = (raw: unknown): SocialCredentials => {
     user,
     chatKeys,
     uploadedKey: typeof raw.uploadedKey === 'string' ? raw.uploadedKey : null,
-    status: raw.status === 'away' || raw.status === 'dnd' ? raw.status : 'online'
+    status: raw.status === 'away' || raw.status === 'dnd' ? raw.status : 'online',
+    accountNumber:
+      typeof raw.accountNumber === 'string' && /^[0-9]{16}$/.test(raw.accountNumber) ? raw.accountNumber : null
   }
 }
 
@@ -100,7 +112,8 @@ export class SocialService {
     private emitChatMessage: (payload: ChatEventPayload) => void,
     private emitChatSent: (payload: { friendId: string; tempId: string; id: number; at: number }) => void,
     private emitChatTyping: (payload: { friendId: string }) => void,
-    private emitChatRejected: (payload: { friendId?: string; tempId?: string; code: string }) => void
+    private emitChatRejected: (payload: { friendId?: string; tempId?: string; code: string }) => void,
+    private emitAdminEvent: (action: string) => void = () => undefined
   ) {}
 
   private get baseUrl(): string {
@@ -113,6 +126,11 @@ export class SocialService {
 
   status(): SocialSnapshot {
     return this.snapshot
+  }
+
+  /** The locally kept 16-digit access code (null for sessions started before it was stored). */
+  accountNumber(): string | null {
+    return this.store.get().accountNumber
   }
 
   init(): void {
@@ -187,7 +205,14 @@ export class SocialService {
     if (!this.pending) throw new Error('no_pending_account')
     const digits = typedNumber.replace(/[^0-9]/g, '')
     if (digits !== this.pending.accountNumber) throw new Error('code_mismatch')
-    this.store.set({ token: this.pending.token, user: this.pending.user, chatKeys: null, uploadedKey: null, status: 'online' })
+    this.store.set({
+      token: this.pending.token,
+      user: this.pending.user,
+      chatKeys: null,
+      uploadedKey: null,
+      status: 'online',
+      accountNumber: digits
+    })
     this.store.flush()
     this.snapshot = { ...EMPTY_SOCIAL, account: this.pending.user }
     this.pending = null
@@ -201,7 +226,14 @@ export class SocialService {
     const data = await this.request<{ user: SocialUser; token: string }>('POST', '/auth/login', {
       accountNumber: digits
     })
-    this.store.set({ token: data.token, user: data.user, chatKeys: null, uploadedKey: null, status: 'online' })
+    this.store.set({
+      token: data.token,
+      user: data.user,
+      chatKeys: null,
+      uploadedKey: null,
+      status: 'online',
+      accountNumber: digits
+    })
     this.store.flush()
     this.snapshot = { ...EMPTY_SOCIAL, account: data.user }
     await this.connect()
@@ -225,7 +257,14 @@ export class SocialService {
   }
 
   private clearCredentials(): void {
-    this.store.set({ token: null, user: null, chatKeys: null, uploadedKey: null, status: 'online' })
+    this.store.set({
+      token: null,
+      user: null,
+      chatKeys: null,
+      uploadedKey: null,
+      status: 'online',
+      accountNumber: null
+    })
     this.store.flush()
     this.chatKeyCache.clear()
     this.teardownSocket()
@@ -339,6 +378,16 @@ export class SocialService {
     } catch (error) {
       log.warn(`stats report failed: ${String(error)}`)
     }
+  }
+
+  // ————— admin (public id #1) —————
+
+  async adminUsers(): Promise<AdminUsers> {
+    return await this.request<AdminUsers>('GET', '/admin/users')
+  }
+
+  async adminForceUpdate(): Promise<void> {
+    await this.request<unknown>('POST', '/admin/force-update')
   }
 
   sendJamPlayback(payload: { track: JamTrackRef | null; playing: boolean; position: number }): void {
@@ -636,6 +685,10 @@ export class SocialService {
         this.emit()
         break
       }
+      case 'admin:force-update':
+        log.info('admin force-update broadcast received')
+        this.emitAdminEvent('force-update')
+        break
       case 'chat:rejected': {
         this.emitChatRejected({
           friendId: typeof message.to === 'string' ? message.to : undefined,

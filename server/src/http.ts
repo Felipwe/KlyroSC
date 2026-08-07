@@ -721,5 +721,44 @@ export function createRouter(services: Services): Router {
     jamMemberAction((ownerId, targetId) => jams.transferTo(ownerId, targetId))
   )
 
+  // ————— admin (public id #1 only) —————
+  const ADMIN_PUBLIC_ID = Number(process.env.ADMIN_PUBLIC_ID ?? 1)
+  const requireAdmin = (req: Request, res: Response): boolean => {
+    if (req.user!.publicId !== ADMIN_PUBLIC_ID) {
+      fail(res, 403, 'admin_only')
+      return false
+    }
+    return true
+  }
+
+  router.get(
+    '/admin/users',
+    auth,
+    wrap(async (req, res) => {
+      if (!requireAdmin(req, res)) return
+      const result = await pool.query<{ id: string; public_id: string; name: string }>(
+        'SELECT id, public_id, name FROM users ORDER BY public_id ASC LIMIT 1000'
+      )
+      const users = result.rows.map((row) => ({
+        publicId: Number(row.public_id),
+        name: row.name,
+        online: hub.isOnline(row.id)
+      }))
+      const active = users.filter((user) => user.online).length
+      res.json({ users, active, inactive: users.length - active })
+    })
+  )
+
+  router.post(
+    '/admin/force-update',
+    auth,
+    socialWriteLimiter,
+    wrap(async (req, res) => {
+      if (!requireAdmin(req, res)) return
+      const sent = hub.broadcastAll({ t: 'admin:force-update' })
+      res.json({ sent })
+    })
+  )
+
   return router
 }

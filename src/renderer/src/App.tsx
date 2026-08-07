@@ -11,6 +11,7 @@ import { initMediaSession } from '@renderer/player/media-session'
 import { initPresenceSync } from '@renderer/player/presence-sync'
 import { initDynamicTheme } from '@renderer/player/dynamic-theme'
 import { initJamSync } from '@renderer/player/jam-sync'
+import { initBadgeSync } from '@renderer/services/badge-sync'
 import { useKeyboardShortcuts } from '@renderer/hooks/keyboard'
 import { buildAppIcon } from '@renderer/utils/icon-tint'
 import { TitleBar } from '@renderer/layouts/TitleBar'
@@ -94,6 +95,7 @@ export default function App(): JSX.Element {
   const [booted, setBooted] = useState(false)
   const [splash, setSplash] = useState<'show' | 'leaving' | 'gone'>('show')
   const [changelogVersion, setChangelogVersion] = useState<string | null>(null)
+  const [maintenance, setMaintenance] = useState(false)
   const route = useNav((state) => state.route)
   const miniMode = useUi((state) => state.miniMode)
   const appearance = useSettings((state) => state.settings.appearance)
@@ -119,6 +121,7 @@ export default function App(): JSX.Element {
         initDynamicTheme()
         await useSocial.getState().load()
         initJamSync()
+        initBadgeSync()
         await useAuth.getState().load()
         const info = await api.app.info()
         const seen = useSettings.getState().settings.system.lastSeenVersion
@@ -153,6 +156,29 @@ export default function App(): JSX.Element {
           'success'
         )
     })
+    // admin hard reset: big maintenance notice, then update + relaunch if a version is pending
+    const unsubAdmin = api.social.onAdminEvent((action) => {
+      if (action !== 'force-update') return
+      setMaintenance(true)
+      void (async (): Promise<void> => {
+        const status = await api.updates.check()
+        if (status.phase === 'available' || status.phase === 'downloading') {
+          const downloaded = await api.updates.download()
+          if (downloaded.phase === 'downloaded') {
+            setTimeout(() => api.updates.install(), 1200)
+            return
+          }
+        } else if (status.phase === 'downloaded') {
+          setTimeout(() => api.updates.install(), 1200)
+          return
+        }
+        // already on the latest version (or updater unavailable) — lift the notice
+        setTimeout(() => {
+          setMaintenance(false)
+          toast(t('settings.admin.upToDate'), 'success')
+        }, 3500)
+      })()
+    })
     const onWindowError = (event: ErrorEvent): void => reportError('window', event.error ?? event.message)
     const onRejection = (event: PromiseRejectionEvent): void => reportError('promise', event.reason)
     window.addEventListener('error', onWindowError)
@@ -163,6 +189,7 @@ export default function App(): JSX.Element {
       unsubToast()
       unsubNav()
       unsubUpdates()
+      unsubAdmin()
       window.removeEventListener('error', onWindowError)
       window.removeEventListener('unhandledrejection', onRejection)
     }
@@ -218,6 +245,15 @@ export default function App(): JSX.Element {
       <ModalHost />
       <AddToPlaylistHost />
       <ToastHost />
+      {maintenance && (
+        <div className="maintenance-overlay" role="alertdialog" aria-modal="true">
+          <div className="mo-card">
+            <div className="spinner" />
+            <h2>{t('settings.admin.maintenanceTitle')}</h2>
+            <p>{t('settings.admin.maintenanceBody')}</p>
+          </div>
+        </div>
+      )}
       {splash !== 'gone' && <BootSplash leaving={splash === 'leaving'} />}
     </>
   )

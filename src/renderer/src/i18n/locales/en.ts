@@ -265,8 +265,10 @@ export const en = {
     codeBody: 'The code below is the only way into your account. Save it somewhere safe  it cannot be recovered if lost.',
     yourName: 'Your name',
     copyCode: 'Copy code',
-    codeCopied: 'Code copied  keep it safe!',
-    proceed: 'I saved it  continue',
+    codeCopied: 'Code copied  keep it safe!',    accessCode: 'Access code',
+    accessCodeHint: 'Hover to reveal · click to copy',
+    accessCodeMissing: 'Log in to Socials again to see the code here.',
+    inactiveNote: 'Accounts inactive for over 180 days are deleted automatically.',    proceed: 'I saved it  continue',
     confirmTitle: 'Confirm your code',
     confirmBody: 'Type the code you just saved so we know you stored it.',
     confirmPlaceholder: '0000 0000 0000 0000',
@@ -421,7 +423,20 @@ export const en = {
       startup: 'Startup',
       data: 'Data & storage',
       shortcuts: 'Shortcuts',
-      about: 'About'
+      about: 'About',
+      admin: 'Admin'
+    },
+    admin: {
+      forceUpdate: 'Force global update',
+      forceUpdateDesc: 'Every connected app checks for updates, installs and restarts if a new version exists.',
+      forceUpdateConfirm: 'Send a hard reset to ALL connected users? Apps with a pending update will restart.',
+      forceUpdateSent: 'Command sent to every connected app',
+      users: 'Users',
+      usersDesc: '{active} active · {inactive} inactive',
+      refresh: 'Refresh list',
+      maintenanceTitle: 'Maintenance in progress',
+      maintenanceBody: 'KlyroSC is going through a maintenance. The app will update and restart by itself do not close this window.',
+      upToDate: 'You are already on the latest version'
     },
     appearance: {
       accent: 'Theme',

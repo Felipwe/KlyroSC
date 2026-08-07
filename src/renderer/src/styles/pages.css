@@ -2886,3 +2886,71 @@ kbd {
 .chat-ticks.pending {
   opacity: 0.8;
 }
+
+/* admin: users overview */
+
+.admin-users {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 13px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  font-size: 0.82rem;
+}
+
+.admin-user-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-state {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.admin-user-state.online {
+  color: var(--success);
+}
+
+/* access code spoiler — blurred until hovered, click copies */
+
+.code-spoiler {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-size: 0.92rem;
+  padding: 9px 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  filter: blur(7px);
+  transition: filter 220ms var(--ease), background var(--t-fast), border-color var(--t-fast);
+  user-select: none;
+}
+
+.code-spoiler:hover {
+  filter: blur(0);
+  background: var(--surface-hover);
+  border-color: var(--stroke-strong);
+}
+
+.sp-account-note {
+  margin-top: 10px;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}

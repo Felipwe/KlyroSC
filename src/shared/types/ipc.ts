@@ -24,6 +24,7 @@ import { type PluginConfigValue, type PluginInfo } from './plugin'
 import { type UpdateStatus } from './update'
 import { type AuthState } from './auth'
 import {
+  type AdminUsers,
   type ChatEventPayload,
   type ChatMessage,
   type JamPlayback,
@@ -58,6 +59,8 @@ export interface KlyroApi {
     isMaximized(): Promise<boolean>
     setMiniMode(on: boolean): Promise<void>
     setIcon(dataUrl: string): void
+    /** taskbar notification badge; overlay is a small PNG drawn by the renderer */
+    setBadge(count: number, overlay: string | null): void
     onMaximized(cb: (maximized: boolean) => void): Unsubscribe
   }
   app: {
@@ -174,6 +177,10 @@ export interface KlyroApi {
     setStatus(status: PresenceStatus): void
     chatRead(friendId: string, upTo: number): void
     myStats(): Promise<UserStats>
+    adminUsers(): Promise<Result<AdminUsers>>
+    adminForceUpdate(): Promise<Result<void>>
+    onAdminEvent(cb: (action: string) => void): Unsubscribe
+    accountNumber(): Promise<string | null>
     reconnect(): void
     sendJamPlayback(payload: { track: JamTrackRef | null; playing: boolean; position: number }): void
     sendJamQueue(queue: JamTrackRef[]): void
@@ -208,6 +215,7 @@ export const IPC = {
   windowIsMaximized: 'window:is-maximized',
   windowSetMini: 'window:set-mini',
   windowMaximized: 'window:maximized',
+  windowSetBadge: 'window:set-badge',
   appInfo: 'app:info',
   appQuit: 'app:quit',
   appRelaunch: 'app:relaunch',
@@ -299,6 +307,10 @@ export const IPC = {
   socialSetStatus: 'social:set-status',
   socialChatRead: 'social:chat-read',
   socialMyStats: 'social:my-stats',
+  socialAdminUsers: 'social:admin-users',
+  socialAdminForceUpdate: 'social:admin-force-update',
+  socialAdminEvent: 'social:admin-event',
+  socialAccountNumber: 'social:account-number',
   socialReconnect: 'social:reconnect',
   socialJamPlaybackSend: 'social:jam-playback-send',
   socialJamQueueSend: 'social:jam-queue-send',
