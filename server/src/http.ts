@@ -329,7 +329,7 @@ export function createRouter(services: Services): Router {
     })
   )
 
-  // optional custom display name — must stay unique; also accepts self-reported listening stats
+  // optional custom display name  must stay unique; also accepts self-reported listening stats
   router.patch(
     '/profile',
     auth,
@@ -369,7 +369,11 @@ export function createRouter(services: Services): Router {
         throw error
       }
       hub.setName(me.id, name)
-      for (const friendId of await friendIdsOf(me.id)) hub.send(friendId, { t: 'sync' })
+      const notify = new Set(await friendIdsOf(me.id))
+      // jam members are not necessarily friends — they must see the new name too
+      const jam = jams.jamOf(me.id)
+      if (jam) for (const memberId of jam.members.keys()) if (memberId !== me.id) notify.add(memberId)
+      for (const id of notify) hub.send(id, { t: 'sync' })
       res.json({ user: { ...me, name } })
     })
   )
@@ -721,7 +725,7 @@ export function createRouter(services: Services): Router {
     jamMemberAction((ownerId, targetId) => jams.transferTo(ownerId, targetId))
   )
 
-  // ————— admin (public id #1 only) —————
+  //  admin (public id #1 only) 
   const ADMIN_PUBLIC_ID = Number(process.env.ADMIN_PUBLIC_ID ?? 1)
   const requireAdmin = (req: Request, res: Response): boolean => {
     if (req.user!.publicId !== ADMIN_PUBLIC_ID) {

@@ -80,7 +80,7 @@ export function AccountPanel(): JSX.Element {
   )
 }
 
-/** Socials access code, hidden behind a blur — hover reveals, click copies. */
+/** Socials access code, hidden behind a blur  hover reveals, click copies. */
 function SocialsCodeCard(): JSX.Element | null {
   const account = useSocial((state) => state.snapshot.account)
   const accountId = account?.id ?? null

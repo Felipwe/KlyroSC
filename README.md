@@ -95,7 +95,7 @@ A aba **Social** conecta você aos amigos sem pedir nenhum dado pessoal:
 - **Conta em 1 clique**: o app gera um nome aleatório (“Bold Zebra”), um ID público (#42) e um código secreto de 16 dígitos  igual Mullvad. O código é a única chave da conta: sem e-mail, sem senha, sem recuperação.
 - **Amigos**: adicione pelo #ID, aceite ou recuse pedidos, veja quem está online e o que estão ouvindo ao vivo.
 - **Jam**: até 8 pessoas ouvindo a mesma música em tempo real, com chat em grupo, fila sincronizada mostrando quem adicionou cada faixa e transferência automática de posse se o dono sair. O dono decide se os convidados podem pausar/trocar música. Jam parada encerra sozinha.
-- **Chat E2E**: mensagens criptografadas de ponta a ponta (X25519 + HKDF + AES-256-GCM) em janelas flutuantes — arraste, redimensione e mantenha várias conversas abertas ao mesmo tempo. As chaves privadas nunca saem do seu computador — o servidor só armazena e repassa texto cifrado.
+- **Chat E2E**: mensagens criptografadas de ponta a ponta (X25519 + HKDF + AES-256-GCM) em janelas flutuantes  arraste, redimensione e mantenha várias conversas abertas ao mesmo tempo. As chaves privadas nunca saem do seu computador  o servidor só armazena e repassa texto cifrado.
 - **Perfil do seu jeito**: foto de perfil opcional (recortada e comprimida localmente) junto do nome aleatório e do #ID.
 - **Backend privado** em Railway (Node + Postgres + WebSocket), com rate limiting, sessões com hash e zero endpoints públicos sem autenticação.
 

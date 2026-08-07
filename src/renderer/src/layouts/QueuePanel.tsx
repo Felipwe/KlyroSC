@@ -17,6 +17,9 @@ export function QueuePanel(): JSX.Element | null {
   const index = usePlayer((state) => state.index)
   const hasCurrent = usePlayer((state) => state.current !== null)
   const clearQueue = usePlayer((state) => state.clearQueue)
+  const jamQueueLength = usePlayer((state) => state.jamQueue.length)
+  const stashedCount = usePlayer((state) => state.stash?.queue.length ?? 0)
+  const inJam = usePlayer((state) => state.stash !== null)
 
   if (!mounted) return null
   const upNextCount = Math.max(0, queueLength - index - 1)
@@ -26,7 +29,7 @@ export function QueuePanel(): JSX.Element | null {
       <div className="panel-head">
         <h3>{t('queue.title')}</h3>
         <div style={{ display: 'flex', gap: 4 }}>
-          {queueLength > 1 && (
+          {(queueLength > 1 || jamQueueLength > 0) && (
             <button className="btn small" onClick={clearQueue}>
               {t('queue.clear')}
             </button>
@@ -37,7 +40,7 @@ export function QueuePanel(): JSX.Element | null {
         </div>
       </div>
       <div className="panel-body">
-        {queueLength === 0 ? (
+        {queueLength === 0 && jamQueueLength === 0 ? (
           <Empty icon="queue" title={t('queue.empty')} hint={t('queue.emptyHint')} />
         ) : (
           <>
@@ -45,6 +48,17 @@ export function QueuePanel(): JSX.Element | null {
               <>
                 <div className="queue-label">{t('queue.nowPlaying')}</div>
                 <QueueRow index={index} active />
+              </>
+            )}
+            {jamQueueLength > 0 && (
+              <>
+                <div className="queue-label jam">
+                  <Icon name="radio" size={12} />
+                  {t('queue.jamSection')}
+                </div>
+                {Array.from({ length: jamQueueLength }, (_, offset) => (
+                  <JamQueueRow key={offset} index={offset} />
+                ))}
               </>
             )}
             {upNextCount > 0 && (
@@ -55,9 +69,46 @@ export function QueuePanel(): JSX.Element | null {
                 ))}
               </>
             )}
+            {inJam && stashedCount > 0 && (
+              <div className="queue-stash-note">{t('queue.personalAfterJam', { count: stashedCount })}</div>
+            )}
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+/** Row of the SHARED jam queue — shows who added the track. */
+function JamQueueRow({ index }: { index: number }): JSX.Element | null {
+  const track = usePlayer((state) => state.jamQueue[index])
+  const locked = usePlayer((state) => state.jamLocked)
+  if (!track) return null
+  return (
+    <div className="track-row">
+      <div className="tr-index">
+        <span className="tr-num">{index + 1}</span>
+      </div>
+      <Artwork src={track.artworkSmall ?? track.artwork} alt="" />
+      <div className="tr-main">
+        <div className="tr-title">{track.title}</div>
+        <div className="tr-artist" style={{ cursor: 'default', textDecoration: 'none' }}>
+          {track.artist}
+          {track.jamAddedBy && <span className="q-added-by">· {track.jamAddedBy}</span>}
+        </div>
+      </div>
+      <div className="tr-actions">
+        {!locked && (
+          <button
+            className="icon-btn"
+            aria-label={t('menu.removeFromQueue')}
+            onClick={() => usePlayer.getState().jamRemoveFromQueue(index)}
+          >
+            <Icon name="close" size={14} />
+          </button>
+        )}
+      </div>
+      <div className="tr-meta">{formatTime(track.duration)}</div>
     </div>
   )
 }

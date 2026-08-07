@@ -8,6 +8,7 @@ import { t } from '@renderer/i18n'
 import { toast } from '@renderer/stores/toasts'
 import { useLibrary } from '@renderer/stores/library'
 import { useSettings } from '@renderer/stores/settings'
+import { useSocial } from '@renderer/stores/social'
 import { AudioEngine } from './engine'
 import { dedupeAppend, nextIndex, previousIndex, shuffled, smartShuffled, unshuffled } from './queue-utils'
 
@@ -27,6 +28,10 @@ interface PlayerState {
   previewActive: boolean
   /** true when following a jam without control permission  transport is locked */
   jamLocked: boolean
+  /** the shared jam queue — completely separate from the personal queue */
+  jamQueue: Track[]
+  /** personal queue parked while a jam overrides playback; restored on jam end */
+  stash: { queue: Track[]; originalQueue: Track[] | null; index: number; shuffle: boolean } | null
 
   playTracks(tracks: Track[], startIndex?: number): void
   playNow(track: Track): void
@@ -45,8 +50,11 @@ interface PlayerState {
   toggleShuffle(): void
   cycleRepeat(): void
   setJamLock(locked: boolean): void
+  jamEnter(): void
+  jamExit(): void
+  jamSetQueue(tracks: Track[]): void
+  jamRemoveFromQueue(index: number): void
   jamApplyTrack(track: Track, position: number, playing: boolean): void
-  jamApplyQueue(tracks: Track[]): void
   jamApplyTransport(playing: boolean, position: number | null): void
 }
 
@@ -170,6 +178,8 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   repeat: 'off',
   previewActive: false,
   jamLocked: false,
+  jamQueue: [],
+  stash: null,
 
   playTracks: (tracks, startIndex = 0) => {
     if (tracks.length === 0 || jamBlocked()) return
@@ -224,7 +234,20 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   playNext: (track) => {
     if (jamBlocked()) return
-    const { queue, index } = get()
+    const state = get()
+    if (state.stash !== null) {
+      // in a jam: explicit adds go to the SHARED queue, never the personal one
+      const mine = useSocial.getState().snapshot.account?.name
+      set({
+        jamQueue: [
+          { ...track, jamAddedBy: track.jamAddedBy ?? mine },
+          ...state.jamQueue.filter((item) => item.id !== track.id)
+        ]
+      })
+      toast(t('toast.playNext'), 'success')
+      return
+    }
+    const { queue, index } = state
     if (queue.length === 0) {
       get().playTracks([track])
       return
@@ -243,7 +266,18 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   addToQueue: (tracks) => {
     if (jamBlocked()) return
-    const { queue } = get()
+    const state = get()
+    if (state.stash !== null) {
+      const known = new Set(state.jamQueue.map((item) => item.id))
+      const mine = useSocial.getState().snapshot.account?.name
+      const fresh = tracks
+        .filter((track) => !known.has(track.id))
+        .map((track) => ({ ...track, jamAddedBy: track.jamAddedBy ?? mine }))
+      if (fresh.length > 0) set({ jamQueue: [...state.jamQueue, ...fresh] })
+      toast(t('toast.addedToJamQueue'), 'success')
+      return
+    }
+    const { queue } = state
     if (queue.length === 0) {
       get().playTracks(tracks)
       return
@@ -267,7 +301,15 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   clearQueue: () => {
     if (jamBlocked()) return
-    const { queue, index } = get()
+    const state = get()
+    if (state.stash !== null) {
+      if (state.jamQueue.length > 0) {
+        set({ jamQueue: [] })
+        toast(t('toast.queueCleared'))
+      }
+      return
+    }
+    const { queue, index } = state
     const current = queue[index]
     set({
       queue: current ? [current] : [],
@@ -299,6 +341,15 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       }
       toast(t('social.jam.locked'))
       return
+    }
+    // in a jam the shared queue outranks everything else
+    if (state.stash !== null && state.jamQueue.length > 0) {
+      const [head, ...rest] = state.jamQueue
+      if (head) {
+        set({ jamQueue: rest, queue: [head], index: 0, originalQueue: null, shuffle: false })
+        startTrack(0)
+        return
+      }
     }
     const result = nextIndex({ queue: state.queue, index: state.index, repeat: state.repeat }, auto)
     if (result.kind === 'index') {
@@ -401,20 +452,67 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     if (get().jamLocked !== locked) set({ jamLocked: locked })
   },
 
+  jamEnter: () => {
+    const state = get()
+    if (state.stash !== null) return
+    // park the personal queue; while in the jam, playback is [current] + jamQueue
+    set({
+      stash: {
+        queue: state.queue,
+        originalQueue: state.originalQueue,
+        index: state.index,
+        shuffle: state.shuffle
+      },
+      queue: state.current ? [state.current] : [],
+      index: 0,
+      originalQueue: null,
+      shuffle: false,
+      jamQueue: []
+    })
+  },
+
+  jamExit: () => {
+    const state = get()
+    if (state.stash === null) {
+      set({ jamQueue: [] })
+      return
+    }
+    const upcoming = state.stash.queue
+      .slice(state.stash.index + 1)
+      .filter((track) => track.id !== state.current?.id)
+    if (state.current) {
+      set({
+        stash: null,
+        jamQueue: [],
+        queue: [state.current, ...upcoming],
+        index: 0,
+        originalQueue: null,
+        shuffle: false
+      })
+    } else {
+      set({
+        stash: null,
+        jamQueue: [],
+        queue: state.stash.queue,
+        index: Math.min(state.stash.index, Math.max(0, state.stash.queue.length - 1)),
+        originalQueue: state.stash.originalQueue,
+        shuffle: state.stash.shuffle
+      })
+    }
+  },
+
+  jamSetQueue: (tracks) => {
+    set({ jamQueue: tracks })
+  },
+
+  jamRemoveFromQueue: (index) => {
+    if (jamBlocked()) return
+    set({ jamQueue: get().jamQueue.filter((_, i) => i !== index) })
+  },
+
   jamApplyTrack: (track, position, playing) => {
     set({ queue: [track], originalQueue: null, shuffle: false })
     startTrack(0, playing, Math.max(0, position))
-  },
-
-  jamApplyQueue: (tracks) => {
-    const { current } = get()
-    // mirror the jam queue after the current track so the queue panel matches the jam
-    set({
-      queue: current ? [current, ...tracks.filter((track) => track.id !== current.id)] : [...tracks],
-      index: 0,
-      originalQueue: null,
-      shuffle: false
-    })
   },
 
   jamApplyTransport: (playing, position) => {
@@ -488,13 +586,20 @@ function startSnapshotPersistence(): void {
   let timer: ReturnType<typeof setTimeout> | null = null
   const save = (): void => {
     const state = usePlayer.getState()
-    if (state.queue.length === 0) return
+    // during a jam the live queue is jam-owned — persist the parked personal queue instead
+    const personal = state.stash ?? {
+      queue: state.queue,
+      originalQueue: state.originalQueue,
+      index: state.index,
+      shuffle: state.shuffle
+    }
+    if (personal.queue.length === 0) return
     api.playback.save({
-      queue: state.queue.slice(0, QUEUE_PERSIST_LIMIT),
-      originalQueue: state.originalQueue?.slice(0, QUEUE_PERSIST_LIMIT) ?? null,
-      index: Math.min(state.index, QUEUE_PERSIST_LIMIT - 1),
-      position: state.position,
-      shuffle: state.shuffle,
+      queue: personal.queue.slice(0, QUEUE_PERSIST_LIMIT),
+      originalQueue: personal.originalQueue?.slice(0, QUEUE_PERSIST_LIMIT) ?? null,
+      index: Math.min(personal.index, QUEUE_PERSIST_LIMIT - 1),
+      position: state.stash ? 0 : state.position,
+      shuffle: personal.shuffle,
       repeat: state.repeat,
       savedAt: Date.now()
     })

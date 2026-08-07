@@ -172,7 +172,7 @@ export default function App(): JSX.Element {
           setTimeout(() => api.updates.install(), 1200)
           return
         }
-        // already on the latest version (or updater unavailable) — lift the notice
+        // already on the latest version (or updater unavailable)  lift the notice
         setTimeout(() => {
           setMaintenance(false)
           toast(t('settings.admin.upToDate'), 'success')

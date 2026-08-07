@@ -79,13 +79,14 @@ function emitQueue(immediate = false): void {
       const known = new Map(
         (social.jam?.queue ?? []).map((ref) => [ref.trackId, ref] as const)
       )
-      // keep the original "added by" tag; new tracks are attributed to us
-      const refs = state.queue.slice(state.index + 1, state.index + 1 + QUEUE_PREVIEW).map((track) => {
+      // keep the original "added by" tag; new tracks are attributed to us.
+      // ONLY the dedicated jam queue is shared — personal queues never leak in
+      const refs = state.jamQueue.slice(0, QUEUE_PREVIEW).map((track) => {
         const existing = known.get(track.id)
         return {
           ...toRef(track),
           addedById: existing?.addedById ?? me?.id ?? null,
-          addedByName: existing?.addedByName ?? me?.name ?? null
+          addedByName: existing?.addedByName ?? track.jamAddedBy ?? me?.name ?? null
         }
       })
       const sig = refs.map((ref) => ref.trackId).join(',')
@@ -93,12 +94,12 @@ function emitQueue(immediate = false): void {
       lastQueueSig = sig
       api.social.sendJamQueue(refs)
     },
-    immediate ? 0 : 800
+    immediate ? 0 : 400
   )
 }
 
-/** Everyone mirrors the jam queue locally — the jam queue outranks any local queue. */
-function applyQueueToLocal(): void {
+/** Everyone mirrors the jam queue locally  the jam queue outranks any local queue. */
+function applyJamQueue(): void {
   const player = usePlayer.getState()
   const { inJam } = role()
   if (!inJam) return
@@ -114,7 +115,8 @@ function applyQueueToLocal(): void {
   lastAppliedQueueSig = sig
   lastQueueSig = idSig
   markApplying()
-  player.jamApplyQueue(queue.map(trackFromRef))
+  // straight into the shared jam queue — the personal queue is untouched
+  player.jamSetQueue(queue.map(trackFromRef))
 }
 
 async function applyPlayback(playback: JamPlayback): Promise<void> {
@@ -136,9 +138,7 @@ async function applyPlayback(playback: JamPlayback): Promise<void> {
     markApplying()
     const track = result.ok ? result.data : trackFromRef(ref)
     usePlayer.getState().jamApplyTrack(track, expectedJamPosition(latest, Date.now()), latest.playing)
-    // the track swap reset the local queue — mirror the jam queue again
-    lastAppliedQueueSig = ''
-    applyQueueToLocal()
+
   } else {
     const drift = Math.abs(player.position - expected)
     player.jamApplyTransport(playback.playing, drift > DRIFT_TOLERANCE ? expected : null)
@@ -192,23 +192,29 @@ export function initJamSync(): void {
       lastQueueSig = ''
       lastAppliedQueueSig = ''
       const me = state.snapshot.account?.id
+      // park the personal queue — while the jam lasts, its queue rules playback
+      markApplying()
+      usePlayer.getState().jamEnter()
       if (jam.ownerId === me) {
-        // owner opening their own jam → seed it with what's playing locally
         const player = usePlayer.getState()
-        if (player.current) {
-          emitPlayback()
-          emitQueue(true)
-        }
+        if (player.current) emitPlayback()
+        applyJamQueue()
       } else {
         void applyPlayback(jam.playback)
-        applyQueueToLocal()
+        applyJamQueue()
       }
     } else if (!jam) {
       lastJamId = null
       lastAppliedQueueSig = ''
-      if (prevJam) toast(t('social.jam.endedToast'))
+      lastQueueSig = ''
+      if (prevJam) {
+        // the jam ended — bring the personal queue back
+        markApplying()
+        usePlayer.getState().jamExit()
+        toast(t('social.jam.endedToast'))
+      }
     } else if (jam.queue !== prevJam?.queue) {
-      applyQueueToLocal()
+      applyJamQueue()
     }
   })
 
@@ -224,7 +230,6 @@ export function initJamSync(): void {
     if (state.current?.id !== previous.current?.id) {
       // autoplay intent: followers should start even while our stream still buffers
       emitPlayback(state.current !== null ? true : undefined)
-      emitQueue(true)
       return
     }
     if (state.playing !== previous.playing) {
@@ -235,7 +240,8 @@ export function initJamSync(): void {
       emitPlayback()
       return
     }
-    if (state.queue !== previous.queue) emitQueue()
+    // only the dedicated jam queue syncs — personal queue changes stay local
+    if (state.jamQueue !== previous.jamQueue) emitQueue()
   })
 
   setInterval(driftCheck, 5_000)

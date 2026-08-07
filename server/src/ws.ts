@@ -197,7 +197,9 @@ export function attachWebSocket(wss: WebSocketServer, services: Services): void 
               socket.send(JSON.stringify({ t: 'chat:rejected', code: 'rate_limited' }))
               break
             }
-            jams.addChat(user.id, user.name, text)
+            // the connection-scoped user snapshot goes stale after a rename
+            const fresh = hub.userOf(user.id)
+            jams.addChat(user.id, fresh?.name ?? user.name, text)
             break
           }
           default:

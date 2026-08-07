@@ -58,7 +58,7 @@ namespace KlyroSetup
             StartPosition = FormStartPosition.CenterScreen;
             Text = "KlyroSC Setup";
             DoubleBuffered = true;
-            BackColor = Color.FromArgb(7, 6, 8);
+            BackColor = Color.FromArgb(10, 11, 18);
             Opacity = 0;
             using (Graphics g = CreateGraphics()) scale = g.DpiX / 96f;
             ClientSize = new Size((int)(W * scale), (int)(H * scale));
@@ -230,9 +230,20 @@ namespace KlyroSetup
             DrawClose(g);
 
             using (GraphicsPath border = RoundPath(new RectangleF(0.5f, 0.5f, ClientSize.Width - 1f, ClientSize.Height - 1f), S(16)))
-            using (Pen pen = new Pen(Color.FromArgb(110, 179, 20, 35), 1.4f))
+            using (Pen pen = new Pen(Color.FromArgb(60, 255, 255, 255), 1.4f))
                 g.DrawPath(pen, border);
         }
+
+        // liquid glass palette: purple to cyan, like the app accents
+        static Color Mix(Color a, Color b, float t)
+        {
+            return Color.FromArgb(
+                (int)(a.R + (b.R - a.R) * t),
+                (int)(a.G + (b.G - a.G) * t),
+                (int)(a.B + (b.B - a.B) * t));
+        }
+        static readonly Color AccentA = Color.FromArgb(139, 92, 246);
+        static readonly Color AccentB = Color.FromArgb(34, 211, 238);
 
         void DrawBars(Graphics g)
         {
@@ -246,11 +257,11 @@ namespace KlyroSetup
             {
                 float h = Math.Max(S(3), barH[i] * energy);
                 RectangleF r = new RectangleF(left + i * slot, baseY - h, bw, h);
-                int alphaTop = 200 - (int)(120f * i / BARS);
+                Color tone = Mix(AccentA, AccentB, (float)i / (BARS - 1));
                 using (LinearGradientBrush b = new LinearGradientBrush(
                     new RectangleF(r.X, r.Y - 1, r.Width, r.Height + 2),
-                    Color.FromArgb(alphaTop, 229, 72, 77),
-                    Color.FromArgb(50, 122, 14, 24),
+                    Color.FromArgb(215, tone),
+                    Color.FromArgb(40, tone),
                     LinearGradientMode.Vertical))
                 {
                     g.FillRectangle(b, r);
@@ -263,42 +274,52 @@ namespace KlyroSetup
             float x = S(56);
             float width = ClientSize.Width - S(112);
             float y = S(306);
-            float h = S(5);
+            float h = S(6);
 
+            // glass track: translucent white with a faint inner ring
             using (GraphicsPath track = RoundPath(new RectangleF(x, y, width, h), h / 2f))
-            using (SolidBrush tb = new SolidBrush(Color.FromArgb(28, 22, 25)))
-                g.FillPath(tb, track);
+            {
+                using (SolidBrush tb = new SolidBrush(Color.FromArgb(26, 255, 255, 255)))
+                    g.FillPath(tb, track);
+                using (Pen tp = new Pen(Color.FromArgb(34, 255, 255, 255), 1f))
+                    g.DrawPath(tp, track);
+            }
 
             float fw = (float)(width * progress);
             if (fw > h)
             {
                 RectangleF fill = new RectangleF(x, y, fw, h);
                 using (GraphicsPath fp = RoundPath(fill, h / 2f))
-                using (LinearGradientBrush fb = new LinearGradientBrush(fill,
-                    Color.FromArgb(122, 14, 24), Color.FromArgb(229, 72, 77), LinearGradientMode.Horizontal))
+                using (LinearGradientBrush fb = new LinearGradientBrush(fill, AccentA, AccentB, LinearGradientMode.Horizontal))
                     g.FillPath(fb, fp);
+
+                // specular top light, the liquid-glass signature
+                RectangleF shine = new RectangleF(fill.X + S(2), fill.Y + S(1), Math.Max(2f, fill.Width - S(4)), h / 2.6f);
+                using (GraphicsPath sp = RoundPath(shine, shine.Height / 2f))
+                using (SolidBrush sb2 = new SolidBrush(Color.FromArgb(70, 255, 255, 255)))
+                    g.FillPath(sb2, sp);
 
                 float pulse = 0.5f + 0.5f * (float)Math.Sin(tick * 0.12);
                 using (GraphicsPath fp = RoundPath(fill, h / 2f))
-                using (Pen glow = new Pen(Color.FromArgb((int)(40 + 50 * pulse), 229, 72, 77), 3f))
+                using (Pen glow = new Pen(Color.FromArgb((int)(30 + 44 * pulse), Mix(AccentA, AccentB, 0.5f)), 3f))
                     g.DrawPath(glow, fp);
             }
 
-            using (SolidBrush sb = new SolidBrush(Color.FromArgb(151, 145, 140)))
+            using (SolidBrush sb = new SolidBrush(Color.FromArgb(154, 160, 181)))
                 g.DrawString(status, statusFont, sb, x - S(2), y + S(14));
 
             string pct = ((int)Math.Round(progress * 100)) + "%";
             SizeF ps = g.MeasureString(pct, pctFont);
-            using (SolidBrush pb = new SolidBrush(Color.FromArgb(229, 72, 77)))
+            using (SolidBrush pb = new SolidBrush(Color.FromArgb(236, 238, 246)))
                 g.DrawString(pct, pctFont, pb, x + width - ps.Width + S(4), y + S(14));
         }
 
         void DrawClose(Graphics g)
         {
             if (closeHover)
-                using (SolidBrush hb = new SolidBrush(Color.FromArgb(46, 229, 72, 77)))
+                using (SolidBrush hb = new SolidBrush(Color.FromArgb(34, 255, 255, 255)))
                     g.FillEllipse(hb, closeRect);
-            using (Pen pen = new Pen(closeHover ? Color.FromArgb(240, 232, 228) : Color.FromArgb(120, 151, 145, 140), 1.6f))
+            using (Pen pen = new Pen(closeHover ? Color.FromArgb(236, 238, 246) : Color.FromArgb(120, 154, 160, 181), 1.6f))
             {
                 float cx = closeRect.X + closeRect.Width / 2f;
                 float cy = closeRect.Y + closeRect.Height / 2f;

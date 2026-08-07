@@ -9,7 +9,7 @@ function timeOf(at: number): string {
   return new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-/** Group chat for the whole jam — every member can talk. */
+/** Group chat for the whole jam  every member can talk. */
 export function JamChatPanel({ zIndex }: { zIndex: number }): JSX.Element | null {
   useLanguage()
   const jam = useSocial((state) => state.snapshot.jam)

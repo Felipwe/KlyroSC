@@ -154,7 +154,7 @@ export class Hub {
     for (const id of userIds) this.send(id, message)
   }
 
-  /** Every connected client — admin broadcasts only. */
+  /** Every connected client  admin broadcasts only. */
   broadcastAll(message: Record<string, unknown>): number {
     let sent = 0
     for (const id of this.clients.keys()) {

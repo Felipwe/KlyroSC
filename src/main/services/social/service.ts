@@ -380,7 +380,7 @@ export class SocialService {
     }
   }
 
-  // ————— admin (public id #1) —————
+  //  admin (public id #1) 
 
   async adminUsers(): Promise<AdminUsers> {
     return await this.request<AdminUsers>('GET', '/admin/users')
@@ -503,7 +503,7 @@ export class SocialService {
     this.sendWs({ t: 'jam:chat', text: trimmed })
   }
 
-  // ————— profile avatar —————
+  //  profile avatar 
 
   async setAvatar(dataUrl: string | null): Promise<void> {
     await this.request<unknown>('POST', '/avatar', { avatar: dataUrl })

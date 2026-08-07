@@ -141,6 +141,8 @@ interface SocialStore {
   markRead(friendId: string): void
   /** unread jam-chat messages while the jam chat window is closed */
   jamUnread: number
+  /** id of the newest jam-chat message the user has actually seen */
+  jamChatSeenId: number
 }
 
 export const useSocial = create<SocialStore>((set, get) => ({
@@ -155,46 +157,55 @@ export const useSocial = create<SocialStore>((set, get) => ({
   unread: {},
   typing: {},
   jamUnread: 0,
+  jamChatSeenId: 0,
 
   load: async () => {
     if (get().loaded) return
     set({ loaded: true })
     let lastJamId: string | null = null
-    let lastSeenJamChatId = 0
     api.social.onState((snapshot) => {
       // drop chat state for people no longer in the friend list
       const validIds = new Set(snapshot.friends.map((friend) => friend.id))
       const state = get()
       let openChats = state.openChats.filter((id) => id === JAM_CHAT_KEY || validIds.has(id))
       let jamUnread: number
+      let jamChatSeenId = state.jamChatSeenId
 
       const jam = snapshot.jam
       if (!jam) {
         openChats = openChats.filter((id) => id !== JAM_CHAT_KEY)
         lastJamId = null
-        lastSeenJamChatId = 0
+        jamChatSeenId = 0
         jamUnread = 0
       } else {
         const lastId = jam.chat.length > 0 ? (jam.chat[jam.chat.length - 1]?.id ?? 0) : 0
         if (jam.id !== lastJamId) {
           // joining a jam: history starts read
           lastJamId = jam.id
-          lastSeenJamChatId = lastId
+          jamChatSeenId = lastId
           jamUnread = 0
         } else if (openChats.includes(JAM_CHAT_KEY)) {
-          lastSeenJamChatId = lastId
+          jamChatSeenId = Math.max(jamChatSeenId, lastId)
           jamUnread = 0
         } else {
           const me = snapshot.account?.id
           jamUnread = jam.chat.filter(
-            (message) => message.id > lastSeenJamChatId && message.fromId !== me
+            (message) => message.id > jamChatSeenId && message.fromId !== me
           ).length
         }
       }
 
-      set({ snapshot, openChats, jamUnread })
+      set({ snapshot, openChats, jamUnread, jamChatSeenId })
       if (!snapshot.account)
-        set({ chats: {}, unread: {}, typing: {}, openChats: [], chatWindows: {}, jamUnread: 0 })
+        set({
+          chats: {},
+          unread: {},
+          typing: {},
+          openChats: [],
+          chatWindows: {},
+          jamUnread: 0,
+          jamChatSeenId: 0
+        })
     })
     api.social.onChatMessage(({ friendId, message }) => {
       const state = get()
@@ -384,7 +395,7 @@ export const useSocial = create<SocialStore>((set, get) => ({
   openChat: async (friendId) => {
     const state = get()
     if (state.closingChats[friendId]) {
-      // reopened while the exit animation was playing — cancel the close
+      // reopened while the exit animation was playing  cancel the close
       const { [friendId]: _gone, ...rest } = state.closingChats
       set({ closingChats: rest, unread: { ...state.unread, [friendId]: 0 } })
       get().focusChat(friendId)
@@ -423,15 +434,18 @@ export const useSocial = create<SocialStore>((set, get) => ({
   openJamChat: () => {
     const state = get()
     if (!state.snapshot.jam) return
+    const chat = state.snapshot.jam.chat
+    const lastId = chat.length > 0 ? (chat[chat.length - 1]?.id ?? 0) : 0
+    const seen = Math.max(state.jamChatSeenId, lastId)
     if (state.closingChats[JAM_CHAT_KEY]) {
       const { [JAM_CHAT_KEY]: _gone, ...rest } = state.closingChats
-      set({ closingChats: rest, jamUnread: 0 })
+      set({ closingChats: rest, jamUnread: 0, jamChatSeenId: seen })
       get().focusChat(JAM_CHAT_KEY)
       return
     }
     if (state.openChats.includes(JAM_CHAT_KEY)) {
       get().focusChat(JAM_CHAT_KEY)
-      set({ jamUnread: 0 })
+      set({ jamUnread: 0, jamChatSeenId: seen })
       return
     }
     set({
@@ -440,14 +454,21 @@ export const useSocial = create<SocialStore>((set, get) => ({
         ...state.chatWindows,
         [JAM_CHAT_KEY]: state.chatWindows[JAM_CHAT_KEY] ?? defaultChatRect(state.openChats.length)
       },
-      jamUnread: 0
+      jamUnread: 0,
+      jamChatSeenId: seen
     })
   },
 
   closeChat: (friendId) => {
     const state = get()
     if (!state.openChats.includes(friendId) || state.closingChats[friendId]) return
-    set({ closingChats: { ...state.closingChats, [friendId]: true } })
+    if (friendId === JAM_CHAT_KEY) {
+      // everything on screen counts as seen, even if no state emit happened while open
+      const chat = state.snapshot.jam?.chat ?? []
+      const lastId = chat.length > 0 ? (chat[chat.length - 1]?.id ?? 0) : 0
+      set({ jamChatSeenId: Math.max(state.jamChatSeenId, lastId), jamUnread: 0 })
+    }
+    set({ closingChats: { ...get().closingChats, [friendId]: true } })
     setTimeout(() => {
       const current = get()
       if (!current.closingChats[friendId]) return // reopened during the exit animation

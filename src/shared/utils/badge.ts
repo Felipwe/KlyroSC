@@ -1,4 +1,4 @@
-/** Taskbar badge helpers — pure so they can be unit-tested. */
+/** Taskbar badge helpers  pure so they can be unit-tested. */
 
 export interface NotificationSources {
   /** per-friend unread direct messages */

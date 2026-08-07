@@ -2569,7 +2569,7 @@ kbd {
   cursor: default;
 }
 
-/* ————— social v2: tabs, profile, friend profile, status, ticks ————— */
+/*  social v2: tabs, profile, friend profile, status, ticks  */
 
 .social-card,
 .update-card,
@@ -2926,7 +2926,7 @@ kbd {
   color: var(--success);
 }
 
-/* access code spoiler — blurred until hovered, click copies */
+/* access code spoiler  blurred until hovered, click copies */
 
 .code-spoiler {
   font-variant-numeric: tabular-nums;
@@ -2951,6 +2951,25 @@ kbd {
 
 .sp-account-note {
   margin-top: 10px;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+/* jam queue inside the queue panel */
+
+.queue-label.jam {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-text);
+}
+
+.queue-stash-note {
+  margin: 12px 6px 4px;
+  padding: 9px 12px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  border: 1px dashed var(--stroke-strong);
   font-size: 0.72rem;
   color: var(--text-faint);
 }

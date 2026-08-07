@@ -102,7 +102,7 @@ export class JamService {
         allowGuestControl: row.allowGuestControl,
         members: new Map(row.members.map((member) => [member.userId, member.joinedAt])),
         queue: row.queue,
-        // freeze the position at the moment we went down — the controller re-emits on reconnect
+        // freeze the position at the moment we went down  the controller re-emits on reconnect
         playback: { ...row.playback, at: Date.now() },
         chat: row.chat,
         chatCounter: row.chatCounter,

@@ -30,7 +30,7 @@ function Ticks({ message, seen }: { message: ChatMessage; seen: boolean }): JSX.
 
 interface ChatPanelProps {
   friendId: string
-  /** stacking position — last one is on top */
+  /** stacking position  last one is on top */
   zIndex: number
 }
 
@@ -76,7 +76,7 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
     <div
       className={cx('chat-panel glass', chatClosing && 'closing')}
       role="dialog"
-      aria-label={`${t('social.chat.title')} — ${friend.name}`}
+      aria-label={`${t('social.chat.title')}  ${friend.name}`}
       style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 30 + zIndex }}
       onPointerDown={focus}
     >

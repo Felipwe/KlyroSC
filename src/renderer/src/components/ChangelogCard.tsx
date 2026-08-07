@@ -11,17 +11,36 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.13.0',
+    pt: [
+      'Fila da Jam separada da fila pessoal: sua fila é guardada ao entrar e volta inteira quando a Jam acaba',
+      'Só o que for adicionado de propósito entra na fila da Jam  e sincroniza ao vivo para todos, com o nome de quem adicionou',
+      'Na Jam, a fila compartilhada tem prioridade: a próxima música é sempre a mesma para todo mundo',
+      'Instalador redesenhado em liquid glass estilo iOS, com barras e progresso em degradê',
+      'Tela de carregamento em liquid glass, seguindo as cores do seu tema',
+      'Corrigido: badge fantasma de mensagens do chat da Jam e nomes desatualizados após renomear durante a Jam'
+    ],
+    en: [
+      'Jam queue separated from your personal queue: it is parked on join and fully restored when the Jam ends',
+      'Only tracks added on purpose go to the Jam queue  synced live to everyone, with the name of who added them',
+      'In a Jam the shared queue takes priority: the next track is always the same for everybody',
+      'Installer redesigned in iOS-style liquid glass, with gradient bars and progress',
+      'Boot splash in liquid glass, following your theme colors',
+      'Fixed: phantom Jam chat badge and stale names after renaming during a Jam'
+    ]
+  },
+  {
     version: '2.12.0',
     pt: [
       'Contador de notificações no ícone da barra de tarefas: mensagens, Jam, pedidos e atualizações (9+ quando passa de nove)',
       'Corrigido: menus de seleção não abriam as opções ao clicar',
-      'Código de acesso do Socials em Configurações > Conta — borrado por padrão, passe o mouse para revelar e clique para copiar',
+      'Código de acesso do Socials em Configurações > Conta  borrado por padrão, passe o mouse para revelar e clique para copiar',
       'O botão de excluir conta saiu do app: contas inativas por mais de 180 dias agora são excluídas automaticamente'
     ],
     en: [
       'Notification counter on the taskbar icon: messages, Jam, requests and updates (9+ past nine)',
       'Fixed: select menus were not opening their options on click',
-      'Socials access code in Settings > Account — blurred by default, hover to reveal and click to copy',
+      'Socials access code in Settings > Account  blurred by default, hover to reveal and click to copy',
       'The delete account button is gone: accounts inactive for over 180 days are now removed automatically'
     ]
   },
@@ -29,7 +48,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.11.0',
     pt: [
       'Animações estilo iOS em tudo: cada botão, menu e clique responde com uma mola suave e sutil',
-      'Menus, modais, painéis, toasts e chats agora também fecham com animação — nada mais some de repente',
+      'Menus, modais, painéis, toasts e chats agora também fecham com animação  nada mais some de repente',
       'Fila da Jam no menu do player, mostrando quem adicionou cada música (avatar e nome)',
       'A fila da Jam agora é a prioridade: todos os membros seguem exatamente a mesma fila',
       'Permissão “convidados podem controlar” de volta, direto no menu da Jam',
@@ -37,7 +56,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
     en: [
       'iOS-style animations everywhere: every button, menu and click responds with a soft, subtle spring',
-      'Menus, modals, panels, toasts and chats now animate on close too — nothing vanishes abruptly',
+      'Menus, modals, panels, toasts and chats now animate on close too  nothing vanishes abruptly',
       'Jam queue inside the player menu, showing who added each track (avatar and name)',
       'The Jam queue is now the priority: every member follows exactly the same queue',
       '“Guests can control” permission is back, right in the Jam menu',
@@ -48,21 +67,21 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.10.0',
     pt: [
       'Confirmação de leitura no chat: relógio enviando, ✓✓ cinza entregue e ✓✓ azul quando o amigo vê, igual WhatsApp',
-      'Status manual estilo Discord: Online, Ausente ou Não perturbe — seus amigos veem na hora',
+      'Status manual estilo Discord: Online, Ausente ou Não perturbe  seus amigos veem na hora',
       'Social reorganizado em abas: Amigos e Perfil, com foto, nome e status em um só lugar',
       'Perfil dos amigos: clique em alguém para ver status, o que está ouvindo, tempo de escuta e a música mais repetida',
       'Seu perfil mostra o tempo total ouvindo música e sua faixa mais ouvida',
       'Visual liquid glass no app inteiro: menus, cards e painéis translúcidos com blur estilo iOS',
-      'A barra grande de Jam saiu do Social — tudo pelo menu compacto no player'
+      'A barra grande de Jam saiu do Social  tudo pelo menu compacto no player'
     ],
     en: [
       'Read receipts in chat: clock while sending, gray ✓✓ delivered and blue ✓✓ when your friend sees it, WhatsApp style',
-      'Discord-style manual status: Online, Away or Do not disturb — friends see it instantly',
+      'Discord-style manual status: Online, Away or Do not disturb  friends see it instantly',
       'Social reorganized into tabs: Friends and Profile, with photo, name and status in one place',
       'Friend profiles: click someone to see their status, what they are listening to, listening time and most repeated track',
       'Your profile shows total time listening to music and your most played track',
       'Liquid glass look across the whole app: translucent blurred menus, cards and panels, iOS style',
-      'The big Jam bar left the Social page — everything lives in the compact player menu'
+      'The big Jam bar left the Social page  everything lives in the compact player menu'
     ]
   },
   {
@@ -70,25 +89,25 @@ export const CHANGELOG: ChangelogEntry[] = [
     pt: [
       'Visual liquid glass: botões que seguem a cor da música agora são vidro translúcido com blur, no estilo iOS',
       'Notificações redesenhadas: pill transparente com blur, sem a bolinha colorida',
-      'O botão de Jam agora abre um menu com a opção “Criar Jam” — nada é criado sem você confirmar'
+      'O botão de Jam agora abre um menu com a opção “Criar Jam”  nada é criado sem você confirmar'
     ],
     en: [
       'Liquid glass look: buttons that follow the music\u2019s color are now translucent blurred glass, iOS style',
       'Redesigned notifications: transparent blurred pill, without the colored dot',
-      'The Jam button now opens a menu with a “Start a Jam” option — nothing is created until you confirm'
+      'The Jam button now opens a menu with a “Start a Jam” option  nothing is created until you confirm'
     ]
   },
   {
     version: '2.9.0',
     pt: [
       'Jam na barra do player: um clique no novo botão ao lado das letras inicia uma jam na hora',
-      'Menu da jam sem sair da tela: veja quem está ouvindo, remova alguém, passe a posse e abra o chat — tudo pelo player',
+      'Menu da jam sem sair da tela: veja quem está ouvindo, remova alguém, passe a posse e abra o chat  tudo pelo player',
       'O chat da jam agora abre em qualquer página do app',
       'Configurações mais enxutas: opções técnicas de vidro, animações, stream e fade foram removidas'
     ],
     en: [
       'Jam from the player bar: one click on the new button next to lyrics starts a jam instantly',
-      'Jam menu without leaving your screen: see who is listening, remove someone, hand over the crown and open the chat — right from the player',
+      'Jam menu without leaving your screen: see who is listening, remove someone, hand over the crown and open the chat  right from the player',
       'The jam chat now opens on any page of the app',
       'Leaner settings: technical glass, animations, stream and fade options were removed'
     ]
@@ -96,20 +115,20 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '2.8.3',
     pt: [
-      'Jams agora sobrevivem a reinícios do servidor: manutenções e atualizações não encerram mais a sua jam — a sincronização retoma sozinha em segundos'
+      'Jams agora sobrevivem a reinícios do servidor: manutenções e atualizações não encerram mais a sua jam  a sincronização retoma sozinha em segundos'
     ],
     en: [
-      'Jams now survive server restarts: maintenance and updates no longer end your jam — sync resumes on its own within seconds'
+      'Jams now survive server restarts: maintenance and updates no longer end your jam  sync resumes on its own within seconds'
     ]
   },
   {
     version: '2.8.2',
     pt: [
-      'Nome de exibição editável no Socials: clique no lápis ao lado do seu nome — único e opcional, seus amigos veem na hora',
+      'Nome de exibição editável no Socials: clique no lápis ao lado do seu nome  único e opcional, seus amigos veem na hora',
       'Janelas de chat agora abrem centralizadas na sua frente, em vez de escondidas no canto'
     ],
     en: [
-      'Editable display name on Socials: click the pencil next to your name — unique and optional, friends see it instantly',
+      'Editable display name on Socials: click the pencil next to your name  unique and optional, friends see it instantly',
       'Chat windows now open centered in front of you instead of tucked into the corner'
     ]
   },
@@ -129,7 +148,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'A jam não morre mais: se o dono fechar o app, a posse passa para o membro mais antigo',
       'Fila da jam sincronizada com a sua fila e mostrando quem adicionou cada música',
       'Discord mostra a jam no seu perfil (Jam 2/8)',
-      'Barra lateral ajustável: arraste a borda — bem estreita vira só ícones; duplo clique volta ao padrão',
+      'Barra lateral ajustável: arraste a borda  bem estreita vira só ícones; duplo clique volta ao padrão',
       'Chats abrem no canto inferior direito, empilhando organizados',
       'Anti-spam leve nos chats para manter a conversa saudável'
     ],
@@ -138,7 +157,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Jams no longer die: if the host closes the app, ownership passes to the oldest member',
       'Jam queue synced with your local queue and showing who added each track',
       'Discord shows the jam on your profile (Jam 2/8)',
-      'Resizable sidebar: drag the edge — very narrow becomes icons-only; double-click resets',
+      'Resizable sidebar: drag the edge  very narrow becomes icons-only; double-click resets',
       'Chats open at the bottom-right corner, stacking neatly',
       'Light anti-spam on chats to keep conversations healthy'
     ]
@@ -147,12 +166,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.7.1',
     pt: [
       'Chats em janelas flutuantes: arraste pelo cabeçalho, redimensione pelo canto e abra várias conversas ao mesmo tempo',
-      'Foto de perfil no Socials: clique no seu avatar para escolher uma imagem — seus amigos veem na hora',
+      'Foto de perfil no Socials: clique no seu avatar para escolher uma imagem  seus amigos veem na hora',
       'Clicar em uma janela de chat traz ela para a frente, como um app de verdade'
     ],
     en: [
       'Floating chat windows: drag by the header, resize from the corner and keep several conversations open at once',
-      'Socials profile picture: click your avatar to pick an image — friends see it instantly',
+      'Socials profile picture: click your avatar to pick an image  friends see it instantly',
       'Clicking a chat window brings it to the front, like a real app'
     ]
   },

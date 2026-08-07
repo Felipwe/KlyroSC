@@ -34,7 +34,7 @@ const SECTIONS: { id: string; icon: IconName }[] = [
 
 const ADMIN_SECTION: { id: string; icon: IconName } = { id: 'admin', icon: 'zap' }
 
-/** Remote administration — rendered only for the #1 account. */
+/** Remote administration  rendered only for the #1 account. */
 function AdminPanel(): JSX.Element {
   const [users, setUsers] = useState<AdminUsers | null>(null)
   const [loading, setLoading] = useState(false)
@@ -80,7 +80,7 @@ function AdminPanel(): JSX.Element {
           <div className="sr-desc">
             {users
               ? t('settings.admin.usersDesc', { active: users.active, inactive: users.inactive })
-              : '—'}
+              : ''}
           </div>
         </div>
         <button className="btn small" disabled={loading} onClick={() => void load()}>

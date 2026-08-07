@@ -77,7 +77,7 @@ export function Select({ value, options, onChange, ariaLabel }: SelectProps): JS
   const menuRef = useRef<HTMLDivElement>(null)
 
   // the menu renders in a body portal with fixed positioning, so it can never be
-  // clipped by scroll containers or cut off at the window edges — it flips and clamps
+  // clipped by scroll containers or cut off at the window edges  it flips and clamps
   useLayoutEffect(() => {
     // keep the last placement while the exit animation plays; `mounted` lags `open`
     // by one commit, so it must be a dep or the portal is measured before it exists
@@ -304,7 +304,7 @@ export function ColorPicker({ label, value, onChange, eyedropperLabel }: ColorPi
   }
 
   useLayoutEffect(() => {
-    // `pickerMounted` lags `open` by one commit — measure only once the portal exists
+    // `pickerMounted` lags `open` by one commit  measure only once the portal exists
     if (!open || !pickerMounted) return
     const btn = btnRef.current
     const pop = popRef.current

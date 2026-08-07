@@ -106,7 +106,7 @@
   min-width: 0;
 }
 
-/* fixed rail between sidebar and content — drag to resize, double-click to reset */
+/* fixed rail between sidebar and content  drag to resize, double-click to reset */
 .sidebar-resize {
   position: fixed;
   top: var(--titlebar-h);

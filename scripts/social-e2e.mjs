@@ -164,7 +164,7 @@ async function main() {
   const stateA1b = (await api('GET', '/state', { token: tokenA })).data
   check('friend chatKey visible in state', stateA1b.friends[0]?.chatKey === keyB.pub)
 
-  // ————— profile avatar —————
+  //  profile avatar 
   const tinyJpeg = 'data:image/jpeg;base64,' + Buffer.from([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x43, 0x00, ...Array(60).fill(16), 0xff, 0xd9]).toString('base64')
   const setAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: tinyJpeg } })
   check('A uploaded avatar', setAvatar.status === 200)
@@ -179,7 +179,7 @@ async function main() {
   const clearAvatar = await api('POST', '/avatar', { token: tokenA, body: { avatar: null } })
   check('avatar removed', clearAvatar.status === 200)
 
-  // ————— optional display name —————
+  //  optional display name 
   const newName = `Teste Renome ${Date.now() % 10000}`
   const rename = await api('PATCH', '/profile', { token: tokenA, body: { name: newName } })
   check('rename accepted', rename.status === 200 && rename.data.user.name === newName)
@@ -224,7 +224,7 @@ async function main() {
   const strangerHistory = await api('GET', `/chat/${a.user.id}`, { token: tokenA })
   check('cannot read chat with self path', strangerHistory.status === 403 || strangerHistory.status === 400)
 
-  // ————— read receipts —————
+  //  read receipts 
   const readPromise = waitFor(wsA, (m) => m.t === 'chat:read', 8000, 'read receipt at A')
   wsB.send({ t: 'chat:read', peer: a.user.id, upTo: ack.id })
   const readEvent = await readPromise
@@ -236,7 +236,7 @@ async function main() {
   const stateARead2 = (await api('GET', '/state', { token: tokenA })).data
   check('read receipts never move backwards', stateARead2.reads?.[b.user.id] === ack.id)
 
-  // ————— manual presence status (online / away / dnd) —————
+  //  manual presence status (online / away / dnd) 
   const dndPromise = waitFor(wsB, (m) => m.t === 'presence' && m.presence?.status === 'dnd', 8000, 'dnd presence at B')
   wsA.send({ t: 'presence', listening: null, status: 'dnd' })
   const dndEvent = await dndPromise
@@ -249,7 +249,7 @@ async function main() {
   check('invalid status ignored', stateB1f.friends[0]?.presence.status === 'dnd')
   wsA.send({ t: 'presence', listening: null, status: 'online' })
 
-  // ————— profile listening stats —————
+  //  profile listening stats 
   const statsPayload = { listeningMs: 5_400_000, topTrack: { title: 'Loop Song', artist: 'Looper', artwork: null, plays: 42 } }
   const statsPatch = await api('PATCH', '/profile', { token: tokenA, body: { stats: statsPayload } })
   check('stats accepted', statsPatch.status === 200)
@@ -258,7 +258,7 @@ async function main() {
   const stateB1g = (await api('GET', '/state', { token: tokenB })).data
   check('friend sees stats', stateB1g.friends[0]?.stats?.topTrack?.plays === 42 && stateB1g.friends[0]?.stats?.listeningMs === 5_400_000)
 
-  // ————— admin endpoints locked to public id 1 (test accounts are never #1) —————
+  //  admin endpoints locked to public id 1 (test accounts are never #1) 
   const adminUsers = await api('GET', '/admin/users', { token: tokenA })
   check('admin users blocked for non-admin', adminUsers.status === 403)
   const adminForce = await api('POST', '/admin/force-update', { token: tokenA })
@@ -332,7 +332,7 @@ async function main() {
   check('queue propagated', queue.queue.length === 1 && queue.queue[0].trackId === 900)
   check('queue keeps addedBy', queue.queue[0].addedByName === a.user.name)
 
-  // ————— jam group chat —————
+  //  jam group chat 
   const jamChatPromiseB = waitFor(wsB, (m) => m.t === 'jam:chat', 8000, 'jam chat at B')
   const jamChatPromiseA = waitFor(wsA, (m) => m.t === 'jam:chat', 8000, 'jam chat echo at A')
   wsA.send({ t: 'jam:chat', text: 'salve jam!' })
@@ -347,7 +347,21 @@ async function main() {
   const stateA2b = (await api('GET', '/state', { token: tokenA })).data
   check('jam chat kept in state', stateA2b.jam.chat.length >= 2)
 
-  // ————— chat anti-spam rate limit —————
+  // ————— rename mid-jam: chat and member list must pick up the new name —————
+  const midJamName = `Renome Jam ${Date.now() % 10000}`
+  const midSyncPromise = waitFor(wsB, (m) => m.t === 'sync', 8000, 'rename sync at jam member B')
+  const midRename = await api('PATCH', '/profile', { token: tokenA, body: { name: midJamName } })
+  check('rename accepted mid-jam', midRename.status === 200)
+  await midSyncPromise
+  check('jam member notified of rename', true)
+  const freshNamePromise = waitFor(wsB, (m) => m.t === 'jam:chat' && m.message.fromId === a.user.id, 8000, 'fresh-name chat at B')
+  wsA.send({ t: 'jam:chat', text: 'novo nome!' })
+  const freshChat = await freshNamePromise
+  check('jam chat uses the renamed sender', freshChat.message.fromName === midJamName)
+  const stateB2c = (await api('GET', '/state', { token: tokenB })).data
+  check('member list shows the new name', stateB2c.jam.members.some((m) => m.id === a.user.id && m.name === midJamName))
+
+  //  chat anti-spam rate limit 
   const rejectedPromise = waitFor(wsA, (m) => m.t === 'chat:rejected' && m.code === 'rate_limited', 10000, 'rate limit rejection')
   for (let i = 0; i < 12; i++) wsA.send({ t: 'jam:chat', text: `spam ${i}` })
   const rejected = await rejectedPromise
@@ -356,7 +370,7 @@ async function main() {
   const stateA2c = (await api('GET', '/state', { token: tokenA })).data
   check('spam capped in history', stateA2c.jam.chat.filter((m) => m.text.startsWith('spam')).length <= 8)
 
-  // ————— kick & transfer ownership —————
+  //  kick & transfer ownership 
   const kickByGuest = await api('POST', '/jams/current/kick', { token: tokenB, body: { userId: a.user.id } })
   check('guest cannot kick', kickByGuest.status === 403)
   const transferByGuest = await api('POST', '/jams/current/transfer', { token: tokenB, body: { userId: b.user.id } })

@@ -273,7 +273,7 @@ function StatsCards({ stats }: { stats: UserStats | null }): JSX.Element {
         </span>
         <div className="sp-stat-main">
           <span className="sp-stat-label">{t('social.profile.listeningTime')}</span>
-          <strong>{stats ? formatListeningTime(stats.listeningMs) : '—'}</strong>
+          <strong>{stats ? formatListeningTime(stats.listeningMs) : ''}</strong>
         </div>
       </div>
       <div className="sp-stat">
