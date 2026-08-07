@@ -97,14 +97,22 @@ function emitQueue(immediate = false): void {
   )
 }
 
-/** Followers mirror the jam queue locally so the queue panel matches what everyone sees. */
+/** Everyone mirrors the jam queue locally — the jam queue outranks any local queue. */
 function applyQueueToLocal(): void {
   const player = usePlayer.getState()
-  if (!player.jamLocked) return
+  const { inJam } = role()
+  if (!inJam) return
   const queue = useSocial.getState().snapshot.jam?.queue ?? []
   const sig = queue.map((ref) => `${ref.trackId}:${ref.addedByName ?? ''}`).join(',')
   if (sig === lastAppliedQueueSig) return
+  const idSig = queue.map((ref) => ref.trackId).join(',')
+  if (!player.jamLocked && idSig === lastQueueSig) {
+    // our own emission bounced back through a state refresh — nothing to mirror
+    lastAppliedQueueSig = sig
+    return
+  }
   lastAppliedQueueSig = sig
+  lastQueueSig = idSig
   markApplying()
   player.jamApplyQueue(queue.map(trackFromRef))
 }

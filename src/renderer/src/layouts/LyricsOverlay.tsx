@@ -5,6 +5,7 @@ import { t, useLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
 import { usePlayer } from '@renderer/player/store'
 import { useUi } from '@renderer/stores/ui'
+import { useExitAnimation } from '@renderer/hooks/use-exit'
 import { Artwork } from '@renderer/components/Artwork'
 import { Icon } from '@renderer/components/Icon'
 import { Empty, Loading } from '@renderer/components/Status'
@@ -15,6 +16,7 @@ export function LyricsOverlay(): JSX.Element | null {
   const open = useUi((state) => state.lyricsOpen)
   const toggleLyrics = useUi((state) => state.toggleLyrics)
   const track = usePlayer((state) => state.current)
+  const { mounted, closing } = useExitAnimation(open && track !== null, 200)
   const position = usePlayer((state) => state.position)
   const decodedDuration = usePlayer((state) => state.duration)
   const [state, setState] = useState<'loading' | 'done' | 'none'>('loading')
@@ -71,10 +73,10 @@ export function LyricsOverlay(): JSX.Element | null {
     if (open && !track) toggleLyrics(false)
   }, [open, track, toggleLyrics])
 
-  if (!open || !track) return null
+  if (!mounted || !track) return null
 
   return (
-    <div className="lyrics-overlay" style={{ background: 'var(--bg)' }}>
+    <div className={cx('lyrics-overlay', closing && 'closing')} style={{ background: 'var(--bg)' }}>
       {track.artwork && <div className="lyrics-backdrop" style={{ backgroundImage: `url(${track.artwork})` }} />}
       <div className="lyrics-head">
         <div className="lh-track">

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react'
 import { useUi } from '@renderer/stores/ui'
 import { useToasts } from '@renderer/stores/toasts'
 import { useLibrary } from '@renderer/stores/library'
+import { useExitAnimation, useLatched } from '@renderer/hooks/use-exit'
 import { t } from '@renderer/i18n'
 import { cx } from '@renderer/utils/format'
 import { Icon, type IconName } from './Icon'
@@ -9,14 +10,13 @@ import { Icon, type IconName } from './Icon'
 export function ContextMenuHost(): JSX.Element | null {
   const menu = useUi((state) => state.menu)
   const closeMenu = useUi((state) => state.closeMenu)
+  const { mounted, closing } = useExitAnimation(menu.open, 150)
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ x: number; y: number; origin: string } | null>(null)
 
   useLayoutEffect(() => {
-    if (!menu.open) {
-      setPos(null)
-      return
-    }
+    // keep the last position while the exit animation plays
+    if (!menu.open) return
     const el = ref.current
     if (!el) return
     // offsetWidth/Height ignore the scale-in transform, unlike getBoundingClientRect
@@ -48,11 +48,11 @@ export function ContextMenuHost(): JSX.Element | null {
     }
   }, [menu.open, closeMenu])
 
-  if (!menu.open) return null
+  if (!mounted) return null
   return (
     <div
       ref={ref}
-      className="ctx-menu glass"
+      className={cx('ctx-menu glass', closing && 'closing')}
       style={
         pos
           ? { left: pos.x, top: pos.y, transformOrigin: pos.origin }
@@ -83,22 +83,24 @@ export function ContextMenuHost(): JSX.Element | null {
 }
 
 export function ModalHost(): JSX.Element | null {
-  const modal = useUi((state) => state.modal)
+  const active = useUi((state) => state.modal)
   const closeModal = useUi((state) => state.closeModal)
+  const modal = useLatched(active)
+  const { mounted, closing } = useExitAnimation(active !== null)
   const [value, setValue] = useState('')
 
   useEffect(() => {
-    setValue(modal?.initialValue ?? '')
-  }, [modal])
+    if (active) setValue(active.initialValue ?? '')
+  }, [active])
 
-  if (!modal) return null
+  if (!mounted || !modal) return null
   const confirm = (): void => {
     closeModal()
     modal.onConfirm(value.trim())
   }
   return (
     <div
-      className="scrim"
+      className={cx('scrim', closing && 'closing')}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) closeModal()
       }}
@@ -137,15 +139,17 @@ export function ModalHost(): JSX.Element | null {
 }
 
 export function AddToPlaylistHost(): JSX.Element | null {
-  const tracks = useUi((state) => state.addToPlaylistTrack)
+  const active = useUi((state) => state.addToPlaylistTrack)
   const close = useUi((state) => state.closeAddToPlaylist)
+  const tracks = useLatched(active)
+  const { mounted, closing } = useExitAnimation(active !== null)
   const playlists = useLibrary((state) => state.data.playlists)
   const [name, setName] = useState('')
 
-  if (!tracks) return null
+  if (!mounted || !tracks) return null
   return (
     <div
-      className="scrim"
+      className={cx('scrim', closing && 'closing')}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close()
       }}
@@ -202,7 +206,11 @@ export function ToastHost(): JSX.Element {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.id} className={cx('toast', toast.kind)} onClick={() => dismiss(toast.id)}>
+        <div
+          key={toast.id}
+          className={cx('toast', toast.kind, toast.closing && 'closing')}
+          onClick={() => dismiss(toast.id)}
+        >
           {toast.message}
         </div>
       ))}

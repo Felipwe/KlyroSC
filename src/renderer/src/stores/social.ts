@@ -103,6 +103,8 @@ interface SocialStore {
   openChats: string[]
   chatWindows: Record<string, ChatWindowRect>
   chatLoading: Record<string, boolean>
+  /** chat windows playing their exit animation */
+  closingChats: Record<string, boolean>
   unread: Record<string, number>
   /** friendId → epoch ms when the typing hint expires */
   typing: Record<string, number>
@@ -149,6 +151,7 @@ export const useSocial = create<SocialStore>((set, get) => ({
   openChats: [],
   chatWindows: {},
   chatLoading: {},
+  closingChats: {},
   unread: {},
   typing: {},
   jamUnread: 0,
@@ -380,6 +383,13 @@ export const useSocial = create<SocialStore>((set, get) => ({
 
   openChat: async (friendId) => {
     const state = get()
+    if (state.closingChats[friendId]) {
+      // reopened while the exit animation was playing — cancel the close
+      const { [friendId]: _gone, ...rest } = state.closingChats
+      set({ closingChats: rest, unread: { ...state.unread, [friendId]: 0 } })
+      get().focusChat(friendId)
+      return
+    }
     if (state.openChats.includes(friendId)) {
       get().focusChat(friendId)
       set({ unread: { ...get().unread, [friendId]: 0 } })
@@ -413,6 +423,12 @@ export const useSocial = create<SocialStore>((set, get) => ({
   openJamChat: () => {
     const state = get()
     if (!state.snapshot.jam) return
+    if (state.closingChats[JAM_CHAT_KEY]) {
+      const { [JAM_CHAT_KEY]: _gone, ...rest } = state.closingChats
+      set({ closingChats: rest, jamUnread: 0 })
+      get().focusChat(JAM_CHAT_KEY)
+      return
+    }
     if (state.openChats.includes(JAM_CHAT_KEY)) {
       get().focusChat(JAM_CHAT_KEY)
       set({ jamUnread: 0 })
@@ -428,8 +444,17 @@ export const useSocial = create<SocialStore>((set, get) => ({
     })
   },
 
-  closeChat: (friendId) =>
-    set({ openChats: get().openChats.filter((id) => id !== friendId) }),
+  closeChat: (friendId) => {
+    const state = get()
+    if (!state.openChats.includes(friendId) || state.closingChats[friendId]) return
+    set({ closingChats: { ...state.closingChats, [friendId]: true } })
+    setTimeout(() => {
+      const current = get()
+      if (!current.closingChats[friendId]) return // reopened during the exit animation
+      const { [friendId]: _gone, ...rest } = current.closingChats
+      set({ openChats: current.openChats.filter((id) => id !== friendId), closingChats: rest })
+    }, 170)
+  },
 
   focusChat: (friendId) => {
     const { openChats } = get()

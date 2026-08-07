@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, useState, type JSX } from 'react'
-import { avatarHue } from '@shared/utils/social'
 import { t, useLanguage } from '@renderer/i18n'
 import { JAM_CHAT_KEY, useSocial } from '@renderer/stores/social'
 import { useFloatingWindow } from '@renderer/hooks/floating-window'
@@ -15,6 +14,7 @@ export function JamChatPanel({ zIndex }: { zIndex: number }): JSX.Element | null
   useLanguage()
   const jam = useSocial((state) => state.snapshot.jam)
   const meId = useSocial((state) => state.snapshot.account?.id ?? '')
+  const chatClosing = useSocial((state) => state.closingChats[JAM_CHAT_KEY] === true)
   const { rect, focus, headHandlers, resizeHandlers } = useFloatingWindow(JAM_CHAT_KEY)
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -37,7 +37,7 @@ export function JamChatPanel({ zIndex }: { zIndex: number }): JSX.Element | null
 
   return (
     <div
-      className="chat-panel glass"
+      className={cx('chat-panel glass', chatClosing && 'closing')}
       role="dialog"
       aria-label={t('social.jam.chatTitle')}
       style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 30 + zIndex }}
@@ -73,14 +73,7 @@ export function JamChatPanel({ zIndex }: { zIndex: number }): JSX.Element | null
             const mine = message.fromId === meId
             return (
               <div key={message.id} className={cx('chat-msg', mine ? 'mine' : 'theirs')}>
-                {!mine && (
-                  <div
-                    className="chat-sender"
-                    style={{ color: `hsl(${avatarHue(message.fromName)} 70% 68%)` }}
-                  >
-                    {message.fromName}
-                  </div>
-                )}
+                {!mine && <div className="chat-sender">{message.fromName}</div>}
                 <div className="chat-bubble">{message.text}</div>
                 <div className="chat-meta">{timeOf(message.at)}</div>
               </div>

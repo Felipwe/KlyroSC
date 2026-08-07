@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { clamp, cx } from '@renderer/utils/format'
+import { useExitAnimation } from '@renderer/hooks/use-exit'
 import { Icon } from './Icon'
 
 interface SliderProps {
@@ -70,17 +71,16 @@ interface SelectProps {
 
 export function Select({ value, options, onChange, ariaLabel }: SelectProps): JSX.Element {
   const [open, setOpen] = useState(false)
+  const { mounted, closing } = useExitAnimation(open, 150)
   const [placed, setPlaced] = useState<CSSProperties | null>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // the menu renders in a body portal with fixed positioning, so it can never be
-  // clipped by scroll containers or cut off at the window edges  it flips and clamps
+  // clipped by scroll containers or cut off at the window edges — it flips and clamps
   useLayoutEffect(() => {
-    if (!open) {
-      setPlaced(null)
-      return
-    }
+    // keep the last placement while the exit animation plays
+    if (!open) return
     const btn = btnRef.current
     const menu = menuRef.current
     if (!btn || !menu) return
@@ -150,11 +150,11 @@ export function Select({ value, options, onChange, ariaLabel }: SelectProps): JS
         <span className="kselect-value">{current?.label ?? value}</span>
         <Icon name="chevronDown" size={14} className="kselect-caret" />
       </button>
-      {open &&
+      {mounted &&
         createPortal(
           <div
             ref={menuRef}
-            className="kselect-menu kselect-pop"
+            className={cx('kselect-menu kselect-pop', closing && 'closing')}
             role="listbox"
             style={placed ?? { visibility: 'hidden', left: 0, top: 0 }}
           >
@@ -269,6 +269,7 @@ interface ColorPickerProps {
 
 export function ColorPicker({ label, value, onChange, eyedropperLabel }: ColorPickerProps): JSX.Element {
   const [open, setOpen] = useState(false)
+  const { mounted: pickerMounted, closing: pickerClosing } = useExitAnimation(open, 150)
   const [placed, setPlaced] = useState<CSSProperties | null>(null)
   const [hsv, setHsv] = useState<Hsv>(() => hexToHsv(value))
   const [hexDraft, setHexDraft] = useState(() => normalizeHex(value) ?? '#000000')
@@ -302,10 +303,8 @@ export function ColorPicker({ label, value, onChange, eyedropperLabel }: ColorPi
   }
 
   useLayoutEffect(() => {
-    if (!open) {
-      setPlaced(null)
-      return
-    }
+    // keep the last placement while the exit animation plays
+    if (!open) return
     const btn = btnRef.current
     const pop = popRef.current
     if (!btn || !pop) return
@@ -419,11 +418,11 @@ export function ColorPicker({ label, value, onChange, eyedropperLabel }: ColorPi
         <span className="cf-swatch" style={{ background: hex }} />
         <span className="cf-label">{label}</span>
       </button>
-      {open &&
+      {pickerMounted &&
         createPortal(
           <div
             ref={popRef}
-            className="cpick kselect-pop"
+            className={cx('cpick kselect-pop', pickerClosing && 'closing')}
             role="dialog"
             aria-label={label}
             style={placed ?? { visibility: 'hidden', left: 0, top: 0 }}

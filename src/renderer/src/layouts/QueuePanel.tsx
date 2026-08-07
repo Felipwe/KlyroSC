@@ -2,6 +2,7 @@ import { type JSX } from 'react'
 import { t, useLanguage } from '@renderer/i18n'
 import { usePlayer } from '@renderer/player/store'
 import { useUi } from '@renderer/stores/ui'
+import { useExitAnimation } from '@renderer/hooks/use-exit'
 import { Empty } from '@renderer/components/Status'
 import { Icon } from '@renderer/components/Icon'
 import { Artwork } from '@renderer/components/Artwork'
@@ -11,16 +12,17 @@ export function QueuePanel(): JSX.Element | null {
   useLanguage()
   const open = useUi((state) => state.queueOpen)
   const toggleQueue = useUi((state) => state.toggleQueue)
+  const { mounted, closing } = useExitAnimation(open, 180)
   const queueLength = usePlayer((state) => state.queue.length)
   const index = usePlayer((state) => state.index)
   const hasCurrent = usePlayer((state) => state.current !== null)
   const clearQueue = usePlayer((state) => state.clearQueue)
 
-  if (!open) return null
+  if (!mounted) return null
   const upNextCount = Math.max(0, queueLength - index - 1)
 
   return (
-    <div className="side-panel glass" role="dialog" aria-label={t('queue.title')}>
+    <div className={cx('side-panel glass', closing && 'closing')} role="dialog" aria-label={t('queue.title')}>
       <div className="panel-head">
         <h3>{t('queue.title')}</h3>
         <div style={{ display: 'flex', gap: 4 }}>

@@ -175,6 +175,8 @@
   bottom: calc(100% + 12px);
   right: -8px;
   width: min(300px, calc(100vw - 24px));
+  max-height: calc(100vh - var(--player-h) - 70px);
+  overflow-y: auto;
   z-index: 60;
   padding: 12px;
   border-radius: var(--radius-m);
@@ -326,6 +328,118 @@
   gap: 8px;
   padding-top: 10px;
   border-top: 1px solid var(--stroke);
+}
+
+/* synced jam queue inside the popover */
+
+.jam-pop-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--stroke);
+}
+
+.jam-pop-queue-title {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+.jam-pop-qrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background var(--t-fast);
+}
+
+.jam-pop-qrow:hover {
+  background: var(--surface-hover);
+}
+
+.jam-pop-qnum {
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  width: 13px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.jam-pop-qmain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.jam-pop-qtitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jam-pop-qartist {
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jam-pop-qby {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 2px 8px 2px 3px;
+  flex: 0 0 auto;
+  max-width: 40%;
+  overflow: hidden;
+}
+
+.jam-pop-qmore {
+  font-size: 0.66rem;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 3px 0 1px;
+}
+
+/* owner permission: guests control playback */
+
+.jam-pop-perm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--stroke);
+}
+
+.jam-pop-perm-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.jam-pop-perm-label span {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-faint);
 }
 
 .jam-pop-foot .btn {

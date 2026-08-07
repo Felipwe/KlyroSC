@@ -7,6 +7,8 @@ import { useNav } from '@renderer/stores/nav'
 import { toast } from '@renderer/stores/toasts'
 import { cx } from '@renderer/utils/format'
 import { Icon } from '@renderer/components/Icon'
+import { Switch } from '@renderer/components/controls'
+import { useExitAnimation } from '@renderer/hooks/use-exit'
 import { SocialAvatar } from '@renderer/pages/SocialPage'
 
 /** Player-bar Jam button: starts a jam, or opens a small management popover when in one. */
@@ -16,6 +18,7 @@ export function JamMenuButton(): JSX.Element {
   const jam = useSocial((state) => state.snapshot.jam)
   const jamUnread = useSocial((state) => state.jamUnread)
   const [open, setOpen] = useState(false)
+  const { mounted, closing } = useExitAnimation(open, 160)
   const [busy, setBusy] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -85,8 +88,8 @@ export function JamMenuButton(): JSX.Element {
         {jam && <span className={cx('jam-dot', jamUnread > 0 && 'unread')} />}
       </button>
 
-      {open && !jam && (
-        <div className="jam-pop" role="dialog" aria-label={t('social.jam.title')}>
+      {mounted && !jam && (
+        <div className={cx('jam-pop', closing && 'closing')} role="dialog" aria-label={t('social.jam.title')}>
           <div className="jam-pop-cta">
             <span className="jam-pop-cta-icon">
               <Icon name="radio" size={17} />
@@ -107,8 +110,8 @@ export function JamMenuButton(): JSX.Element {
         </div>
       )}
 
-      {open && jam && (
-        <div className="jam-pop" role="dialog" aria-label={t('social.jam.manage')}>
+      {mounted && jam && (
+        <div className={cx('jam-pop', closing && 'closing')} role="dialog" aria-label={t('social.jam.manage')}>
           <div className="jam-pop-head">
             <span className="social-live-dot" />
             <span className="jam-pop-title">{t('social.jam.live')}</span>
@@ -157,6 +160,50 @@ export function JamMenuButton(): JSX.Element {
               </div>
             ))}
           </div>
+
+          {jam.queue.length > 0 && (
+            <div className="jam-pop-queue">
+              <div className="jam-pop-queue-title">{t('social.jam.queueNext')}</div>
+              {jam.queue.slice(0, 5).map((track, index) => {
+                const adder = track.addedById
+                  ? jam.members.find((member) => member.id === track.addedById)
+                  : undefined
+                const adderName = track.addedByName ?? adder?.name ?? null
+                return (
+                  <div key={`${track.trackId}-${index}`} className="jam-pop-qrow">
+                    <span className="jam-pop-qnum">{index + 1}</span>
+                    <div className="jam-pop-qmain">
+                      <span className="jam-pop-qtitle" title={track.title}>
+                        {track.title}
+                      </span>
+                      <span className="jam-pop-qartist">{track.artist}</span>
+                    </div>
+                    {adderName && (
+                      <span className="jam-pop-qby" title={t('social.jam.addedBy', { name: adderName })}>
+                        <SocialAvatar name={adderName} avatar={adder?.avatar ?? null} size={16} />
+                        {adderName.split(' ')[0]}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+              {jam.queue.length > 5 && <div className="jam-pop-qmore">+{jam.queue.length - 5}</div>}
+            </div>
+          )}
+
+          {isOwner && (
+            <div className="jam-pop-perm">
+              <div className="jam-pop-perm-label">
+                {t('social.jam.guestsCanControl')}
+                <span>{t('social.jam.guestsCanControlHint')}</span>
+              </div>
+              <Switch
+                on={jam.allowGuestControl}
+                onToggle={(on) => void useSocial.getState().setJamControl(on)}
+                ariaLabel={t('social.jam.guestsCanControl')}
+              />
+            </div>
+          )}
 
           <div className="jam-pop-foot">
             <button

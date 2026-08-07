@@ -11,6 +11,25 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.11.0',
+    pt: [
+      'Animações estilo iOS em tudo: cada botão, menu e clique responde com uma mola suave e sutil',
+      'Menus, modais, painéis, toasts e chats agora também fecham com animação — nada mais some de repente',
+      'Fila da Jam no menu do player, mostrando quem adicionou cada música (avatar e nome)',
+      'A fila da Jam agora é a prioridade: todos os membros seguem exatamente a mesma fila',
+      'Permissão “convidados podem controlar” de volta, direto no menu da Jam',
+      'Nomes no chat da Jam em branco padrão e perfil do amigo em vidro translúcido de verdade'
+    ],
+    en: [
+      'iOS-style animations everywhere: every button, menu and click responds with a soft, subtle spring',
+      'Menus, modals, panels, toasts and chats now animate on close too — nothing vanishes abruptly',
+      'Jam queue inside the player menu, showing who added each track (avatar and name)',
+      'The Jam queue is now the priority: every member follows exactly the same queue',
+      '“Guests can control” permission is back, right in the Jam menu',
+      'Jam chat names in standard white and the friend profile in true translucent glass'
+    ]
+  },
+  {
     version: '2.10.0',
     pt: [
       'Confirmação de leitura no chat: relógio enviando, ✓✓ cinza entregue e ✓✓ azul quando o amigo vê, igual WhatsApp',

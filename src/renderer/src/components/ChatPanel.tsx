@@ -42,6 +42,7 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
   // store clears the flag via timeout, so non-zero means "typing right now"
   const typing = useSocial((state) => (state.typing[friendId] ?? 0) > 0)
   const readUpTo = useSocial((state) => state.snapshot.reads[friendId] ?? 0)
+  const chatClosing = useSocial((state) => state.closingChats[friendId] === true)
   const { rect, focus, headHandlers, resizeHandlers } = useFloatingWindow(friendId)
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -73,7 +74,7 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
 
   return (
     <div
-      className="chat-panel glass"
+      className={cx('chat-panel glass', chatClosing && 'closing')}
       role="dialog"
       aria-label={`${t('social.chat.title')} — ${friend.name}`}
       style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h, zIndex: 30 + zIndex }}

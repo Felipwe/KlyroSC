@@ -400,3 +400,180 @@
 .chat-send:hover {
   filter: brightness(1.16) saturate(1.1);
 }
+
+/* friend profile: fully transparent liquid glass over a light scrim */
+.fp-scrim {
+  background: rgba(4, 5, 10, 0.32);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal.friend-profile {
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 46%),
+    rgba(13, 15, 24, 0.42);
+  backdrop-filter: blur(30px) saturate(1.7);
+  -webkit-backdrop-filter: blur(30px) saturate(1.7);
+  border: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    var(--shadow-2);
+}
+
+/* ————— iOS micro-interactions: a gentle spring on every tap ————— */
+
+.icon-btn,
+.tabs button,
+.sp-status-pill,
+.side-item,
+.kselect-btn,
+.kselect-item,
+.ctx-menu button,
+.social-invite-row,
+.social-chat-open,
+.sh-row,
+.social-friend-row,
+.social-request-row,
+.jam-pop-member,
+.jam-pop-qrow,
+.track-row,
+.quick-tile,
+.resume-card,
+.theme-card,
+.social-avatar-btn,
+.pb-art-link,
+.sp-stat {
+  transition:
+    background var(--t-fast),
+    color var(--t-fast),
+    border-color var(--t-fast),
+    box-shadow var(--t-fast),
+    filter var(--t-fast),
+    transform 220ms var(--spring);
+}
+
+.icon-btn:hover {
+  transform: scale(1.07);
+}
+
+.icon-btn:active {
+  transform: scale(0.88);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.tabs button:active,
+.sp-status-pill:active,
+.kselect-btn:active,
+.kselect-item:active,
+.ctx-menu button:active,
+.social-invite-row:active {
+  transform: scale(0.96);
+}
+
+.side-item:active {
+  transform: scale(0.98);
+}
+
+.social-friend-row:active,
+.social-request-row:active,
+.track-row:active,
+.jam-pop-member:active,
+.jam-pop-qrow:active,
+.sh-row:active {
+  transform: scale(0.992);
+}
+
+.quick-tile:active,
+.resume-card:active,
+.theme-card:active,
+.sp-stat:active {
+  transform: scale(0.98);
+}
+
+.card:active {
+  transform: translateY(-1px) scale(0.985);
+}
+
+.social-avatar-btn:hover {
+  transform: scale(1.04);
+}
+
+.social-avatar-btn:active {
+  transform: scale(0.94);
+}
+
+.social-chat-open:hover {
+  transform: scale(1.12);
+}
+
+.social-chat-open:active {
+  transform: scale(0.9);
+}
+
+.pb-art-link:hover {
+  transform: scale(1.04);
+}
+
+.pb-art-link:active {
+  transform: scale(0.97);
+}
+
+/* iOS-style switch knob squash while pressed */
+.switch::after {
+  transition: transform var(--t-med), opacity var(--t-med), width 160ms var(--ease);
+}
+
+.switch:active::after {
+  width: 22px;
+}
+
+.switch.on:active::after {
+  transform: translateX(14px);
+}
+
+/* ————— exit animations: everything closes as softly as it opens ————— */
+
+.ctx-menu.closing,
+.kselect-menu.closing,
+.cpick.closing,
+.chat-panel.closing {
+  animation: scale-out 150ms var(--ease) both;
+  pointer-events: none;
+}
+
+.jam-pop.closing {
+  animation: pop-out-down 160ms var(--ease) both;
+  pointer-events: none;
+}
+
+.scrim.closing {
+  animation: fade-out 170ms var(--ease) both;
+  pointer-events: none;
+}
+
+.scrim.closing .modal {
+  animation: scale-out 170ms var(--ease) both;
+}
+
+.side-panel.closing {
+  animation: panel-out 180ms var(--ease) both;
+  pointer-events: none;
+}
+
+.toast.closing {
+  animation: pop-out-down 170ms var(--ease) both;
+  pointer-events: none;
+}
+
+.lyrics-overlay.closing {
+  animation: fade-out 200ms var(--ease) both;
+  pointer-events: none;
+}

@@ -448,14 +448,23 @@ function ProfileTab(): JSX.Element {
 function FriendProfileModal({ friendId, onClose }: { friendId: string; onClose: () => void }): JSX.Element | null {
   const friend = useSocial((state) => state.snapshot.friends.find((item) => item.id === friendId) ?? null)
   const jam = useSocial((state) => state.snapshot.jam)
+  const [closing, setClosing] = useState(false)
+
+  // animate out, then actually unmount
+  const close = (): void => {
+    if (closing) return
+    setClosing(true)
+    setTimeout(onClose, 170)
+  }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') close()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- close is stable enough for a keydown guard
+  }, [closing])
 
   if (!friend) return null
   const status = statusOf(friend)
@@ -471,16 +480,16 @@ function FriendProfileModal({ friendId, onClose }: { friendId: string; onClose: 
       danger: true,
       confirmLabel: t('social.removeFriend'),
       onConfirm: () => {
-        onClose()
+        close()
         void useSocial.getState().removeFriend(friend.id)
       }
     })
 
   return createPortal(
     <div
-      className="scrim"
+      className={cx('scrim fp-scrim', closing && 'closing')}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose()
+        if (event.target === event.currentTarget) close()
       }}
     >
       <div className="modal glass friend-profile" role="dialog" aria-modal="true" aria-label={friend.name}>
@@ -498,7 +507,7 @@ function FriendProfileModal({ friendId, onClose }: { friendId: string; onClose: 
               {t('social.profile.friendSince', { date: new Date(friend.since).toLocaleDateString() })}
             </div>
           </div>
-          <button className="icon-btn fp-close" onClick={onClose} aria-label={t('common.close')}>
+          <button className="icon-btn fp-close" onClick={close} aria-label={t('common.close')}>
             <Icon name="close" size={16} />
           </button>
         </div>
@@ -525,7 +534,7 @@ function FriendProfileModal({ friendId, onClose }: { friendId: string; onClose: 
           <button
             className="btn primary"
             onClick={() => {
-              onClose()
+              close()
               void useSocial.getState().openChat(friend.id)
             }}
           >

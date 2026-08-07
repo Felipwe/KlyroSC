@@ -2454,6 +2454,7 @@ kbd {
   font-weight: 700;
   margin: 0 6px 2px;
   letter-spacing: 0.02em;
+  color: #fff;
 }
 
 .chat-bubble {
