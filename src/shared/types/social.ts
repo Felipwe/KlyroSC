@@ -30,6 +30,11 @@ export interface UserStats {
   topTrack: { title: string; artist: string; artwork: string | null; plays: number } | null
 }
 
+/** Wire payload for stats reports — the server adds `listeningDeltaMs` to the account total. */
+export interface UserStatsReport extends UserStats {
+  listeningDeltaMs: number
+}
+
 export interface Friend extends SocialUser {
   since: string
   presence: FriendPresence

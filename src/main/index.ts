@@ -106,12 +106,19 @@ function bootstrap(): void {
     (action) => mainWindow.send(IPC.socialAdminEvent, action)
   )
   const stats = new StatsService()
-  // profile stats shared with friends: refresh shortly after boot, then periodically
+  // profile stats shared with friends: refresh shortly after boot, then periodically.
+  // sends only the unreported delta; the server accumulates it into the account total
   const reportStats = (): void => {
-    void social.reportStats({
-      listeningMs: stats.listeningMs(),
-      topTrack: stats.topTrack(library.get().history)
-    })
+    const report = stats.pendingReport()
+    void social
+      .reportStats({
+        listeningMs: report.deviceMs,
+        listeningDeltaMs: report.deltaMs,
+        topTrack: stats.topTrack(library.get().history)
+      })
+      .then((accountTotal) => {
+        if (accountTotal !== null) stats.commitReport(report.deviceMs, accountTotal)
+      })
   }
   setTimeout(reportStats, 20_000)
   setInterval(reportStats, 5 * 60 * 1000)

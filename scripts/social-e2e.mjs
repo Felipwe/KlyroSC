@@ -250,13 +250,19 @@ async function main() {
   wsA.send({ t: 'presence', listening: null, status: 'online' })
 
   //  profile listening stats 
-  const statsPayload = { listeningMs: 5_400_000, topTrack: { title: 'Loop Song', artist: 'Looper', artwork: null, plays: 42 } }
-  const statsPatch = await api('PATCH', '/profile', { token: tokenA, body: { stats: statsPayload } })
-  check('stats accepted', statsPatch.status === 200)
+  const topTrack = { title: 'Loop Song', artist: 'Looper', artwork: null, plays: 42 }
+  const statsPatch = await api('PATCH', '/profile', { token: tokenA, body: { stats: { listeningMs: 5_400_000, topTrack } } })
+  check('stats accepted', statsPatch.status === 200 && statsPatch.data.listeningMs === 5_400_000)
   const badStats = await api('PATCH', '/profile', { token: tokenA, body: { stats: { listeningMs: -5, topTrack: null } } })
   check('invalid stats rejected', badStats.status === 400)
+  const badDelta = await api('PATCH', '/profile', { token: tokenA, body: { stats: { listeningMs: 1000, listeningDeltaMs: -1, topTrack: null } } })
+  check('invalid stats delta rejected', badDelta.status === 400)
+  const deltaPatch = await api('PATCH', '/profile', { token: tokenA, body: { stats: { listeningMs: 1_260_000, listeningDeltaMs: 60_000, topTrack } } })
+  check('delta accumulates into account total', deltaPatch.status === 200 && deltaPatch.data.listeningMs === 5_460_000)
+  const lowerPatch = await api('PATCH', '/profile', { token: tokenA, body: { stats: { listeningMs: 1_000, topTrack } } })
+  check('legacy absolute never lowers the total', lowerPatch.status === 200 && lowerPatch.data.listeningMs === 5_460_000)
   const stateB1g = (await api('GET', '/state', { token: tokenB })).data
-  check('friend sees stats', stateB1g.friends[0]?.stats?.topTrack?.plays === 42 && stateB1g.friends[0]?.stats?.listeningMs === 5_400_000)
+  check('friend sees stats', stateB1g.friends[0]?.stats?.topTrack?.plays === 42 && stateB1g.friends[0]?.stats?.listeningMs === 5_460_000)
 
   //  admin endpoints locked to public id 1 (test accounts are never #1) 
   const adminUsers = await api('GET', '/admin/users', { token: tokenA })

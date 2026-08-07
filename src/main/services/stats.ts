@@ -1,25 +1,34 @@
 import { isRecord } from '@shared/types/result'
 import { type UserStats } from '@shared/types/social'
 import { type HistoryEntry } from '@shared/types/library'
+import {
+  applyReportAck,
+  displayListeningMs,
+  pendingDeltaMs,
+  type ListeningLedger
+} from '@shared/utils/listening-stats'
 import { JsonStore } from '../core/store'
 import { paths } from '../core/paths'
 
-interface StoredStats {
-  listeningMs: number
-}
+const ms = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null
 
-const parseStats = (raw: unknown): StoredStats => ({
-  listeningMs:
-    isRecord(raw) && typeof raw.listeningMs === 'number' && Number.isFinite(raw.listeningMs) && raw.listeningMs > 0
-      ? raw.listeningMs
-      : 0
-})
+const parseStats = (raw: unknown): ListeningLedger => {
+  const rec = isRecord(raw) ? raw : {}
+  const listeningMs = ms(rec.listeningMs) ?? 0
+  return {
+    listeningMs,
+    // files from before the delta protocol have no watermark — treat everything as already reported
+    reportedMs: Math.min(ms(rec.reportedMs) ?? listeningMs, listeningMs),
+    accountMs: ms(rec.accountMs) ?? 0
+  }
+}
 
 const TICK_MS = 5_000
 
 /** Accumulates total time spent actually listening (player in "playing" state). */
 export class StatsService {
-  private store = new JsonStore<StoredStats>(paths.statsFile(), parseStats, 5_000)
+  private store = new JsonStore<ListeningLedger>(paths.statsFile(), parseStats, 5_000)
   private playing = false
   private lastTick = Date.now()
   private timer: NodeJS.Timeout
@@ -38,13 +47,27 @@ export class StatsService {
     if (this.playing) {
       // cap the delta so sleep/suspend gaps never count as listening
       const delta = Math.min(now - this.lastTick, TICK_MS * 3)
-      if (delta > 0) this.store.set({ listeningMs: this.store.get().listeningMs + delta })
+      const data = this.store.get()
+      if (delta > 0) this.store.set({ ...data, listeningMs: data.listeningMs + delta })
     }
     this.lastTick = now
   }
 
-  listeningMs(): number {
-    return this.store.get().listeningMs
+  /** Snapshot for a server report: device total + portion not yet acknowledged. */
+  pendingReport(): { deviceMs: number; deltaMs: number } {
+    this.tick()
+    const data = this.store.get()
+    return { deviceMs: data.listeningMs, deltaMs: pendingDeltaMs(data) }
+  }
+
+  /** Marks a report as acknowledged by the server and caches the account-wide total. */
+  commitReport(deviceMs: number, accountTotalMs: number): void {
+    this.store.set(applyReportAck(this.store.get(), deviceMs, accountTotalMs))
+  }
+
+  /** Account-wide listening time — what profiles display (matches what friends see). */
+  listeningTotal(): number {
+    return displayListeningMs(this.store.get())
   }
 
   /** Most repeated track in the local history. */

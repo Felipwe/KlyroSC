@@ -16,7 +16,7 @@ import {
   type PresenceStatus,
   type SocialSnapshot,
   type SocialUser,
-  type UserStats
+  type UserStatsReport
 } from '@shared/types/social'
 import {
   decryptChatMessage,
@@ -370,13 +370,18 @@ export class SocialService {
     this.sendWs({ t: 'chat:read', peer: friendId, upTo })
   }
 
-  /** Self-reported listening stats for the profile (fire-and-forget). */
-  async reportStats(stats: UserStats): Promise<void> {
-    if (!this.store.get().token) return
+  /** Self-reported listening stats for the profile (fire-and-forget).
+   * Resolves with the account-wide total acknowledged by the server, or null. */
+  async reportStats(stats: UserStatsReport): Promise<number | null> {
+    if (!this.store.get().token) return null
     try {
-      await this.request<unknown>('PATCH', '/profile', { stats })
+      const data = await this.request<unknown>('PATCH', '/profile', { stats })
+      return isRecord(data) && typeof data.listeningMs === 'number' && Number.isFinite(data.listeningMs)
+        ? data.listeningMs
+        : null
     } catch (error) {
       log.warn(`stats report failed: ${String(error)}`)
+      return null
     }
   }
 

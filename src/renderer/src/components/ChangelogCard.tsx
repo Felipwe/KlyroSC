@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.13.1',
+    pt: [
+      'Tempo ouvindo música agora é da conta: soma entre computadores e não zera ao reinstalar o app',
+      'Corrigido: o tempo do seu perfil podia aparecer diferente para os seus amigos',
+      'O que você vê no seu perfil é exatamente o que os amigos veem  sincronizado com o servidor'
+    ],
+    en: [
+      'Listening time is now account-wide: it adds up across computers and survives reinstalls',
+      'Fixed: your profile listening time could look different to your friends',
+      'What you see on your profile is exactly what friends see  synced with the server'
+    ]
+  },
+  {
     version: '2.13.0',
     pt: [
       'Fila da Jam separada da fila pessoal: sua fila é guardada ao entrar e volta inteira quando a Jam acaba',

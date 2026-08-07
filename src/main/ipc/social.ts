@@ -77,7 +77,7 @@ export function registerSocialIpc(ctx: AppContext): void {
     if (typeof p?.friendId === 'string' && typeof p?.upTo === 'number') social.chatRead(p.friendId, p.upTo)
   })
   handle(IPC.socialMyStats, () => ({
-    listeningMs: ctx.stats.listeningMs(),
+    listeningMs: ctx.stats.listeningTotal(),
     topTrack: ctx.stats.topTrack(ctx.library.get().history)
   }))
   handleResult(IPC.socialAdminUsers, () => social.adminUsers())

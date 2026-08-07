@@ -5,7 +5,7 @@ import { generateAccountNumber, generateSessionToken, isAccountNumber, sha256 } 
 import { randomName } from './names.js'
 import { type Hub } from './hub.js'
 import { JAM_MAX_MEMBERS, type JamService } from './jams.js'
-import { isUserStats, isValidAvatar, type SocialUser } from './types.js'
+import { isUserStats, isValidAvatar, mergeStats, type SocialUser } from './types.js'
 
 const SESSION_DAYS = 180
 
@@ -343,9 +343,14 @@ export function createRouter(services: Services): Router {
           fail(res, 400, 'invalid_payload')
           return
         }
-        await pool.query('UPDATE users SET stats = $1 WHERE id = $2', [JSON.stringify(rawStats), me.id])
+        // merge instead of replace: the account total never regresses and
+        // delta reports add up across devices/reinstalls
+        const currentRow = await pool.query<{ stats: unknown }>('SELECT stats FROM users WHERE id = $1', [me.id])
+        const current = currentRow.rows[0]?.stats
+        const merged = mergeStats(isUserStats(current) ? current : null, rawStats)
+        await pool.query('UPDATE users SET stats = $1 WHERE id = $2', [JSON.stringify(merged), me.id])
         if (body?.name === undefined) {
-          res.json({ result: 'updated' })
+          res.json({ result: 'updated', listeningMs: merged.listeningMs })
           return
         }
       }

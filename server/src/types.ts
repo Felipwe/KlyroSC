@@ -43,10 +43,20 @@ export interface UserStats {
   topTrack: { title: string; artist: string; artwork: string | null; plays: number } | null
 }
 
-export function isUserStats(value: unknown): value is UserStats {
+/** What clients PATCH — newer clients also send the still-unreported delta. */
+export interface UserStatsReport extends UserStats {
+  listeningDeltaMs?: number
+}
+
+export function isUserStats(value: unknown): value is UserStatsReport {
   if (typeof value !== 'object' || value === null) return false
   const v = value as Record<string, unknown>
   if (typeof v.listeningMs !== 'number' || !Number.isFinite(v.listeningMs) || v.listeningMs < 0) return false
+  if (
+    v.listeningDeltaMs !== undefined &&
+    (typeof v.listeningDeltaMs !== 'number' || !Number.isFinite(v.listeningDeltaMs) || v.listeningDeltaMs < 0)
+  )
+    return false
   if (v.topTrack === null) return true
   if (typeof v.topTrack !== 'object' || v.topTrack === null) return false
   const track = v.topTrack as Record<string, unknown>
@@ -62,6 +72,21 @@ export function isUserStats(value: unknown): value is UserStats {
     track.plays >= 0 &&
     track.plays <= 1_000_000
   )
+}
+
+/** Sanity cap for a single delta report (clients report every ~5 min). */
+export const MAX_LISTENING_DELTA_MS = 24 * 60 * 60 * 1000
+
+/** Merges a stats report into the stored account stats. Delta reports accumulate
+ * across devices; legacy absolute reports can only raise the total, so a wiped
+ * device never erases the account's listening history. */
+export function mergeStats(current: UserStats | null, incoming: UserStatsReport): UserStats {
+  const base = current?.listeningMs ?? 0
+  const total =
+    incoming.listeningDeltaMs !== undefined
+      ? base + Math.min(incoming.listeningDeltaMs, MAX_LISTENING_DELTA_MS)
+      : Math.max(base, incoming.listeningMs)
+  return { listeningMs: Math.round(total), topTrack: incoming.topTrack }
 }
 
 export interface JamTrackRef {
