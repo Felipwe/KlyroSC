@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.14.0',
+    pt: [
+      'Smart Shuffle: clique duas vezes no botão aleatório e músicas parecidas entram na mistura, marcadas como "Recomendada" na fila  um clique desliga e restaura a ordem',
+      'Tela inicial customizável: em Configurações > Tela inicial você oculta seções, arrasta para reordenar e restaura o padrão quando quiser',
+      'Fixe playlists suas na tela inicial: clique com o botão direito na playlist (ou use o botão na página dela)',
+      'Mensagens do chat agora somem automaticamente 1 dia após o envio  o aviso aparece em todo chat'
+    ],
+    en: [
+      'Smart Shuffle: double-click the shuffle button and similar songs join the mix, tagged "Recommended" in the queue  one click turns it off and restores the order',
+      'Customizable home page: in Settings > Home page you can hide sections, drag to reorder and restore the default anytime',
+      'Pin your playlists to the home page: right-click a playlist (or use the button on its page)',
+      'Chat messages now disappear automatically 1 day after being sent  the notice shows in every chat'
+    ]
+  },
+  {
     version: '2.13.1',
     pt: [
       'Tempo ouvindo música agora é da conta: soma entre computadores e não zera ao reinstalar o app',
