@@ -3,7 +3,9 @@ import { type PluginConfigValue, type PluginInfo, type PluginSettingField } from
 import { type UpdateStatus } from '@shared/types/update'
 import { type AppInfo } from '@shared/types/ipc'
 import { APP_REPO_URL } from '@shared/constants'
+import { orderHomeSections } from '@shared/utils/home-sections'
 import { getLanguage, t, useLanguage } from '@renderer/i18n'
+import { localizeScTitle } from '@renderer/i18n/sc-titles'
 import { api } from '@renderer/services/ipc'
 import { toast } from '@renderer/stores/toasts'
 import { useUi } from '@renderer/stores/ui'
@@ -11,7 +13,9 @@ import { useSettings } from '@renderer/stores/settings'
 import { useAuth } from '@renderer/stores/auth'
 import { useSocial } from '@renderer/stores/social'
 import { useNav } from '@renderer/stores/nav'
+import { useAsyncResult } from '@renderer/hooks/async'
 import { formatAccountNumber } from '@shared/utils/social'
+import { cx } from '@renderer/utils/format'
 import { Icon } from '@renderer/components/Icon'
 import { Select, Switch } from '@renderer/components/controls'
 import { Empty, Loading } from '@renderer/components/Status'
@@ -528,6 +532,138 @@ export function ShortcutsPanel(): JSX.Element {
           </span>
         </div>
       ))}
+    </>
+  )
+}
+
+interface HomeSectionRow {
+  id: string
+  label: string
+}
+
+/** Customize the home page: hide sections and drag them into your own order. */
+export function HomePanel(): JSX.Element {
+  useLanguage()
+  const { settings, update } = useSettings()
+  const scSections = useAsyncResult(() => api.sc.home(), [])
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dropId, setDropId] = useState<string | null>(null)
+
+  const baseSections: HomeSectionRow[] = [
+    { id: 'pinned', label: t('home.pinned') },
+    { id: 'trending', label: t('home.trending') },
+    ...(scSections.data?.map((section) => ({
+      id: `sc:${section.id}`,
+      label: localizeScTitle(section.title)
+    })) ?? [])
+  ]
+  const rows = orderHomeSections(baseSections, settings.home.order, [])
+  const hidden = new Set(settings.home.hiddenSections)
+  const customized = settings.home.order.length > 0 || settings.home.hiddenSections.length > 0
+
+  const setSectionVisible = (id: string, visible: boolean): void => {
+    const next = visible
+      ? settings.home.hiddenSections.filter((entry) => entry !== id)
+      : [...settings.home.hiddenSections.filter((entry) => entry !== id), id]
+    void update({ home: { hiddenSections: next } })
+  }
+
+  const finishDrag = (): void => {
+    setDragId(null)
+    setDropId(null)
+  }
+
+  const dropOn = (targetId: string): void => {
+    if (dragId === null || dragId === targetId) return
+    const ids = rows.map((row) => row.id)
+    const from = ids.indexOf(dragId)
+    const to = ids.indexOf(targetId)
+    if (from < 0 || to < 0) return
+    ids.splice(from, 1)
+    ids.splice(to, 0, dragId)
+    void update({ home: { order: ids } })
+  }
+
+  const reset = (): void => {
+    void update({ home: { hiddenSections: [], order: [] } })
+    toast(t('settings.home.resetDone'), 'success')
+  }
+
+  return (
+    <>
+      <p className="settings-section-desc">{t('settings.home.desc')}</p>
+
+      <SettingRow label={t('home.quick')} desc={t('settings.home.quickDesc')}>
+        <Switch
+          on={!hidden.has('quick')}
+          ariaLabel={t('home.quick')}
+          onToggle={(on) => setSectionVisible('quick', on)}
+        />
+      </SettingRow>
+
+      <div className="sr-text" style={{ margin: '14px 0 8px' }}>
+        <div className="sr-label">{t('settings.home.sections')}</div>
+        <div className="sr-desc">{t('settings.home.sectionsDesc')}</div>
+      </div>
+
+      <div className="home-sections-list">
+        {rows.map((row) => (
+          <div
+            key={row.id}
+            className={cx(
+              'hs-row',
+              dragId === row.id && 'dragging',
+              dropId === row.id && dragId !== null && dragId !== row.id && 'drop-target',
+              hidden.has(row.id) && 'off'
+            )}
+            draggable
+            onDragStart={(event) => {
+              event.dataTransfer.effectAllowed = 'move'
+              event.dataTransfer.setData('text/plain', row.id)
+              setDragId(row.id)
+            }}
+            onDragEnd={finishDrag}
+            onDragOver={(event) => {
+              if (dragId === null) return
+              event.preventDefault()
+              event.dataTransfer.dropEffect = 'move'
+              if (dropId !== row.id) setDropId(row.id)
+            }}
+            onDragLeave={(event) => {
+              if (event.currentTarget.contains(event.relatedTarget as Node)) return
+              if (dropId === row.id) setDropId(null)
+            }}
+            onDrop={(event) => {
+              event.preventDefault()
+              dropOn(row.id)
+              finishDrag()
+            }}
+          >
+            <span className="hs-grip" title={t('settings.home.dragHint')}>
+              <Icon name="grip" size={15} />
+            </span>
+            <span className="hs-label">{row.label}</span>
+            <Switch
+              on={!hidden.has(row.id)}
+              ariaLabel={row.label}
+              onToggle={(on) => setSectionVisible(row.id, on)}
+            />
+          </div>
+        ))}
+        {scSections.loading && (
+          <div className="hs-row loading">
+            <div className="spinner small" />
+            <span className="hs-label">{t('settings.home.loadingSections')}</span>
+          </div>
+        )}
+      </div>
+
+      <SettingRow label={t('settings.home.reset')} desc={t('settings.home.resetDesc')}>
+        <button className="btn" disabled={!customized} onClick={reset}>
+          <Icon name="refresh" size={14} />
+          {t('settings.home.reset')}
+        </button>
+      </SettingRow>
     </>
   )
 }

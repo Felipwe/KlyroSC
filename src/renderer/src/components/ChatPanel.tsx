@@ -103,9 +103,6 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
             {friend.presence.online ? t('social.online') : t('social.offlineStatus')}
           </div>
         </div>
-        <span className="chat-lock" title={t('social.chat.encrypted')}>
-          <Icon name="lock" size={13} />
-        </span>
         <button
           className="icon-btn"
           onClick={() => useSocial.getState().closeChat(friendId)}
@@ -116,13 +113,17 @@ export function ChatPanel({ friendId, zIndex }: ChatPanelProps): JSX.Element | n
       </div>
 
       <div className="chat-body" ref={bodyRef}>
+        <div className="chat-ephemeral">
+          <Icon name="clock" size={12} />
+          <span>{t('social.chat.ephemeral')}</span>
+        </div>
         {loading ? (
           <div className="chat-empty">
             <div className="spinner small" />
           </div>
         ) : messages.length === 0 ? (
           <div className="chat-empty">
-            <Icon name="lock" size={20} />
+            <Icon name="clock" size={20} />
             <span>{t('social.chat.empty')}</span>
             {!friend.presence.online && <span className="chat-note">{t('social.chat.offlineNote')}</span>}
           </div>

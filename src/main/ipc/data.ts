@@ -28,6 +28,7 @@ const parseSnapshot = (raw: unknown): PlaybackSnapshot | null => {
     index: Math.min(Math.max(0, index), queue.length - 1),
     position: typeof raw.position === 'number' && raw.position >= 0 ? raw.position : 0,
     shuffle: raw.shuffle === true,
+    smartShuffle: raw.smartShuffle === true,
     repeat,
     savedAt: typeof raw.savedAt === 'number' ? raw.savedAt : Date.now()
   }
@@ -88,6 +89,12 @@ export function registerDataIpc(ctx: AppContext): void {
     const p = payload as { from?: unknown; to?: unknown }
     return typeof p?.from === 'number' && typeof p?.to === 'number'
       ? ctx.library.movePlaylist(Math.floor(p.from), Math.floor(p.to))
+      : ctx.library.get()
+  })
+  handle(IPC.libraryPinPlaylist, (payload) => {
+    const p = payload as { id?: unknown; pinned?: unknown }
+    return typeof p?.id === 'string' && typeof p?.pinned === 'boolean'
+      ? ctx.library.setPlaylistPinned(p.id, p.pinned)
       : ctx.library.get()
   })
   handle(IPC.libraryAddHistory, (track) =>

@@ -16,6 +16,8 @@ export interface LocalPlaylist {
   createdAt: number
   updatedAt: number
   cover: string | null
+  /** shown in a dedicated rail on the home page */
+  pinned: boolean
   tracks: Track[]
 }
 

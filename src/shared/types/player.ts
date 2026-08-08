@@ -30,6 +30,8 @@ export interface PlaybackSnapshot {
   index: number
   position: number
   shuffle: boolean
+  /** shuffle enhanced with injected recommendations (double-click shuffle) */
+  smartShuffle?: boolean
   repeat: RepeatMode
   savedAt: number
 }

@@ -54,6 +54,7 @@ export const en = {
     tagline: 'What are we listening to today?',
     continueListening: 'Pick up where you left off',
     quick: 'Jump back in',
+    pinned: 'Pinned playlists',
     trending: 'Trending now',
     trendingIn: 'Trending · {region}',
     scSections: {
@@ -109,7 +110,10 @@ export const en = {
     local: 'Your playlist',
     changeCover: 'Change cover',
     removeCover: 'Remove cover',
-    coverFailed: 'Could not set cover: {error}'
+    coverFailed: 'Could not set cover: {error}',
+    pin: 'Pin to home',
+    unpin: 'Unpin from home',
+    pinnedBadge: 'Pinned to home'
   },
   playlist: {
     empty: 'This playlist is empty',
@@ -149,6 +153,9 @@ export const en = {
     next: 'Next',
     previous: 'Previous',
     shuffle: 'Shuffle',
+    shuffleHint: 'Shuffle · double-click for Smart Shuffle',
+    smartShuffle: 'Smart Shuffle',
+    smartShuffleActive: 'Smart Shuffle on · similar songs woven in · click to turn off',
     repeat: 'Repeat',
     repeatAll: 'Repeat all',
     repeatOne: 'Repeat one',
@@ -169,6 +176,8 @@ export const en = {
     title: 'Queue',
     nowPlaying: 'Now playing',
     upNext: 'Up next',
+    smartPick: 'Recommended',
+    smartPickHint: 'Added by Smart Shuffle because it matches your queue',
     jamSection: 'Jam queue',
     personalAfterJam: 'Your personal queue comes back when the Jam ends · {count} tracks saved',
     empty: 'The queue is empty',
@@ -222,6 +231,10 @@ export const en = {
     historyCleared: 'History cleared',
     playlistCreated: 'Playlist “{name}” created',
     playlistDeleted: 'Playlist deleted',
+    playlistPinned: 'Pinned to your home page',
+    playlistUnpinned: 'Unpinned from your home page',
+    smartShuffleOn: 'Smart Shuffle on — weaving in similar songs',
+    smartShuffleOff: 'Smart Shuffle off — back to the original order',
     linkResolveFailed: 'Could not open that SoundCloud link'
   },
   status: {
@@ -339,11 +352,11 @@ export const en = {
     chat: {
       title: 'Chat',
       open: 'Open chat',
-      encrypted: 'End-to-end encrypted',
+      ephemeral: 'Messages are deleted automatically 1 day after they are sent',
       placeholder: 'Message…',
       send: 'Send',
       typing: '{name} is typing…',
-      empty: 'Say hi  messages are end-to-end encrypted.',
+      empty: 'Say hi — messages disappear automatically after 1 day.',
       offlineNote: 'Messages are delivered when your friend comes back online.',
       pendingState: 'Sending…',
       sentState: 'Sent',
@@ -416,6 +429,7 @@ export const en = {
     sections: {
       account: 'Account',
       appearance: 'Appearance',
+      home: 'Home page',
       language: 'Language',
       playback: 'Playback',
       equalizer: 'Equalizer',
@@ -428,6 +442,17 @@ export const en = {
       shortcuts: 'Shortcuts',
       about: 'About',
       admin: 'Admin'
+    },
+    home: {
+      desc: 'Make the home page yours: hide sections you never use and drag them into the order you like.',
+      quickDesc: 'The quick grid at the top with your recent playlists and tracks.',
+      sections: 'Home sections',
+      sectionsDesc: 'Toggle a section to show or hide it. Drag rows to set the top-to-bottom order.',
+      dragHint: 'Drag to reorder',
+      loadingSections: 'Loading SoundCloud sections…',
+      reset: 'Restore default',
+      resetDesc: 'Undo all customizations and bring back the original home layout.',
+      resetDone: 'Home page restored to default'
     },
     admin: {
       forceUpdate: 'Force global update',

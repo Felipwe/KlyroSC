@@ -144,6 +144,12 @@ function QueueRow({ index, active = false }: { index: number; active?: boolean }
       <div className="tr-main">
         <div className="tr-title">{track.title}</div>
         <div className="tr-artist" style={{ cursor: 'default', textDecoration: 'none' }}>
+          {track.smartPick && (
+            <span className="q-smart-pick" title={t('queue.smartPickHint')}>
+              <Icon name="sparkle" size={10} />
+              {t('queue.smartPick')}
+            </span>
+          )}
           {track.artist}
           {track.jamAddedBy && <span className="q-added-by">· {track.jamAddedBy}</span>}
         </div>

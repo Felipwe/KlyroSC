@@ -30,6 +30,7 @@ function sanitizeLibrary(raw: unknown): LibraryData {
         createdAt: typeof p.createdAt === 'number' ? p.createdAt : Date.now(),
         updatedAt: typeof p.updatedAt === 'number' ? p.updatedAt : Date.now(),
         cover,
+        pinned: p.pinned === true,
         tracks
       })
     }
@@ -88,8 +89,16 @@ export class LibraryService {
         createdAt: now,
         updatedAt: now,
         cover: null,
+        pinned: false,
         tracks: []
       })
+    })
+  }
+
+  setPlaylistPinned(id: string, pinned: boolean): LibraryData {
+    return this.mutate((data) => {
+      const playlist = data.playlists.find((p) => p.id === id)
+      if (playlist) playlist.pinned = pinned
     })
   }
 

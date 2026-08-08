@@ -87,6 +87,7 @@ const api: KlyroApi = {
     removeFromPlaylist: (id, index) => invoke(IPC.libraryRemoveFromPlaylist, { id, index }),
     moveInPlaylist: (id, from, to) => invoke(IPC.libraryMoveInPlaylist, { id, from, to }),
     movePlaylist: (from, to) => invoke(IPC.libraryMovePlaylist, { from, to }),
+    setPlaylistPinned: (id, pinned) => invoke(IPC.libraryPinPlaylist, { id, pinned }),
     addHistory: (track) => invoke(IPC.libraryAddHistory, track),
     clearHistory: () => invoke(IPC.libraryClearHistory),
     exportData: () => invoke(IPC.libraryExport),

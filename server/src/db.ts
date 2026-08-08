@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS chat_reads (
 );
 `
 
-const MESSAGE_TTL_DAYS = 30
+/** chat messages disappear after one day */
+const MESSAGE_TTL_HOURS = 24
 /** accounts idle beyond this are removed automatically (cascades sessions, friends, messages) */
 const INACTIVE_ACCOUNT_DAYS = 180
 
@@ -100,7 +101,7 @@ export async function initDb(): Promise<void> {
   await pool.query(SCHEMA)
   const sweep = (): void => {
     pool
-      .query(`DELETE FROM messages WHERE created_at < now() - interval '${MESSAGE_TTL_DAYS} days'`)
+      .query(`DELETE FROM messages WHERE created_at < now() - interval '${MESSAGE_TTL_HOURS} hours'`)
       .catch((error) => console.error('message sweep failed', error))
     pool
       .query(`DELETE FROM users WHERE last_seen_at < now() - interval '${INACTIVE_ACCOUNT_DAYS} days'`)
@@ -110,7 +111,7 @@ export async function initDb(): Promise<void> {
       .catch((error) => console.error('inactive account sweep failed', error))
   }
   sweep()
-  setInterval(sweep, 6 * 60 * 60 * 1000).unref()
+  setInterval(sweep, 60 * 60 * 1000).unref()
 }
 
 export interface UserRow {

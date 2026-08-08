@@ -427,6 +427,7 @@ export function createRouter(services: Services): Router {
       }>(
         `SELECT id, from_id, iv, ct, created_at FROM messages
          WHERE ((from_id = $1 AND to_id = $2) OR (from_id = $2 AND to_id = $1)) AND id < $3
+           AND created_at > now() - interval '24 hours'
          ORDER BY id DESC LIMIT 60`,
         [me.id, friendId, before]
       )

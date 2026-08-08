@@ -1360,6 +1360,74 @@ kbd {
   transform: scale(1.02);
 }
 
+.mc-pin {
+  display: inline-grid;
+  place-items: center;
+  color: var(--accent-text);
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+/* ── Home customization (settings) ────────────────────── */
+
+.home-sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.hs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--stroke);
+  background: var(--surface);
+  transition: opacity var(--t-fast), border-color var(--t-fast), transform var(--t-med), background var(--t-fast);
+}
+
+.hs-row:not(.loading) {
+  cursor: grab;
+}
+
+.hs-row:not(.loading):active {
+  cursor: grabbing;
+}
+
+.hs-row.dragging {
+  opacity: 0.35;
+}
+
+.hs-row.drop-target {
+  border-color: var(--accent-a);
+  background: var(--accent-soft);
+  transform: scale(1.01);
+}
+
+.hs-row.off .hs-label {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--text-faint) 55%, transparent);
+}
+
+.hs-grip {
+  display: grid;
+  place-items: center;
+  color: var(--text-faint);
+  flex: 0 0 auto;
+}
+
+.hs-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .track-hero {
     align-items: flex-start;
@@ -2009,6 +2077,20 @@ kbd {
   margin-left: 6px;
 }
 
+.q-smart-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-text);
+  font-size: 0.62rem;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-right: 7px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .social-jam-chat-btn {
   position: relative;
 }
@@ -2399,6 +2481,22 @@ kbd {
   gap: 7px;
   overscroll-behavior: contain;
   min-height: 0;
+}
+
+.chat-ephemeral {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-raised) 64%, transparent);
+  border: 1px solid var(--stroke);
+  color: var(--text-faint);
+  font-size: 0.66rem;
+  text-align: center;
+  flex: 0 0 auto;
+  margin-bottom: 4px;
 }
 
 .chat-empty {

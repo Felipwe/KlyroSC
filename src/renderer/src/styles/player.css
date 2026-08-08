@@ -88,6 +88,43 @@
   gap: 6px;
 }
 
+/* ── Smart Shuffle (double-click shuffle) ─────────────── */
+
+.pb-shuffle {
+  position: relative;
+}
+
+.pb-shuffle.smart {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.pb-smart-spark {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent-gradient);
+  box-shadow: 0 1px 5px color-mix(in srgb, var(--accent-a) 55%, transparent);
+  animation: smart-spark-in 260ms var(--ease) both;
+}
+
+@keyframes smart-spark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .pb-play {
   width: 42px;
   height: 42px;

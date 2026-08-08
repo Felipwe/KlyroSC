@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { type Track } from '../src/shared/types/track'
 import {
   dedupeAppend,
+  mixRecommendations,
   nextIndex,
   previousIndex,
   shuffled,
+  smartPickBudget,
   smartShuffled,
-  unshuffled
+  unshuffled,
+  withoutSmartPicks
 } from '../src/renderer/src/player/queue-utils'
 
 const track = (id: number): Track => ({
@@ -148,5 +151,84 @@ describe('smartShuffled', () => {
     expect(smartShuffled([], 0)).toEqual({ queue: [], index: 0 })
     const single = [withMeta(1, 'A', null)]
     expect(smartShuffled(single, 0).queue.map((t) => t.id)).toEqual([1])
+  })
+})
+
+describe('smartPickBudget', () => {
+  it('scales with queue size within bounds', () => {
+    expect(smartPickBudget(0)).toBe(0)
+    expect(smartPickBudget(1)).toBe(0)
+    expect(smartPickBudget(4)).toBe(3)
+    expect(smartPickBudget(10)).toBe(5)
+    expect(smartPickBudget(200)).toBe(20)
+  })
+})
+
+describe('mixRecommendations', () => {
+  const fixed = (): number => 0.99 // keeps pool order stable for assertions
+
+  it('weaves one recommendation after every three tracks past the playing one', () => {
+    const list = [track(1), track(2), track(3), track(4), track(5), track(6), track(7)]
+    const recs = [track(100), track(101)]
+    const mixed = mixRecommendations(list, 0, recs, fixed)
+    expect(mixed.map((t) => t.id)).toEqual([1, 2, 3, 4, 100, 5, 6, 7, 101])
+  })
+
+  it('never inserts before or at the playing index', () => {
+    const list = [track(1), track(2), track(3), track(4), track(5), track(6)]
+    const mixed = mixRecommendations(list, 2, [track(100)], fixed)
+    expect(mixed.slice(0, 3).map((t) => t.id)).toEqual([1, 2, 3])
+    expect(mixed.filter((t) => t.smartPick).length).toBe(1)
+  })
+
+  it('marks injected tracks as smart picks without touching originals', () => {
+    const list = [track(1), track(2), track(3), track(4)]
+    const mixed = mixRecommendations(list, 0, [track(100)], fixed)
+    const pick = mixed.find((t) => t.id === 100)
+    expect(pick?.smartPick).toBe(true)
+    expect(mixed.filter((t) => !t.smartPick).map((t) => t.id)).toEqual([1, 2, 3, 4])
+  })
+
+  it('dedupes recommendations already in the queue and repeated ones', () => {
+    const list = [track(1), track(2), track(3), track(4)]
+    const mixed = mixRecommendations(list, 0, [track(2), track(100), track(100)], fixed)
+    expect(mixed.filter((t) => t.id === 2).length).toBe(1)
+    expect(mixed.filter((t) => t.id === 100).length).toBe(1)
+  })
+
+  it('caps insertions at the queue budget', () => {
+    const list = [track(1), track(2), track(3), track(4)]
+    const recs = Array.from({ length: 30 }, (_, i) => track(100 + i))
+    const mixed = mixRecommendations(list, 0, recs, fixed)
+    expect(mixed.filter((t) => t.smartPick).length).toBe(smartPickBudget(list.length))
+  })
+
+  it('guarantees at least one pick lands on short queues', () => {
+    const list = [track(1), track(2)]
+    const mixed = mixRecommendations(list, 0, [track(100), track(101), track(102), track(103)], fixed)
+    expect(mixed.filter((t) => t.smartPick).length).toBe(smartPickBudget(2))
+    expect(mixed.length).toBeGreaterThan(list.length)
+  })
+
+  it('returns the queue untouched when there is nothing to add', () => {
+    const list = [track(1), track(2), track(3)]
+    expect(mixRecommendations(list, 0, [track(1)], fixed)).toBe(list)
+    expect(mixRecommendations([], 0, [track(9)], fixed)).toEqual([])
+  })
+})
+
+describe('withoutSmartPicks', () => {
+  it('removes recommendations but keeps a playing recommendation', () => {
+    const list = [track(1), { ...track(100), smartPick: true }, track(2), { ...track(101), smartPick: true }]
+    const cleaned = withoutSmartPicks(list, 100)
+    expect(cleaned.queue.map((t) => t.id)).toEqual([1, 100, 2])
+    expect(cleaned.index).toBe(1)
+  })
+
+  it('drops all picks when none is playing', () => {
+    const list = [track(1), { ...track(100), smartPick: true }, track(2)]
+    const cleaned = withoutSmartPicks(list, 2)
+    expect(cleaned.queue.map((t) => t.id)).toEqual([1, 2])
+    expect(cleaned.index).toBe(1)
   })
 })

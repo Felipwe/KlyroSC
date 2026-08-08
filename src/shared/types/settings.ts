@@ -70,6 +70,12 @@ export interface Settings {
     lastSeenVersion: string
     artThemeMigrated: boolean
   }
+  home: {
+    /** section ids the user removed from the home page */
+    hiddenSections: string[]
+    /** custom top-to-bottom order of home sections; unknown sections follow in natural order */
+    order: string[]
+  }
 }
 
 export const DEFAULT_CUSTOM_THEME: CustomTheme = {
@@ -129,6 +135,10 @@ export const DEFAULT_SETTINGS: Settings = {
     globalMediaKeys: false,
     lastSeenVersion: '',
     artThemeMigrated: false
+  },
+  home: {
+    hiddenSections: [],
+    order: []
   }
 }
 
@@ -202,6 +212,21 @@ function sanitizeEqCustom(raw: unknown): EqCustomPreset[] {
   return presets
 }
 
+function sanitizeSectionIds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return []
+  const ids: string[] = []
+  const seen = new Set<string>()
+  for (const entry of raw) {
+    if (typeof entry !== 'string') continue
+    const id = entry.trim().slice(0, 120)
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+    if (ids.length >= 80) break
+  }
+  return ids
+}
+
 export function sanitizeSettings(raw: unknown): Settings {
   const r = isRecord(raw) ? raw : {}
   const d = DEFAULT_SETTINGS
@@ -213,6 +238,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   const performance = isRecord(r.performance) ? r.performance : {}
   const startup = isRecord(r.startup) ? r.startup : {}
   const system = isRecord(r.system) ? r.system : {}
+  const home = isRecord(r.home) ? r.home : {}
 
   const clientId = str(discord.clientId, d.discord.clientId, 32)
 
@@ -267,6 +293,10 @@ export function sanitizeSettings(raw: unknown): Settings {
       globalMediaKeys: bool(system.globalMediaKeys, d.system.globalMediaKeys),
       lastSeenVersion: str(system.lastSeenVersion, d.system.lastSeenVersion, 20),
       artThemeMigrated: bool(system.artThemeMigrated, d.system.artThemeMigrated)
+    },
+    home: {
+      hiddenSections: sanitizeSectionIds(home.hiddenSections),
+      order: sanitizeSectionIds(home.order)
     }
   }
 }

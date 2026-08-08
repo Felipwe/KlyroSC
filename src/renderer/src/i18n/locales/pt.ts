@@ -56,6 +56,7 @@ export const pt: Dict = {
     tagline: 'O que vamos ouvir hoje?',
     continueListening: 'Continue de onde parou',
     quick: 'Voltar a ouvir',
+    pinned: 'Playlists fixadas',
     trending: 'Em alta agora',
     trendingIn: 'Em alta · {region}',
     scSections: {
@@ -111,7 +112,10 @@ export const pt: Dict = {
     local: 'Sua playlist',
     changeCover: 'Trocar capa',
     removeCover: 'Remover capa',
-    coverFailed: 'Não foi possível definir a capa: {error}'
+    coverFailed: 'Não foi possível definir a capa: {error}',
+    pin: 'Fixar na tela inicial',
+    unpin: 'Desafixar da tela inicial',
+    pinnedBadge: 'Fixada na tela inicial'
   },
   playlist: {
     empty: 'Esta playlist está vazia',
@@ -151,6 +155,9 @@ export const pt: Dict = {
     next: 'Próxima',
     previous: 'Anterior',
     shuffle: 'Aleatório',
+    shuffleHint: 'Aleatório · clique duplo para o Smart Shuffle',
+    smartShuffle: 'Smart Shuffle',
+    smartShuffleActive: 'Smart Shuffle ligado · músicas parecidas na mistura · clique para desligar',
     repeat: 'Repetir',
     repeatAll: 'Repetir tudo',
     repeatOne: 'Repetir uma',
@@ -171,6 +178,8 @@ export const pt: Dict = {
     title: 'Fila',
     nowPlaying: 'Tocando agora',
     upNext: 'A seguir',
+    smartPick: 'Recomendada',
+    smartPickHint: 'Adicionada pelo Smart Shuffle por combinar com a sua fila',
     jamSection: 'Fila da Jam',
     personalAfterJam: 'Sua fila pessoal volta quando a Jam acabar · {count} músicas guardadas',
     empty: 'A fila está vazia',
@@ -224,6 +233,10 @@ export const pt: Dict = {
     historyCleared: 'Histórico limpo',
     playlistCreated: 'Playlist “{name}” criada',
     playlistDeleted: 'Playlist excluída',
+    playlistPinned: 'Fixada na sua tela inicial',
+    playlistUnpinned: 'Desafixada da sua tela inicial',
+    smartShuffleOn: 'Smart Shuffle ligado — misturando músicas parecidas',
+    smartShuffleOff: 'Smart Shuffle desligado — de volta à ordem original',
     linkResolveFailed: 'Não foi possível abrir esse link do SoundCloud'
   },
   status: {
@@ -343,11 +356,11 @@ export const pt: Dict = {
     chat: {
       title: 'Chat',
       open: 'Abrir chat',
-      encrypted: 'Criptografado de ponta a ponta',
+      ephemeral: 'As mensagens são apagadas automaticamente 1 dia após o envio',
       placeholder: 'Mensagem…',
       send: 'Enviar',
       typing: '{name} está digitando…',
-      empty: 'Diga oi as mensagens são criptografadas de ponta a ponta.',
+      empty: 'Diga oi as mensagens somem automaticamente depois de 1 dia.',
       offlineNote: 'As mensagens chegam quando seu amigo voltar a ficar online.',
       pendingState: 'Enviando…',
       sentState: 'Enviada',
@@ -420,6 +433,7 @@ export const pt: Dict = {
     sections: {
       account: 'Conta',
       appearance: 'Aparência',
+      home: 'Tela inicial',
       language: 'Idioma',
       playback: 'Reprodução',
       equalizer: 'Equalizador',
@@ -432,6 +446,17 @@ export const pt: Dict = {
       shortcuts: 'Atalhos',
       about: 'Sobre',
       admin: 'Admin'
+    },
+    home: {
+      desc: 'Deixe a tela inicial com a sua cara: oculte seções que você não usa e arraste para a ordem que preferir.',
+      quickDesc: 'A grade rápida do topo com suas playlists e músicas recentes.',
+      sections: 'Seções da tela inicial',
+      sectionsDesc: 'Ative ou desative uma seção para mostrar ou ocultar. Arraste as linhas para definir a ordem de cima para baixo.',
+      dragHint: 'Arraste para reordenar',
+      loadingSections: 'Carregando seções do SoundCloud…',
+      reset: 'Restaurar padrão',
+      resetDesc: 'Desfaz todas as personalizações e volta ao layout original da tela inicial.',
+      resetDone: 'Tela inicial restaurada ao padrão'
     },
     admin: {
       forceUpdate: 'Forçar atualização geral',

@@ -91,6 +91,19 @@ describe('sanitizeSettings', () => {
     expect(result.appearance.fontScale).toBe(105)
     expect(result.system.closeToTray).toBe(false)
   })
+
+  it('sanitizes home customization lists', () => {
+    const result = sanitizeSettings({
+      home: {
+        hiddenSections: ['quick', 'quick', 42, '  trending  ', ''],
+        order: ['sc:a', 'pinned', 'sc:a']
+      }
+    })
+    expect(result.home.hiddenSections).toEqual(['quick', 'trending'])
+    expect(result.home.order).toEqual(['sc:a', 'pinned'])
+    expect(sanitizeSettings({}).home).toEqual({ hiddenSections: [], order: [] })
+    expect(sanitizeSettings({ home: { order: 'nope' } }).home.order).toEqual([])
+  })
 })
 
 describe('mergeSettings', () => {
@@ -104,5 +117,12 @@ describe('mergeSettings', () => {
   it('sanitizes merged output', () => {
     const merged = mergeSettings(DEFAULT_SETTINGS, { playback: { volume: 99 } })
     expect(merged.playback.volume).toBe(1)
+  })
+
+  it('replaces home lists wholesale instead of merging them', () => {
+    const base = mergeSettings(DEFAULT_SETTINGS, { home: { hiddenSections: ['quick', 'trending'] } })
+    const next = mergeSettings(base, { home: { hiddenSections: ['pinned'] } })
+    expect(next.home.hiddenSections).toEqual(['pinned'])
+    expect(next.home.order).toEqual([])
   })
 })

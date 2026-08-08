@@ -81,13 +81,31 @@ export function PlaylistsPage(): JSX.Element {
                 finishDrag()
               }}
               onClick={() => useNav.getState().push({ name: 'playlist', ref: playlist.id, local: true })}
+              onContextMenu={(event) => {
+                event.preventDefault()
+                useUi.getState().openMenu(event.clientX, event.clientY, [
+                  {
+                    id: 'pin',
+                    label: playlist.pinned ? t('playlists.unpin') : t('playlists.pin'),
+                    icon: 'pin',
+                    action: () => void useLibrary.getState().setPlaylistPinned(playlist.id, !playlist.pinned)
+                  }
+                ])
+              }}
             >
               <Artwork
                 src={playlist.cover ?? playlist.tracks[0]?.artwork ?? null}
                 alt=""
                 fallbackIcon="queue"
               />
-              <div className="mc-title">{playlist.name}</div>
+              <div className="mc-title">
+                {playlist.pinned && (
+                  <span className="mc-pin" title={t('playlists.pinnedBadge')}>
+                    <Icon name="pin" size={11} />
+                  </span>
+                )}
+                {playlist.name}
+              </div>
               <div className="mc-sub">
                 {playlist.tracks.length === 1
                   ? t('common.track')
@@ -205,6 +223,13 @@ export function LocalPlaylistPage({ id }: { id: string }): JSX.Element {
             <button className="btn" onClick={rename}>
               <Icon name="edit" size={15} />
               {t('common.rename')}
+            </button>
+            <button
+              className={cx('btn', playlist.pinned && 'active')}
+              onClick={() => void useLibrary.getState().setPlaylistPinned(playlist.id, !playlist.pinned)}
+            >
+              <Icon name="pin" size={15} />
+              {playlist.pinned ? t('playlists.unpin') : t('playlists.pin')}
             </button>
             <button className="btn danger" onClick={remove}>
               <Icon name="trash" size={15} />

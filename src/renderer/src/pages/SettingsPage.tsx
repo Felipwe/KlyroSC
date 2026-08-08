@@ -12,13 +12,14 @@ import { toast } from '@renderer/stores/toasts'
 import { type AccentId } from '@shared/types/settings'
 import { type AdminUsers } from '@shared/types/social'
 import yagamiBg from '../assets/yagami-bg.png'
-import { PluginsPanel, UpdatesPanel, DataPanel, AboutPanel, ShortcutsPanel, AccountPanel } from './settings-panels'
+import { PluginsPanel, UpdatesPanel, DataPanel, AboutPanel, ShortcutsPanel, AccountPanel, HomePanel } from './settings-panels'
 import { EqualizerPanel } from './EqualizerPanel'
 import { ThemeStudio } from './ThemeStudio'
 
 const SECTIONS: { id: string; icon: IconName }[] = [
   { id: 'account', icon: 'user' },
   { id: 'appearance', icon: 'sparkle' },
+  { id: 'home', icon: 'home' },
   { id: 'language', icon: 'globe' },
   { id: 'playback', icon: 'playCircle' },
   { id: 'equalizer', icon: 'sliders' },
@@ -224,6 +225,8 @@ export function SettingsPage({ initialSection }: { initialSection?: string }): J
           <h2 className="settings-section-title">{t(`settings.sections.${section}`)}</h2>
 
           {section === 'account' && <AccountPanel />}
+
+          {section === 'home' && <HomePanel />}
 
           {section === 'admin' && isAdmin && <AdminPanel />}
 

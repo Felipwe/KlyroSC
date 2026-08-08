@@ -10,7 +10,16 @@ import { useLibrary } from '@renderer/stores/library'
 import { useSettings } from '@renderer/stores/settings'
 import { useSocial } from '@renderer/stores/social'
 import { AudioEngine } from './engine'
-import { dedupeAppend, nextIndex, previousIndex, shuffled, smartShuffled, unshuffled } from './queue-utils'
+import {
+  dedupeAppend,
+  mixRecommendations,
+  nextIndex,
+  previousIndex,
+  shuffled,
+  smartShuffled,
+  unshuffled,
+  withoutSmartPicks
+} from './queue-utils'
 
 interface PlayerState {
   queue: Track[]
@@ -24,6 +33,8 @@ interface PlayerState {
   volume: number
   muted: boolean
   shuffle: boolean
+  /** shuffle upgraded with similar-track recommendations woven into the queue */
+  smartShuffle: boolean
   repeat: RepeatMode
   previewActive: boolean
   /** true when following a jam without control permission  transport is locked */
@@ -48,6 +59,7 @@ interface PlayerState {
   setVolume(volume: number): void
   toggleMute(): void
   toggleShuffle(): void
+  toggleSmartShuffle(): void
   cycleRepeat(): void
   setJamLock(locked: boolean): void
   jamEnter(): void
@@ -65,6 +77,8 @@ let playerInitialized = false
 let smartShuffleEnabled = true
 let forcedPreview = false
 let volumePersistTimer: ReturnType<typeof setTimeout> | null = null
+/** bumped whenever the queue context changes so in-flight recommendation fetches are dropped */
+let smartShuffleGeneration = 0
 
 /** Applies EQ straight to the audio graph without persisting (live preview while dragging). */
 export function applyEqLive(eq: EqState): void {
@@ -72,6 +86,38 @@ export function applyEqLive(eq: EqState): void {
 }
 
 const pickShuffle = (): typeof shuffled => (smartShuffleEnabled ? smartShuffled : shuffled)
+
+/** Pulls similar tracks for a few seeds of the queue and weaves them in as recommendations. */
+async function injectSmartRecommendations(): Promise<void> {
+  const generation = ++smartShuffleGeneration
+  const state = usePlayer.getState()
+  const seeds: Track[] = []
+  if (state.current) seeds.push(state.current)
+  const others = state.queue.filter((track) => track.id !== state.current?.id)
+  for (let i = 0; i < 2 && others.length > 0; i++) {
+    const pick = others.splice(Math.floor(Math.random() * others.length), 1)[0]
+    if (pick) seeds.push(pick)
+  }
+  if (seeds.length === 0) return
+  const results = await Promise.all(seeds.map((seed) => api.sc.related(seed.id).catch(() => null)))
+  const recommendations: Track[] = []
+  const seen = new Set<number>()
+  for (const result of results) {
+    if (!result || !result.ok) continue
+    for (const rec of result.data) {
+      if (seen.has(rec.id)) continue
+      seen.add(rec.id)
+      recommendations.push(rec)
+    }
+  }
+  if (recommendations.length === 0) return
+  const fresh = usePlayer.getState()
+  // context changed while fetching (new queue, jam, smart shuffle off) → drop silently
+  if (generation !== smartShuffleGeneration || !fresh.smartShuffle || fresh.stash !== null) return
+  const mixed = mixRecommendations(fresh.queue, fresh.index, recommendations)
+  if (mixed.length > fresh.queue.length)
+    usePlayer.setState({ queue: mixed.slice(0, QUEUE_PERSIST_LIMIT) })
+}
 
 /** Transport guard while following a jam someone else controls. */
 const jamBlocked = (): boolean => {
@@ -175,6 +221,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   volume: 0.8,
   muted: false,
   shuffle: false,
+  smartShuffle: false,
   repeat: 'off',
   previewActive: false,
   jamLocked: false,
@@ -183,7 +230,9 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   playTracks: (tracks, startIndex = 0) => {
     if (tracks.length === 0 || jamBlocked()) return
+    smartShuffleGeneration++
     const shuffleOn = get().shuffle
+    if (get().smartShuffle) set({ smartShuffle: false })
     if (shuffleOn) {
       const result = pickShuffle()(tracks, startIndex)
       set({ queue: result.queue, originalQueue: [...tracks] })
@@ -314,7 +363,8 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     set({
       queue: current ? [current] : [],
       index: 0,
-      originalQueue: null
+      originalQueue: null,
+      smartShuffle: false
     })
     toast(t('toast.queueCleared'))
   },
@@ -425,6 +475,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   toggleShuffle: () => {
     if (jamBlocked()) return
+    smartShuffleGeneration++
     const state = get()
     if (!state.shuffle) {
       const result = pickShuffle()(state.queue, state.index)
@@ -435,10 +486,41 @@ export const usePlayer = create<PlayerState>((set, get) => ({
         index: result.index
       })
     } else {
-      const original = state.originalQueue ?? state.queue
+      const original = state.originalQueue ?? withoutSmartPicks(state.queue, state.current?.id ?? null).queue
       const result = unshuffled(original, state.current?.id ?? null)
-      set({ shuffle: false, originalQueue: null, queue: result.queue, index: result.index })
+      set({ shuffle: false, smartShuffle: false, originalQueue: null, queue: result.queue, index: result.index })
     }
+  },
+
+  toggleSmartShuffle: () => {
+    if (jamBlocked()) return
+    const state = get()
+    if (state.smartShuffle) {
+      // full off: back to the original order, recommendations removed
+      smartShuffleGeneration++
+      const original = state.originalQueue ?? withoutSmartPicks(state.queue, state.current?.id ?? null).queue
+      const result = unshuffled(original, state.current?.id ?? null)
+      set({ shuffle: false, smartShuffle: false, originalQueue: null, queue: result.queue, index: result.index })
+      toast(t('toast.smartShuffleOff'))
+      return
+    }
+    if (state.stash !== null) return
+    if (state.queue.length === 0) return
+    if (!state.shuffle) {
+      // smart mode always uses the flow-aware ordering
+      const result = smartShuffled(state.queue, state.index)
+      set({
+        shuffle: true,
+        smartShuffle: true,
+        originalQueue: state.originalQueue ?? [...state.queue],
+        queue: result.queue,
+        index: result.index
+      })
+    } else {
+      set({ smartShuffle: true })
+    }
+    toast(t('toast.smartShuffleOn'), 'success')
+    void injectSmartRecommendations()
   },
 
   cycleRepeat: () => {
@@ -455,6 +537,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   jamEnter: () => {
     const state = get()
     if (state.stash !== null) return
+    smartShuffleGeneration++
     // park the personal queue; while in the jam, playback is [current] + jamQueue
     set({
       stash: {
@@ -467,6 +550,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       index: 0,
       originalQueue: null,
       shuffle: false,
+      smartShuffle: false,
       jamQueue: []
     })
   },
@@ -550,6 +634,7 @@ export async function initPlayer(): Promise<void> {
         originalQueue: snapshot.originalQueue,
         index: snapshot.index,
         shuffle: snapshot.shuffle,
+        smartShuffle: snapshot.smartShuffle === true,
         repeat: snapshot.repeat,
         current: snapshot.queue[snapshot.index] ?? null,
         position: snapshot.position,
@@ -600,6 +685,7 @@ function startSnapshotPersistence(): void {
       index: Math.min(personal.index, QUEUE_PERSIST_LIMIT - 1),
       position: state.stash ? 0 : state.position,
       shuffle: personal.shuffle,
+      smartShuffle: state.stash ? false : state.smartShuffle,
       repeat: state.repeat,
       savedAt: Date.now()
     })
@@ -610,7 +696,8 @@ function startSnapshotPersistence(): void {
       state.queue !== previous.queue ||
       state.index !== previous.index ||
       state.repeat !== previous.repeat ||
-      state.shuffle !== previous.shuffle
+      state.shuffle !== previous.shuffle ||
+      state.smartShuffle !== previous.smartShuffle
     ) {
       if (timer) clearTimeout(timer)
       timer = setTimeout(save, 1500)

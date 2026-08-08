@@ -1,4 +1,4 @@
-import { type JSX } from 'react'
+import { useEffect, useRef, type JSX } from 'react'
 import { t, useLanguage } from '@renderer/i18n'
 import { usePlayer } from '@renderer/player/store'
 import { useLibrary } from '@renderer/stores/library'
@@ -18,6 +18,27 @@ export function PlayerBar(): JSX.Element {
     player.current ? state.favoriteIds.has(player.current.id) : false
   )
   const ui = useUi()
+  // single click toggles shuffle after a short window; a second click within it fires Smart Shuffle
+  const shuffleClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (shuffleClickTimer.current) clearTimeout(shuffleClickTimer.current)
+    },
+    []
+  )
+
+  const onShuffleClick = (): void => {
+    if (shuffleClickTimer.current) {
+      clearTimeout(shuffleClickTimer.current)
+      shuffleClickTimer.current = null
+      usePlayer.getState().toggleSmartShuffle()
+      return
+    }
+    shuffleClickTimer.current = setTimeout(() => {
+      shuffleClickTimer.current = null
+      usePlayer.getState().toggleShuffle()
+    }, 260)
+  }
 
   const repeatLabel =
     player.repeat === 'one'
@@ -95,12 +116,17 @@ export function PlayerBar(): JSX.Element {
       <div className="pb-center">
         <div className="pb-controls">
           <button
-            className={cx('icon-btn', player.shuffle && 'active')}
-            onClick={player.toggleShuffle}
-            aria-label={t('player.shuffle')}
-            title={t('player.shuffle')}
+            className={cx('icon-btn pb-shuffle', player.shuffle && 'active', player.smartShuffle && 'smart')}
+            onClick={onShuffleClick}
+            aria-label={player.smartShuffle ? t('player.smartShuffle') : t('player.shuffle')}
+            title={player.smartShuffle ? t('player.smartShuffleActive') : t('player.shuffleHint')}
           >
             <Icon name="shuffle" size={16} />
+            {player.smartShuffle && (
+              <span className="pb-smart-spark" aria-hidden="true">
+                <Icon name="sparkle" size={9} />
+              </span>
+            )}
           </button>
           <button
             className="icon-btn"

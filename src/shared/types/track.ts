@@ -29,6 +29,8 @@ export interface Track {
   description?: string | null
   /** who queued this track in the current jam (display only) */
   jamAddedBy?: string
+  /** true when Smart Shuffle injected this track as a recommendation */
+  smartPick?: boolean
 }
 
 export interface TrackComment {

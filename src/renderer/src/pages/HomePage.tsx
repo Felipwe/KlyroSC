@@ -1,5 +1,7 @@
 import { useMemo, type JSX } from 'react'
 import { type Track } from '@shared/types/track'
+import { type LocalPlaylist } from '@shared/types/library'
+import { orderHomeSections } from '@shared/utils/home-sections'
 import { getLanguage, t, useLanguage } from '@renderer/i18n'
 import { localizeScTitle } from '@renderer/i18n/sc-titles'
 import { api } from '@renderer/services/ipc'
@@ -7,6 +9,7 @@ import { usePlayer } from '@renderer/player/store'
 import { useLibrary } from '@renderer/stores/library'
 import { useAuth } from '@renderer/stores/auth'
 import { useNav } from '@renderer/stores/nav'
+import { useSettings } from '@renderer/stores/settings'
 import { useAsyncResult } from '@renderer/hooks/async'
 import { personalizeTrending, tasteOf } from '@renderer/utils/trending'
 import { Loading, ErrorState } from '@renderer/components/Status'
@@ -60,12 +63,47 @@ async function loadTrending(): Promise<{ ok: true; data: TrendingRail } | { ok: 
   return { ok: true, data: { tracks: personalizeTrending(global.data, taste), country, regional: false } }
 }
 
+/** Card for a user playlist pinned to the home page. */
+function PinnedPlaylistCard({ playlist }: { playlist: LocalPlaylist }): JSX.Element {
+  const open = (): void => useNav.getState().push({ name: 'playlist', ref: playlist.id, local: true })
+  return (
+    <div className="media-card card" onClick={open}>
+      <Artwork
+        src={playlist.cover ?? playlist.tracks[0]?.artwork ?? null}
+        alt={playlist.name}
+        fallbackIcon="queue"
+      />
+      <div className="mc-title" title={playlist.name}>
+        {playlist.name}
+      </div>
+      <div className="mc-sub">
+        {playlist.tracks.length === 1
+          ? t('common.track')
+          : t('common.tracks', { count: playlist.tracks.length })}
+      </div>
+      {playlist.tracks.length > 0 && (
+        <button
+          className="mc-play"
+          aria-label={t('common.play')}
+          onClick={(event) => {
+            event.stopPropagation()
+            usePlayer.getState().playTracks(playlist.tracks)
+          }}
+        >
+          <Icon name="play" size={18} />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function HomePage(): JSX.Element {
   useLanguage()
   const current = usePlayer((state) => state.current)
   const playing = usePlayer((state) => state.playing)
   const libraryData = useLibrary((state) => state.data)
   const authUser = useAuth((state) => state.state.user)
+  const homePrefs = useSettings((state) => state.settings.home)
 
   const firstName = (authUser?.name.trim().split(/\s+/)[0] ?? t('home.anonymous')).slice(0, 18)
 
@@ -101,6 +139,59 @@ export function HomePage(): JSX.Element {
   }, [libraryData, current?.id])
 
   const showResume = current !== null && !playing
+  const pinnedPlaylists = libraryData.playlists.filter((playlist) => playlist.pinned)
+  const showQuick = tiles.length > 0 && !homePrefs.hiddenSections.includes('quick')
+
+  const sections = orderHomeSections(
+    [
+      ...(pinnedPlaylists.length > 0 ? [{ id: 'pinned' }] : []),
+      { id: 'trending' },
+      ...(home.data?.map((section) => ({ id: `sc:${section.id}` })) ?? [])
+    ],
+    homePrefs.order,
+    homePrefs.hiddenSections
+  )
+
+  const renderSection = (id: string): JSX.Element | null => {
+    if (id === 'pinned') {
+      return (
+        <Rail key="pinned" title={t('home.pinned')}>
+          {pinnedPlaylists.map((playlist) => (
+            <PinnedPlaylistCard key={playlist.id} playlist={playlist} />
+          ))}
+        </Rail>
+      )
+    }
+    if (id === 'trending') {
+      if (trending.loading) return <Loading key="trending" />
+      if (trending.error)
+        return <ErrorState key="trending" message={trending.error} onRetry={trending.reload} />
+      if (!trending.data || trending.data.tracks.length === 0) return null
+      return (
+        <Rail
+          key="trending"
+          title={
+            trending.data.regional && trending.data.country
+              ? t('home.trendingIn', { region: regionLabel(trending.data.country) })
+              : t('home.trending')
+          }
+        >
+          {trending.data.tracks.map((track) => (
+            <TrackCard key={track.id} track={track} />
+          ))}
+        </Rail>
+      )
+    }
+    const section = home.data?.find((entry) => `sc:${entry.id}` === id)
+    if (!section) return null
+    return (
+      <Rail key={section.id} title={localizeScTitle(section.title)}>
+        {section.playlists.map((playlist) => (
+          <PlaylistCard key={playlist.ref} playlist={playlist} />
+        ))}
+      </Rail>
+    )
+  }
 
   return (
     <div className="page">
@@ -139,7 +230,7 @@ export function HomePage(): JSX.Element {
             </button>
           )}
         </div>
-        {tiles.length > 0 && (
+        {showQuick && (
           <div className="hh-quick">
             <span className="hh-quick-label">{t('home.quick')}</span>
             <div className="hh-quick-grid">
@@ -178,34 +269,7 @@ export function HomePage(): JSX.Element {
         )}
       </div>
 
-      {trending.loading ? (
-        <Loading />
-      ) : trending.error ? (
-        <ErrorState message={trending.error} onRetry={trending.reload} />
-      ) : (
-        trending.data &&
-        trending.data.tracks.length > 0 && (
-          <Rail
-            title={
-              trending.data.regional && trending.data.country
-                ? t('home.trendingIn', { region: regionLabel(trending.data.country) })
-                : t('home.trending')
-            }
-          >
-            {trending.data.tracks.map((track) => (
-              <TrackCard key={track.id} track={track} />
-            ))}
-          </Rail>
-        )
-      )}
-
-      {home.data?.map((section) => (
-        <Rail key={section.id} title={localizeScTitle(section.title)}>
-          {section.playlists.map((playlist) => (
-            <PlaylistCard key={playlist.ref} playlist={playlist} />
-          ))}
-        </Rail>
-      ))}
+      {sections.map((section) => renderSection(section.id))}
     </div>
   )
 }

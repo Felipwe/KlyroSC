@@ -92,6 +92,71 @@ export function unshuffled(original: Track[], currentId: number | null): { queue
   return { queue: [...original], index: Math.max(0, found) }
 }
 
+/** How many Smart Shuffle recommendations a queue of this size can absorb. */
+export function smartPickBudget(queueLength: number): number {
+  if (queueLength < 2) return 0
+  return Math.min(20, Math.max(3, Math.ceil(queueLength / 2)))
+}
+
+/**
+ * Spotify-style Smart Shuffle: weaves recommended tracks into an already
+ * shuffled queue. Every ~3 personal tracks one recommendation is inserted,
+ * always after `index` (the playing track never moves). Recommendations are
+ * deduped against the queue, flagged with `smartPick` and capped by budget.
+ */
+export function mixRecommendations(
+  queue: Track[],
+  index: number,
+  recommendations: Track[],
+  random: () => number = Math.random
+): Track[] {
+  if (queue.length === 0) return queue
+  const known = new Set(queue.map((track) => track.id))
+  const pool: Track[] = []
+  for (const rec of recommendations) {
+    if (known.has(rec.id)) continue
+    known.add(rec.id)
+    pool.push({ ...rec, smartPick: true })
+  }
+  if (pool.length === 0) return queue
+  // shuffle the pool so repeated activations do not inject the same order
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1))
+    const a = pool[i]
+    const b = pool[j]
+    if (a !== undefined && b !== undefined) {
+      pool[i] = b
+      pool[j] = a
+    }
+  }
+  const budget = Math.min(pool.length, smartPickBudget(queue.length))
+  const out = queue.slice(0, index + 1)
+  const rest = queue.slice(index + 1)
+  let used = 0
+  for (let i = 0; i < rest.length; i++) {
+    const item = rest[i]
+    if (item !== undefined) out.push(item)
+    if ((i + 1) % 3 === 0 && used < budget) {
+      const pick = pool[used++]
+      if (pick !== undefined) out.push(pick)
+    }
+  }
+  // short queues: make sure at least one recommendation lands at the end
+  while (used < budget) {
+    const pick = pool[used++]
+    if (pick === undefined) break
+    out.push(pick)
+  }
+  return out
+}
+
+/** Strips Smart Shuffle recommendations, keeping the playing track even if it was one. */
+export function withoutSmartPicks(queue: Track[], currentId: number | null): { queue: Track[]; index: number } {
+  const kept = queue.filter((track) => track.smartPick !== true || track.id === currentId)
+  const found = currentId === null ? -1 : kept.findIndex((track) => track.id === currentId)
+  return { queue: kept, index: Math.max(0, found) }
+}
+
 export function dedupeAppend(queue: Track[], tracks: Track[]): Track[] {
   const seen = new Set(queue.map((track) => track.id))
   const additions = tracks.filter((track) => {

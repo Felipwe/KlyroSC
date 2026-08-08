@@ -20,6 +20,7 @@ interface LibraryState {
   removeFromPlaylist(id: string, index: number): Promise<void>
   moveInPlaylist(id: string, from: number, to: number): Promise<void>
   movePlaylist(from: number, to: number): Promise<void>
+  setPlaylistPinned(id: string, pinned: boolean): Promise<void>
   addHistory(track: Track): void
   clearHistory(): Promise<void>
 }
@@ -103,6 +104,12 @@ export const useLibrary = create<LibraryState>((set, get) => ({
     }
     const data = await api.library.movePlaylist(from, to)
     set({ data })
+  },
+
+  setPlaylistPinned: async (id, pinned) => {
+    const data = await api.library.setPlaylistPinned(id, pinned)
+    set({ data })
+    toast(pinned ? t('toast.playlistPinned') : t('toast.playlistUnpinned'), pinned ? 'success' : undefined)
   },
 
   addHistory: (track) => {
