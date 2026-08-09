@@ -6,15 +6,14 @@ import { logger } from '../core/logger'
 
 const log = logger.scope('tray-popup')
 
-const WIDTH = 252
-const HEIGHT = 322
+const WIDTH = 268
+const HEIGHT = 292
+/** matches the exit animation in tray.html */
+const CLOSE_ANIMATION_MS = 190
 
 export interface TrayPopupLabels {
-  nowPlaying: string
   nothing: string
-  plugins: string
-  favorites: string
-  history: string
+  nothingHint: string
   open: string
   quit: string
 }
@@ -24,8 +23,7 @@ export interface TrayPopupState {
   accent: string
   accentColors: { a: string; b: string } | null
   labels: TrayPopupLabels
-  stats: { plugins: number; favorites: number; history: number }
-  now: { title: string; artist: string; playing: boolean } | null
+  now: { title: string; artist: string; artwork: string | null; playing: boolean } | null
 }
 
 export type TrayPopupAction = 'open' | 'quit' | 'play-pause' | 'next' | 'previous'
@@ -35,6 +33,7 @@ const ACTIONS: readonly TrayPopupAction[] = ['open', 'quit', 'play-pause', 'next
 export class TrayPopup {
   private window: BrowserWindow | null = null
   private now: TrayPopupState['now'] = null
+  private closing = false
 
   constructor(
     private getState: () => Omit<TrayPopupState, 'now'>,
@@ -51,7 +50,12 @@ export class TrayPopup {
 
   setNowPlaying(payload: PresencePayload | null): void {
     this.now = payload
-      ? { title: payload.title, artist: payload.artist, playing: payload.playing }
+      ? {
+          title: payload.title,
+          artist: payload.artist,
+          artwork: payload.artworkUrl,
+          playing: payload.playing
+        }
       : null
     this.push()
   }
@@ -61,22 +65,42 @@ export class TrayPopup {
   }
 
   toggle(bounds: Electron.Rectangle): void {
-    if (this.window && !this.window.isDestroyed() && this.window.isVisible()) this.hide()
+    if (this.window && !this.window.isDestroyed() && this.window.isVisible() && !this.closing) this.hide()
     else this.show(bounds)
   }
 
   hide(): void {
-    // destroyed on hide so the popup never keeps the app alive on quit
-    if (this.window && !this.window.isDestroyed()) this.window.destroy()
-    this.window = null
+    const window = this.window
+    if (!window || window.isDestroyed()) {
+      this.window = null
+      return
+    }
+    if (this.closing) return
+    this.closing = true
+    // let the page play its exit animation before the window goes away
+    window.webContents.send(IPC.trayClosing)
+    setTimeout(() => {
+      if (this.window === window) {
+        this.destroyNow()
+      } else if (!window.isDestroyed()) {
+        window.destroy()
+      }
+    }, CLOSE_ANIMATION_MS)
   }
 
   destroy(): void {
-    this.hide()
+    this.destroyNow()
+  }
+
+  /** synchronous teardown — the popup must never keep the app alive on quit */
+  private destroyNow(): void {
+    if (this.window && !this.window.isDestroyed()) this.window.destroy()
+    this.window = null
+    this.closing = false
   }
 
   private show(bounds: Electron.Rectangle): void {
-    this.hide()
+    this.destroyNow()
     const window = new BrowserWindow({
       width: WIDTH,
       height: HEIGHT,

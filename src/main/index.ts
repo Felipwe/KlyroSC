@@ -58,7 +58,6 @@ function bootstrap(): void {
   const trayPopup = new TrayPopup(
     () => {
       const s = settings.get()
-      const lib = library.get()
       return {
         version: app.getVersion(),
         accent: s.appearance.accent,
@@ -66,12 +65,7 @@ function bootstrap(): void {
           s.appearance.accent === 'custom'
             ? { a: s.appearance.custom.colorA, b: s.appearance.custom.colorB }
             : null,
-        labels: trayPopupLabels(resolveLanguage(s)),
-        stats: {
-          plugins: plugins.list().filter((plugin) => plugin.enabled).length,
-          favorites: lib.favorites.length,
-          history: lib.history.length
-        }
+        labels: trayPopupLabels(resolveLanguage(s))
       }
     },
     (action) => {
@@ -246,20 +240,14 @@ function resolveLanguage(settings: Settings): 'en' | 'pt' {
 function trayPopupLabels(lang: 'en' | 'pt'): TrayPopupLabels {
   return lang === 'pt'
     ? {
-        nowPlaying: 'Tocando agora',
         nothing: 'Nada tocando',
-        plugins: 'Plugins',
-        favorites: 'Favoritos',
-        history: 'Histórico',
+        nothingHint: 'Escolha um som no app',
         open: 'Abrir o KlyroSC',
         quit: 'Sair'
       }
     : {
-        nowPlaying: 'Now playing',
         nothing: 'Nothing playing',
-        plugins: 'Plugins',
-        favorites: 'Favorites',
-        history: 'History',
+        nothingHint: 'Pick a sound in the app',
         open: 'Open KlyroSC',
         quit: 'Quit'
       }

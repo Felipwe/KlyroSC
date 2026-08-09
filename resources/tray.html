@@ -2,23 +2,17 @@
 <html lang="pt">
 <head>
 <meta charset="utf-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src file: data:; script-src 'unsafe-inline'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src file: data: https:; script-src 'unsafe-inline'" />
 <style>
   :root {
-    --bg: rgba(13, 13, 17, 0.97);
-    --stroke: rgba(255, 255, 255, 0.08);
-    --text: #eceef6;
-    --dim: #9aa0b5;
-    --faint: #62687e;
-    --surface: rgba(255, 255, 255, 0.05);
-    --hover: rgba(255, 255, 255, 0.09);
+    --spring: cubic-bezier(0.32, 1.3, 0.55, 1);
+    --text: #f0f2fa;
+    --dim: #a5abc2;
+    --faint: #6b7189;
     --a: #8b5cf6;
     --b: #22d3ee;
-    --soft: rgba(139, 92, 246, 0.15);
-    --atext: #b9a5fb;
   }
-  [data-accent='yagami'] { --bg: rgba(11, 9, 11, 0.97); --a: #b31423; --b: #e5484d; --soft: rgba(179, 20, 35, 0.16); --atext: #ef7d84; }
-  [data-accent='custom'] { --bg: rgba(11, 9, 11, 0.97); }
+  [data-accent='yagami'] { --a: #b31423; --b: #e5484d; }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { background: transparent; height: 100%; overflow: hidden; }
@@ -28,117 +22,264 @@
     font-size: 13px;
     user-select: none;
     cursor: default;
-    padding: 6px;
+    padding: 10px;
   }
+
+  /* ── liquid glass card ─────────────────────────────── */
   .card {
+    position: relative;
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--bg);
-    border: 1px solid var(--stroke);
-    border-radius: 14px;
-    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--soft);
+    border-radius: 22px;
     overflow: hidden;
-    animation: pop 160ms cubic-bezier(0.22, 1, 0.36, 1);
+    background: linear-gradient(165deg, rgba(23, 25, 36, 0.92), rgba(12, 13, 20, 0.88));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.17),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+      0 18px 48px rgba(0, 0, 0, 0.52),
+      0 0 30px color-mix(in srgb, var(--a) 16%, transparent);
+    animation: tray-in 340ms var(--spring) both;
   }
-  @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+  .card.leaving { animation: tray-out 170ms ease both; }
+  @keyframes tray-in { from { opacity: 0; transform: translateY(10px) scale(0.94); } }
+  @keyframes tray-out { to { opacity: 0; transform: translateY(6px) scale(0.965); } }
 
+  .glass-bg { position: absolute; inset: 0; pointer-events: none; }
+  .blob {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    filter: blur(42px);
+    opacity: 0.36;
+  }
+  .blob.pa { top: -90px; left: -70px; background: radial-gradient(circle, var(--a), transparent 66%); animation: drift-a 19s ease-in-out infinite alternate; }
+  .blob.pb { bottom: -110px; right: -80px; background: radial-gradient(circle, var(--b), transparent 66%); animation: drift-b 24s ease-in-out infinite alternate; }
+  @keyframes drift-a { to { transform: translate(20px, 14px) scale(1.12); } }
+  @keyframes drift-b { to { transform: translate(-18px, -12px) scale(1.15); } }
+  .sheen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 34%);
+  }
+
+  .rise { animation: rise 430ms var(--spring) both; }
+  .d1 { animation-delay: 55ms; }
+  .d2 { animation-delay: 120ms; }
+  .d3 { animation-delay: 185ms; }
+  @keyframes rise { from { opacity: 0; transform: translateY(9px); } }
+
+  /* ── header ────────────────────────────────────────── */
   .head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 15px 9px;
+  }
+  .head img { width: 23px; height: 23px; border-radius: 7px; }
+  .head .name { font-weight: 700; font-size: 0.94em; letter-spacing: 0.01em; flex: 1; }
+  .ver {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--b) 55%, #fff);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    padding: 2.5px 9px;
+  }
+
+  /* ── now playing glass tile ────────────────────────── */
+  .now { position: relative; flex: 1; min-height: 0; padding: 2px 11px 8px; display: flex; }
+  .np, .idle {
+    flex: 1;
+    border-radius: 17px;
+    background: linear-gradient(170deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.028));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  .np { padding: 11px 12px 10px; display: flex; flex-direction: column; justify-content: space-between; }
+  .np[hidden], .idle[hidden] { display: none; }
+
+  .np-top { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .art {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--a) 26%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+    transition: box-shadow 300ms ease;
+  }
+  .art.playing { animation: breathe 3.8s ease-in-out infinite; }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 4px 14px color-mix(in srgb, var(--a) 26%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.09); }
+    50% { box-shadow: 0 5px 24px color-mix(in srgb, var(--a) 58%, transparent), inset 0 0 0 1px rgba(255, 255, 255, 0.13); }
+  }
+  .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .art .fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--faint);
+  }
+  .art .fallback svg { width: 20px; height: 20px; }
+  .art img[hidden] { display: none; }
+
+  .np-meta { flex: 1; min-width: 0; }
+  .np-meta.swap { animation: swap-in 280ms var(--spring) both; }
+  @keyframes swap-in { from { opacity: 0; transform: translateY(6px); } }
+  .title-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+  .eq { display: flex; gap: 2.5px; align-items: flex-end; height: 11px; flex: 0 0 auto; }
+  .eq i {
+    width: 3px;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--b), var(--a));
+    animation: eqb 1.05s ease-in-out infinite;
+  }
+  .eq i:nth-child(2) { animation-delay: 0.28s; }
+  .eq i:nth-child(3) { animation-delay: 0.52s; }
+  @keyframes eqb { 0%, 100% { height: 4px; } 50% { height: 11px; } }
+  .eq.paused i { animation-play-state: paused; opacity: 0.45; }
+  .track { font-weight: 650; font-size: 0.88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .artist { color: var(--dim); font-size: 0.76em; margin-top: 2.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 9px; }
+  .cbtn {
+    width: 33px;
+    height: 33px;
+    display: grid;
+    place-items: center;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    color: var(--dim);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transition: transform 260ms var(--spring), color 160ms, background 160ms, box-shadow 220ms;
+  }
+  .cbtn:hover { color: var(--text); transform: scale(1.09); }
+  .cbtn:active { transform: scale(0.9); }
+  .cbtn svg { width: 13px; height: 13px; }
+  .cbtn.main {
+    width: 40px;
+    height: 40px;
+    color: #fff;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 46%),
+      linear-gradient(135deg, color-mix(in srgb, var(--a) 82%, transparent), color-mix(in srgb, var(--b) 70%, transparent));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+      0 6px 18px color-mix(in srgb, var(--a) 42%, transparent);
+    transition: transform 260ms var(--spring), filter 180ms, box-shadow 260ms;
+  }
+  .cbtn.main:hover { filter: brightness(1.13); transform: scale(1.07); box-shadow: inset 0 1px 0 rgba(255,255,255,0.34), inset 0 0 0 1px rgba(255,255,255,0.12), 0 7px 24px color-mix(in srgb, var(--a) 58%, transparent); }
+  .cbtn.main:active { transform: scale(0.9); }
+  .cbtn.main svg { width: 15px; height: 15px; }
+  #play-ic { display: grid; place-items: center; }
+  #play-ic.pop { animation: ic-pop 250ms var(--spring); }
+  @keyframes ic-pop { from { transform: scale(0.5); opacity: 0.35; } }
+
+  /* ── idle state ────────────────────────────────────── */
+  .idle {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 3px;
+    text-align: center;
+    padding: 10px;
+  }
+  .idle-disc {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--faint);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    margin-bottom: 6px;
+    animation: float 5.2s ease-in-out infinite;
+  }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .idle-disc svg { width: 18px; height: 18px; }
+  .idle-t { font-weight: 650; font-size: 0.86em; color: var(--dim); }
+  .idle-h { font-size: 0.72em; color: var(--faint); }
+
+  /* ── actions ───────────────────────────────────────── */
+  .items { position: relative; padding: 8px 9px 9px; display: grid; gap: 3px; }
+  .item {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 14px 10px;
-  }
-  .head img { width: 26px; height: 26px; border-radius: 7px; }
-  .head .name { font-weight: 700; font-size: 0.95em; flex: 1; white-space: nowrap; overflow: hidden; }
-  .ver {
-    font-size: 0.72em;
+    padding: 9px 11px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
     font-weight: 600;
-    color: var(--atext);
-    background: var(--soft);
-    border-radius: 999px;
-    padding: 2px 8px;
+    font-size: 0.9em;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: inset 0 0 0 1px transparent;
+    transition: background 170ms, box-shadow 220ms, transform 260ms var(--spring);
   }
-
-  .stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    border-top: 1px solid var(--stroke);
-    border-bottom: 1px solid var(--stroke);
+  .item:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
-  .cell { padding: 9px 4px 8px; text-align: center; }
-  .cell + .cell { border-left: 1px solid var(--stroke); }
-  .cell b { display: block; font-size: 1.12em; font-weight: 800; color: var(--atext); }
-  .cell span {
-    display: block;
-    margin-top: 2px;
-    font-size: 0.62em;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    color: var(--faint);
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .now { padding: 10px 14px; flex: 1; min-height: 0; }
-  .now label {
-    display: block;
-    font-size: 0.64em;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: var(--faint);
-    text-transform: uppercase;
-    margin-bottom: 7px;
-  }
-  .now .track { font-weight: 600; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .now .artist { color: var(--dim); font-size: 0.78em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .now .idle { color: var(--faint); font-size: 0.85em; text-align: center; padding: 12px 0; }
-
-  .controls { display: flex; justify-content: center; gap: 6px; margin-top: 9px; }
-  .cbtn {
-    width: 32px; height: 32px;
-    display: grid; place-items: center;
-    border: none; background: var(--surface); color: var(--dim);
-    border-radius: 9px; cursor: pointer;
-    transition: background 120ms, color 120ms;
-  }
-  .cbtn:hover { background: var(--hover); color: var(--text); }
-  .cbtn.main { background: linear-gradient(135deg, var(--a), var(--b)); color: #fff; }
-  .cbtn svg { width: 14px; height: 14px; }
-
-  .items { border-top: 1px solid var(--stroke); padding: 6px; }
-  .item {
-    width: 100%;
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 10px;
-    border: none; background: none; color: var(--text);
-    font: inherit; font-weight: 600; font-size: 0.92em;
-    border-radius: 9px; cursor: pointer; text-align: left;
-    transition: background 120ms;
-  }
-  .item:hover { background: var(--hover); }
-  .item svg { width: 15px; height: 15px; color: var(--dim); }
-  .item:hover svg { color: var(--atext); }
+  .item:active { transform: scale(0.975); }
+  .item svg { width: 15px; height: 15px; color: var(--dim); transition: color 160ms, transform 260ms var(--spring); }
+  .item:hover svg { color: color-mix(in srgb, var(--b) 62%, #fff); transform: scale(1.12); }
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="head">
+  <div class="card" id="card">
+    <div class="glass-bg"><i class="blob pa"></i><i class="blob pb"></i><i class="sheen"></i></div>
+
+    <div class="head rise d1">
       <img src="icon.png" alt="" />
       <div class="name">KlyroSC</div>
       <span class="ver" id="ver">v0.0.0</span>
     </div>
-    <div class="stats">
-      <div class="cell"><b id="st-plugins">0</b><span id="lb-plugins">Plugins</span></div>
-      <div class="cell"><b id="st-favorites">0</b><span id="lb-favorites">Favoritos</span></div>
-      <div class="cell"><b id="st-history">0</b><span id="lb-history">Histórico</span></div>
+
+    <div class="now rise d2">
+      <div class="np" id="np" hidden>
+        <div class="np-top">
+          <div class="art" id="art">
+            <span class="fallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.4" /></svg></span>
+            <img id="art-img" alt="" hidden />
+          </div>
+          <div class="np-meta" id="np-meta">
+            <div class="title-row">
+              <div class="eq" id="eq"><i></i><i></i><i></i></div>
+              <div class="track" id="track"></div>
+            </div>
+            <div class="artist" id="artist"></div>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="cbtn" id="c-prev" aria-label="previous"></button>
+          <button class="cbtn main" id="c-play" aria-label="play-pause"><span id="play-ic"></span></button>
+          <button class="cbtn" id="c-next" aria-label="next"></button>
+        </div>
+      </div>
+
+      <div class="idle" id="idle" hidden>
+        <div class="idle-disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.4" /></svg></div>
+        <div class="idle-t" id="lb-nothing"></div>
+        <div class="idle-h" id="lb-hint"></div>
+      </div>
     </div>
-    <div class="now">
-      <label id="lb-now">Tocando agora</label>
-      <div id="now-body"></div>
-    </div>
-    <div class="items">
+
+    <div class="items rise d3">
       <button class="item" id="bt-open">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5" /><path d="M5 11v9h14v-9" /></svg>
         <span id="lb-open">Abrir</span>
@@ -151,8 +292,7 @@
   </div>
 <script>
   const $ = (id) => document.getElementById(id)
-  const svg = (paths) =>
-    '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">' + paths + '</svg>'
+  const svg = (paths) => '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">' + paths + '</svg>'
   const icons = {
     prev: svg('<path d="M18.5 6.11v11.78c0 .86-.96 1.37-1.68.9l-8.9-5.89a1.08 1.08 0 0 1 0-1.8l8.9-5.9a1.08 1.08 0 0 1 1.68.9ZM5.4 5H7a.9.9 0 0 1 .9.9v12.2A.9.9 0 0 1 7 19H5.4a.9.9 0 0 1-.9-.9V5.9a.9.9 0 0 1 .9-.9Z"/>'),
     next: svg('<path d="M5.5 6.11v11.78c0 .86.96 1.37 1.68.9l8.9-5.89a1.08 1.08 0 0 0 0-1.8l-8.9-5.9a1.08 1.08 0 0 0-1.68.9ZM17 5h1.6a.9.9 0 0 1 .9.9v12.2a.9.9 0 0 1-.9.9H17a.9.9 0 0 1-.9-.9V5.9A.9.9 0 0 1 17 5Z"/>'),
@@ -162,45 +302,75 @@
   const act = (name) => window.trayApi.action(name)
   $('bt-open').addEventListener('click', () => act('open'))
   $('bt-quit').addEventListener('click', () => act('quit'))
+  $('c-prev').innerHTML = icons.prev
+  $('c-next').innerHTML = icons.next
+  $('c-prev').addEventListener('click', () => act('previous'))
+  $('c-next').addEventListener('click', () => act('next'))
+  $('c-play').addEventListener('click', () => act('play-pause'))
+  $('art-img').addEventListener('error', () => {
+    $('art-img').hidden = true
+  })
+
+  const retrigger = (el, cls) => {
+    el.classList.remove(cls)
+    void el.offsetWidth
+    el.classList.add(cls)
+  }
+
+  // incremental updates: state pushes arrive every second and must not restart animations
+  const last = { hasNow: null, title: null, artist: null, artwork: null, playing: null }
+
+  window.trayApi.onClosing(() => $('card').classList.add('leaving'))
 
   window.trayApi.onState((state) => {
     document.body.dataset.accent = state.accent
     if (state.accentColors) {
       document.body.style.setProperty('--a', state.accentColors.a)
       document.body.style.setProperty('--b', state.accentColors.b)
-      document.body.style.setProperty('--soft', state.accentColors.a + '29')
-      document.body.style.setProperty('--atext', state.accentColors.b)
     } else {
-      for (const p of ['--a', '--b', '--soft', '--atext']) document.body.style.removeProperty(p)
+      document.body.style.removeProperty('--a')
+      document.body.style.removeProperty('--b')
     }
     $('ver').textContent = 'v' + state.version
-    $('st-plugins').textContent = String(state.stats.plugins)
-    $('st-favorites').textContent = String(state.stats.favorites)
-    $('st-history').textContent = String(state.stats.history)
-    $('lb-plugins').textContent = state.labels.plugins
-    $('lb-favorites').textContent = state.labels.favorites
-    $('lb-history').textContent = state.labels.history
-    $('lb-now').textContent = state.labels.nowPlaying
     $('lb-open').textContent = state.labels.open
     $('lb-quit').textContent = state.labels.quit
+    $('lb-nothing').textContent = state.labels.nothing
+    $('lb-hint').textContent = state.labels.nothingHint
 
-    const body = $('now-body')
-    if (state.now) {
-      body.innerHTML =
-        '<div class="track"></div><div class="artist"></div>' +
-        '<div class="controls">' +
-        '<button class="cbtn" id="c-prev">' + icons.prev + '</button>' +
-        '<button class="cbtn main" id="c-play">' + (state.now.playing ? icons.pause : icons.play) + '</button>' +
-        '<button class="cbtn" id="c-next">' + icons.next + '</button>' +
-        '</div>'
-      body.querySelector('.track').textContent = state.now.title
-      body.querySelector('.artist').textContent = state.now.artist
-      $('c-prev').addEventListener('click', () => act('previous'))
-      $('c-play').addEventListener('click', () => act('play-pause'))
-      $('c-next').addEventListener('click', () => act('next'))
-    } else {
-      body.innerHTML = '<div class="idle"></div>'
-      body.querySelector('.idle').textContent = state.labels.nothing
+    const now = state.now
+    const hasNow = now !== null
+    if (hasNow !== last.hasNow) {
+      $('np').hidden = !hasNow
+      $('idle').hidden = hasNow
+      last.hasNow = hasNow
+    }
+    if (!now) return
+
+    if (now.title !== last.title || now.artist !== last.artist) {
+      $('track').textContent = now.title
+      $('artist').textContent = now.artist
+      retrigger($('np-meta'), 'swap')
+      last.title = now.title
+      last.artist = now.artist
+    }
+    const artwork = now.artwork || null
+    if (artwork !== last.artwork) {
+      const img = $('art-img')
+      if (artwork) {
+        img.hidden = false
+        img.src = artwork
+      } else {
+        img.hidden = true
+        img.removeAttribute('src')
+      }
+      last.artwork = artwork
+    }
+    if (now.playing !== last.playing) {
+      $('play-ic').innerHTML = now.playing ? icons.pause : icons.play
+      retrigger($('play-ic'), 'pop')
+      $('eq').classList.toggle('paused', !now.playing)
+      $('art').classList.toggle('playing', now.playing)
+      last.playing = now.playing
     }
   })
 </script>

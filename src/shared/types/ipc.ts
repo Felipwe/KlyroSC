@@ -333,5 +333,6 @@ export const IPC = {
   nav: 'nav',
   trayState: 'tray:state',
   trayAction: 'tray:action',
+  trayClosing: 'tray:closing',
   logRenderer: 'log:renderer'
 } as const

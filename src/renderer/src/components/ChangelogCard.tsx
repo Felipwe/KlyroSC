@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.16.0',
+    pt: [
+      'Menu da bandeja redesenhado em liquid glass estilo iOS: mais limpo, com a capa da música tocando',
+      'Tudo animado com suavidade: entrada em cascata, brilhos que respiram, equalizador ao vivo e saída em fade',
+      'Menos poluição: contadores removidos  só o que importa, música e ações rápidas'
+    ],
+    en: [
+      'Tray menu redesigned in iOS-style liquid glass: cleaner, with the playing track artwork',
+      'Softly animated everywhere: staggered entrance, breathing glows, live equalizer and fade-out exit',
+      'Less clutter: counters removed  just what matters, music and quick actions'
+    ]
+  },
+  {
     version: '2.15.0',
     pt: [
       'Recomendações na sua playlist, estilo Spotify: sugestões parecidas com o que está nela, com botão rápido de adicionar',
