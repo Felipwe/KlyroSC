@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.15.0',
+    pt: [
+      'Recomendações na sua playlist, estilo Spotify: sugestões parecidas com o que está nela, com botão rápido de adicionar',
+      'Clique na capa de uma recomendação para ouvir uma prévia  o player pausa e volta sozinho',
+      'O botão Aleatório das playlists também tem Smart Shuffle no clique duplo',
+      'Tocar tudo agora vira Pausar enquanto aquela lista está tocando'
+    ],
+    en: [
+      'Spotify-style recommendations in your playlists: similar songs with a quick add button',
+      'Click a recommendation cover to hear a preview  the player pauses and resumes by itself',
+      'The playlist Shuffle button also gets Smart Shuffle on double-click',
+      'Play all now turns into Pause while that list is playing'
+    ]
+  },
+  {
     version: '2.14.0',
     pt: [
       'Smart Shuffle: clique duas vezes no botão aleatório e músicas parecidas entram na mistura, marcadas como "Recomendada" na fila  um clique desliga e restaura a ordem',

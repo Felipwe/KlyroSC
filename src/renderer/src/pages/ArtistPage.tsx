@@ -2,12 +2,12 @@ import { useEffect, useState, type JSX } from 'react'
 import { type Page, type Track } from '@shared/types/track'
 import { t, useLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
-import { usePlayer } from '@renderer/player/store'
 import { useAsyncResult } from '@renderer/hooks/async'
 import { TrackList } from '@renderer/components/TrackList'
 import { Empty, ErrorState, Loading } from '@renderer/components/Status'
 import { Artwork } from '@renderer/components/Artwork'
 import { Icon } from '@renderer/components/Icon'
+import { PlayAllButton } from '@renderer/components/controls'
 import { formatCount } from '@renderer/utils/format'
 
 export function ArtistPage({ id }: { id: number }): JSX.Element {
@@ -72,12 +72,7 @@ export function ArtistPage({ id }: { id: number }): JSX.Element {
             {data.city && <span>{data.city}</span>}
           </div>
           <div className="ah-actions">
-            {tracks.length > 0 && (
-              <button className="btn primary" onClick={() => usePlayer.getState().playTracks(tracks)}>
-                <Icon name="play" size={15} />
-                {t('common.playAll')}
-              </button>
-            )}
+            {tracks.length > 0 && <PlayAllButton tracks={tracks} />}
             <button className="btn" onClick={() => api.app.openExternal(data.url)}>
               <Icon name="external" size={15} />
               SoundCloud

@@ -45,6 +45,8 @@ interface PlayerState {
   stash: { queue: Track[]; originalQueue: Track[] | null; index: number; shuffle: boolean } | null
 
   playTracks(tracks: Track[], startIndex?: number): void
+  /** plays a list straight into Smart Shuffle: flow-aware order + similar-track recommendations */
+  playTracksSmart(tracks: Track[]): void
   playNow(track: Track): void
   playStation(track: Track): void
   playNext(track: Track): void
@@ -241,6 +243,26 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       set({ queue: [...tracks], originalQueue: null })
       startTrack(startIndex)
     }
+  },
+
+  playTracksSmart: (tracks) => {
+    if (tracks.length === 0 || jamBlocked()) return
+    // inside a jam the shared queue rules — fall back to a plain play
+    if (get().stash !== null) {
+      get().playTracks(tracks)
+      return
+    }
+    smartShuffleGeneration++
+    const result = smartShuffled(tracks, 0)
+    set({
+      queue: result.queue,
+      originalQueue: [...tracks],
+      shuffle: true,
+      smartShuffle: true
+    })
+    startTrack(result.index)
+    toast(t('toast.smartShuffleOn'), 'success')
+    void injectSmartRecommendations()
   },
 
   playNow: (track) => {

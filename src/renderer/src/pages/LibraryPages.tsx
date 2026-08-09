@@ -3,10 +3,10 @@ import { type Track } from '@shared/types/track'
 import { t, useLanguage, getLanguage } from '@renderer/i18n'
 import { useLibrary } from '@renderer/stores/library'
 import { useUi } from '@renderer/stores/ui'
-import { usePlayer } from '@renderer/player/store'
 import { TrackList } from '@renderer/components/TrackList'
 import { Empty } from '@renderer/components/Status'
 import { Icon } from '@renderer/components/Icon'
+import { PlayAllButton } from '@renderer/components/controls'
 
 export function FavoritesPage(): JSX.Element {
   useLanguage()
@@ -24,10 +24,7 @@ export function FavoritesPage(): JSX.Element {
         </div>
         {tracks.length > 0 && (
           <div className="page-head-actions">
-            <button className="btn primary" onClick={() => usePlayer.getState().playTracks(tracks)}>
-              <Icon name="play" size={15} />
-              {t('common.playAll')}
-            </button>
+            <PlayAllButton tracks={tracks} />
           </div>
         )}
       </div>

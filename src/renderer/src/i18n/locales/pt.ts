@@ -120,7 +120,12 @@ export const pt: Dict = {
   playlist: {
     empty: 'Esta playlist está vazia',
     emptyHint: 'Use o menu da faixa para adicionar músicas aqui.',
-    addAllToPlaylist: 'Salvar em playlist'
+    addAllToPlaylist: 'Salvar em playlist',
+    recommendations: 'Recomendações',
+    recommendationsHint: 'Com base no que está nesta playlist',
+    refreshRecs: 'Atualizar sugestões',
+    preview: 'Tocar uma prévia',
+    addRec: 'Adicionar'
   },
   artist: {
     popular: 'Faixas populares',
@@ -237,6 +242,7 @@ export const pt: Dict = {
     playlistUnpinned: 'Desafixada da sua tela inicial',
     smartShuffleOn: 'Smart Shuffle ligado — misturando músicas parecidas',
     smartShuffleOff: 'Smart Shuffle desligado — de volta à ordem original',
+    previewFailed: 'Não deu para tocar a prévia',
     linkResolveFailed: 'Não foi possível abrir esse link do SoundCloud'
   },
   status: {

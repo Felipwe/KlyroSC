@@ -1,16 +1,20 @@
-import { useState, type JSX } from 'react'
+import { useEffect, useMemo, useRef, useState, type JSX } from 'react'
 import { type Track } from '@shared/types/track'
+import { type LocalPlaylist } from '@shared/types/library'
 import { t, useLanguage, getLanguage } from '@renderer/i18n'
 import { api } from '@renderer/services/ipc'
 import { useLibrary } from '@renderer/stores/library'
 import { useNav } from '@renderer/stores/nav'
 import { useUi } from '@renderer/stores/ui'
 import { usePlayer } from '@renderer/player/store'
+import { usePreview, togglePreview, stopPreview } from '@renderer/player/preview'
 import { useAsyncResult } from '@renderer/hooks/async'
+import { openTrackMenuAt } from '@renderer/hooks/track-menu'
 import { TrackList } from '@renderer/components/TrackList'
 import { Empty, ErrorState, Loading } from '@renderer/components/Status'
 import { Artwork } from '@renderer/components/Artwork'
 import { Icon } from '@renderer/components/Icon'
+import { PlayAllButton } from '@renderer/components/controls'
 import { cx, formatDate, formatTime } from '@renderer/utils/format'
 
 export function PlaylistsPage(): JSX.Element {
@@ -125,11 +129,34 @@ export function LocalPlaylistPage({ id }: { id: string }): JSX.Element {
   useLanguage()
   const playlist = useLibrary((state) => state.data.playlists.find((p) => p.id === id))
   const nav = useNav()
+  // single click = shuffle play; double click = Smart Shuffle play
+  const shuffleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (shuffleTimer.current) clearTimeout(shuffleTimer.current)
+    },
+    []
+  )
 
   if (!playlist) {
     return <Empty icon="queue" title={t('playlists.empty')} />
   }
   const totalDuration = playlist.tracks.reduce((sum, track) => sum + track.duration, 0)
+
+  const onShuffleClick = (): void => {
+    const tracks = playlist.tracks
+    if (shuffleTimer.current) {
+      clearTimeout(shuffleTimer.current)
+      shuffleTimer.current = null
+      usePlayer.getState().playTracksSmart(tracks)
+      return
+    }
+    shuffleTimer.current = setTimeout(() => {
+      shuffleTimer.current = null
+      if (!usePlayer.getState().shuffle) usePlayer.getState().toggleShuffle()
+      usePlayer.getState().playTracks(tracks)
+    }, 260)
+  }
 
   const rename = (): void =>
     useUi.getState().openModal({
@@ -201,19 +228,11 @@ export function LocalPlaylistPage({ id }: { id: string }): JSX.Element {
           <div className="ph-actions">
             {playlist.tracks.length > 0 && (
               <>
-                <button
-                  className="btn primary"
-                  onClick={() => usePlayer.getState().playTracks(playlist.tracks)}
-                >
-                  <Icon name="play" size={15} />
-                  {t('common.playAll')}
-                </button>
+                <PlayAllButton tracks={playlist.tracks} />
                 <button
                   className="btn"
-                  onClick={() => {
-                    if (!usePlayer.getState().shuffle) usePlayer.getState().toggleShuffle()
-                    usePlayer.getState().playTracks(playlist.tracks)
-                  }}
+                  onClick={onShuffleClick}
+                  title={t('player.shuffleHint')}
                 >
                   <Icon name="shuffle" size={15} />
                   {t('common.shufflePlay')}
@@ -267,7 +286,142 @@ export function LocalPlaylistPage({ id }: { id: string }): JSX.Element {
           ]}
         />
       )}
+      {playlist.tracks.length > 0 && <PlaylistRecommendations playlist={playlist} />}
     </div>
+  )
+}
+
+/** Spotify-style "based on this playlist" suggestions with quick add and artwork preview. */
+function PlaylistRecommendations({ playlist }: { playlist: LocalPlaylist }): JSX.Element | null {
+  const [recs, setRecs] = useState<Track[] | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [salt, setSalt] = useState(0)
+  const previewingId = usePreview((state) => state.trackId)
+  const previewLoadingId = usePreview((state) => state.loadingId)
+
+  const inPlaylist = useMemo(
+    () => new Set(playlist.tracks.map((track) => track.id)),
+    [playlist.tracks]
+  )
+
+  useEffect(() => {
+    let alive = true
+    const load = async (): Promise<void> => {
+      const tracks = useLibrary.getState().data.playlists.find((p) => p.id === playlist.id)?.tracks ?? []
+      if (tracks.length === 0) {
+        setRecs([])
+        return
+      }
+      setLoading(true)
+      const pool = [...tracks]
+      const seeds: Track[] = []
+      for (let i = 0; i < 3 && pool.length > 0; i++) {
+        const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]
+        if (pick) seeds.push(pick)
+      }
+      const results = await Promise.all(seeds.map((seed) => api.sc.related(seed.id).catch(() => null)))
+      if (!alive) return
+      const known = new Set(tracks.map((track) => track.id))
+      const seen = new Set<number>()
+      const out: Track[] = []
+      for (const result of results) {
+        if (!result || !result.ok) continue
+        for (const rec of result.data) {
+          if (seen.has(rec.id) || known.has(rec.id)) continue
+          seen.add(rec.id)
+          out.push(rec)
+        }
+      }
+      setLoading(false)
+      setRecs(out.slice(0, 10))
+    }
+    void load()
+    return () => {
+      alive = false
+    }
+  }, [playlist.id, salt])
+
+  // leaving the page kills any playing preview
+  useEffect(() => () => stopPreview(), [])
+
+  const visible = (recs ?? []).filter((track) => !inPlaylist.has(track.id))
+  if (!loading && recs !== null && visible.length === 0) return null
+
+  return (
+    <section className="playlist-recs">
+      <div className="recs-head">
+        <div>
+          <h2>{t('playlist.recommendations')}</h2>
+          <p>{t('playlist.recommendationsHint')}</p>
+        </div>
+        <button
+          className="icon-btn"
+          onClick={() => setSalt((value) => value + 1)}
+          disabled={loading}
+          aria-label={t('playlist.refreshRecs')}
+          title={t('playlist.refreshRecs')}
+        >
+          <Icon name="refresh" size={15} />
+        </button>
+      </div>
+      {loading || recs === null ? (
+        <div className="recs-loading">
+          <div className="spinner" />
+        </div>
+      ) : (
+        <div className="recs-list">
+          {visible.map((track) => {
+            const isPreviewing = previewingId === track.id
+            const isPreviewLoading = previewLoadingId === track.id
+            return (
+              <div
+                key={track.id}
+                className="rec-row"
+                onContextMenu={(event) => openTrackMenuAt(event, track)}
+              >
+                <button
+                  className={cx('rec-art', (isPreviewing || isPreviewLoading) && 'previewing')}
+                  onClick={() => void togglePreview(track)}
+                  aria-label={t('playlist.preview')}
+                  title={t('playlist.preview')}
+                >
+                  <Artwork src={track.artworkSmall ?? track.artwork} alt="" />
+                  <span className="rec-art-overlay">
+                    {isPreviewLoading ? (
+                      <div className="spinner small" />
+                    ) : (
+                      <Icon name={isPreviewing ? 'pause' : 'play'} size={14} />
+                    )}
+                  </span>
+                </button>
+                <div className="rec-main">
+                  <div className="rec-title" title={track.title}>
+                    {track.title}
+                    {isPreviewing && <span className="badge accent rec-live">{t('player.preview')}</span>}
+                  </div>
+                  <div
+                    className="rec-artist"
+                    onClick={() =>
+                      track.artistId > 0 && useNav.getState().push({ name: 'artist', id: track.artistId })
+                    }
+                  >
+                    {track.artist}
+                  </div>
+                </div>
+                <span className="rec-dur">{formatTime(track.duration)}</span>
+                <button
+                  className="btn small rec-add"
+                  onClick={() => void useLibrary.getState().addToPlaylist(playlist.id, [track])}
+                >
+                  <Icon name="plus" size={13} />
+                  {t('playlist.addRec')}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -305,10 +459,7 @@ export function RemotePlaylistPage({ playlistRef }: { playlistRef: string }): JS
             {data.duration > 0 && <span>{formatTime(data.duration)}</span>}
           </div>
           <div className="ph-actions">
-            <button className="btn primary" onClick={() => usePlayer.getState().playTracks(allTracks)}>
-              <Icon name="play" size={15} />
-              {t('common.playAll')}
-            </button>
+            <PlayAllButton tracks={allTracks} />
             <button
               className="btn"
               onClick={() => useUi.getState().openAddToPlaylist(allTracks)}

@@ -118,7 +118,12 @@ export const en = {
   playlist: {
     empty: 'This playlist is empty',
     emptyHint: 'Use the track menu to add music here.',
-    addAllToPlaylist: 'Save to playlist'
+    addAllToPlaylist: 'Save to playlist',
+    recommendations: 'Recommendations',
+    recommendationsHint: 'Based on what is in this playlist',
+    refreshRecs: 'Refresh suggestions',
+    preview: 'Play a preview',
+    addRec: 'Add'
   },
   artist: {
     popular: 'Popular tracks',
@@ -235,6 +240,7 @@ export const en = {
     playlistUnpinned: 'Unpinned from your home page',
     smartShuffleOn: 'Smart Shuffle on — weaving in similar songs',
     smartShuffleOff: 'Smart Shuffle off — back to the original order',
+    previewFailed: 'Could not play the preview',
     linkResolveFailed: 'Could not open that SoundCloud link'
   },
   status: {

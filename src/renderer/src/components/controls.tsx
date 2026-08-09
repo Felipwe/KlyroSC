@@ -8,9 +8,33 @@ import {
   type PointerEvent as ReactPointerEvent
 } from 'react'
 import { createPortal } from 'react-dom'
+import { type Track } from '@shared/types/track'
+import { t } from '@renderer/i18n'
+import { usePlayer } from '@renderer/player/store'
 import { clamp, cx } from '@renderer/utils/format'
 import { useExitAnimation } from '@renderer/hooks/use-exit'
 import { Icon } from './Icon'
+
+/** "Play all" that becomes a pause button while its list is what's playing. */
+export function PlayAllButton({ tracks }: { tracks: Track[] }): JSX.Element {
+  const current = usePlayer((state) => state.current)
+  const playing = usePlayer((state) => state.playing)
+  const inContext = current !== null && tracks.some((track) => track.id === current.id)
+  const isPlaying = inContext && playing
+  return (
+    <button
+      className="btn primary"
+      onClick={() => {
+        const player = usePlayer.getState()
+        if (inContext) player.toggle()
+        else player.playTracks(tracks)
+      }}
+    >
+      <Icon name={isPlaying ? 'pause' : 'play'} size={15} />
+      {isPlaying ? t('player.pause') : t('common.playAll')}
+    </button>
+  )
+}
 
 interface SliderProps {
   value: number
