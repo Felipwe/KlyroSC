@@ -130,6 +130,8 @@ export interface KlyroApi {
     pickBackground(): Promise<Result<boolean | null>>
     exportTheme(payload: { name: string; theme: CustomTheme }): Promise<Result<string | null>>
     importTheme(): Promise<Result<{ name: string } | null>>
+    /** live colors extracted from the playing cover (art theme) — mirrored by the tray popup */
+    setAccentColors(colors: { a: string; b: string } | null): void
   }
   presence: {
     update(payload: PresencePayload | null): void
@@ -334,5 +336,6 @@ export const IPC = {
   trayState: 'tray:state',
   trayAction: 'tray:action',
   trayClosing: 'tray:closing',
+  themeAccentColors: 'theme:accent-colors',
   logRenderer: 'log:renderer'
 } as const

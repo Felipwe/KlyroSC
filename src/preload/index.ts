@@ -104,7 +104,8 @@ const api: KlyroApi = {
   theme: {
     pickBackground: () => invoke(IPC.themePickBackground),
     exportTheme: (payload) => invoke(IPC.themeExport, payload),
-    importTheme: () => invoke(IPC.themeImport)
+    importTheme: () => invoke(IPC.themeImport),
+    setAccentColors: (colors) => send(IPC.themeAccentColors, colors)
   },
   presence: {
     update: (payload) => send(IPC.presenceUpdate, payload)

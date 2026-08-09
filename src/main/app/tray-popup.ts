@@ -34,6 +34,8 @@ export class TrayPopup {
   private window: BrowserWindow | null = null
   private now: TrayPopupState['now'] = null
   private closing = false
+  /** live colors extracted from the playing cover while the art theme is active */
+  private artAccent: { a: string; b: string } | null = null
 
   constructor(
     private getState: () => Omit<TrayPopupState, 'now'>,
@@ -57,6 +59,11 @@ export class TrayPopup {
           playing: payload.playing
         }
       : null
+    this.push()
+  }
+
+  setArtAccent(colors: { a: string; b: string } | null): void {
+    this.artAccent = colors
     this.push()
   }
 
@@ -137,7 +144,7 @@ export class TrayPopup {
     window.on('blur', () => this.hide())
     window.webContents.on('did-finish-load', () => {
       if (this.window !== window || window.isDestroyed()) return
-      window.webContents.send(IPC.trayState, { ...this.getState(), now: this.now })
+      window.webContents.send(IPC.trayState, this.buildState())
       window.show()
     })
 
@@ -147,8 +154,15 @@ export class TrayPopup {
     window.loadFile(file).catch((error) => log.warn(`failed to load tray popup: ${String(error)}`))
   }
 
+  /** settings-provided state plus the live bits (now playing, art accent) */
+  private buildState(): TrayPopupState {
+    const state: TrayPopupState = { ...this.getState(), now: this.now }
+    if (state.accent === 'art' && this.artAccent) state.accentColors = this.artAccent
+    return state
+  }
+
   private push(): void {
     if (this.window && !this.window.isDestroyed() && this.window.isVisible())
-      this.window.webContents.send(IPC.trayState, { ...this.getState(), now: this.now })
+      this.window.webContents.send(IPC.trayState, this.buildState())
   }
 }

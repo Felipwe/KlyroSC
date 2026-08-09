@@ -1,5 +1,6 @@
 import { usePlayer } from './store'
 import { useSettings } from '@renderer/stores/settings'
+import { api } from '@renderer/services/ipc'
 
 const ART_PROPS = [
   '--art-bg',
@@ -76,6 +77,7 @@ function clearArtTheme(): void {
   const root = document.documentElement
   for (const prop of ART_PROPS) root.style.removeProperty(prop)
   appliedArtwork = null
+  api.theme.setAccentColors(null)
 }
 
 async function applyArtTheme(): Promise<void> {
@@ -117,6 +119,8 @@ async function applyArtTheme(): Promise<void> {
   root.style.setProperty('--accent-soft', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.17)`)
   root.style.setProperty('--accent-text', `color-mix(in srgb, ${a} 46%, #ffffff)`)
   root.style.setProperty('--glow', `0 0 44px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.22)`)
+  // the tray popup mirrors the live cover colors
+  api.theme.setAccentColors({ a, b })
 }
 
 export function initDynamicTheme(): void {

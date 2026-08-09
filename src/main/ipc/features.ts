@@ -24,6 +24,18 @@ const parsePresence = (raw: unknown): PresencePayload | null => {
   }
 }
 
+const CSS_COLOR_RE = /^#[0-9a-f]{6}$/i
+
+const parseAccentColors = (raw: unknown): { a: string; b: string } | null => {
+  if (!isRecord(raw)) return null
+  return typeof raw.a === 'string' &&
+    typeof raw.b === 'string' &&
+    CSS_COLOR_RE.test(raw.a) &&
+    CSS_COLOR_RE.test(raw.b)
+    ? { a: raw.a, b: raw.b }
+    : null
+}
+
 export function registerFeatureIpc(ctx: AppContext): void {
   on(IPC.presenceUpdate, (payload) => {
     const parsed = parsePresence(payload)
@@ -41,6 +53,10 @@ export function registerFeatureIpc(ctx: AppContext): void {
           }
         : null
     )
+  })
+
+  on(IPC.themeAccentColors, (payload) => {
+    ctx.trayPopup.setArtAccent(parseAccentColors(payload))
   })
 
   handle(IPC.authStatus, () => ctx.auth.state())

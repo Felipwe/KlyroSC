@@ -11,6 +11,15 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.16.1',
+    pt: [
+      'O menu da bandeja agora segue as cores da música tocando  no tema Capa da música, o vidro, o botão de play e os brilhos se pintam com a paleta da capa em tempo real'
+    ],
+    en: [
+      'The tray menu now follows the playing music colors  on the Album art theme, the glass, play button and glows tint with the live cover palette'
+    ]
+  },
+  {
     version: '2.16.0',
     pt: [
       'Menu da bandeja redesenhado em liquid glass estilo iOS: mais limpo, com a capa da música tocando',
