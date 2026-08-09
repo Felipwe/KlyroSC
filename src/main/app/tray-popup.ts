@@ -6,8 +6,8 @@ import { logger } from '../core/logger'
 
 const log = logger.scope('tray-popup')
 
-const WIDTH = 268
-const HEIGHT = 292
+const WIDTH = 276
+const HEIGHT = 300
 /** matches the exit animation in tray.html */
 const CLOSE_ANIMATION_MS = 190
 

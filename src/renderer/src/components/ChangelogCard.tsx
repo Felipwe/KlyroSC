@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.16.2',
+    pt: [
+      'Menu da bandeja polido: títulos longos não cortam mais os botões, reticências corretas e nada de brilho vazando nos cantos',
+      'Equalizador virou um chip discreto sobre a capa da música'
+    ],
+    en: [
+      'Tray menu polish: long titles no longer push the buttons out, proper ellipsis and no glow bleeding at the corners',
+      'The equalizer is now a subtle chip over the artwork'
+    ]
+  },
+  {
     version: '2.16.1',
     pt: [
       'O menu da bandeja agora segue as cores da música tocando  no tema Capa da música, o vidro, o botão de play e os brilhos se pintam com a paleta da capa em tempo real'

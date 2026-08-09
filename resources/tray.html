@@ -52,7 +52,7 @@
     height: 200px;
     border-radius: 50%;
     filter: blur(42px);
-    opacity: 0.36;
+    opacity: 0.3;
   }
   .blob.pa { top: -90px; left: -70px; background: radial-gradient(circle, var(--a), transparent 66%); animation: drift-a 19s ease-in-out infinite alternate; }
   .blob.pb { bottom: -110px; right: -80px; background: radial-gradient(circle, var(--b), transparent 66%); animation: drift-b 24s ease-in-out infinite alternate; }
@@ -94,6 +94,7 @@
   .now { position: relative; flex: 1; min-height: 0; padding: 2px 11px 8px; display: flex; }
   .np, .idle {
     flex: 1;
+    min-width: 0;
     border-radius: 17px;
     background: linear-gradient(170deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.028));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -129,23 +130,45 @@
   .art .fallback svg { width: 20px; height: 20px; }
   .art img[hidden] { display: none; }
 
-  .np-meta { flex: 1; min-width: 0; }
-  .np-meta.swap { animation: swap-in 280ms var(--spring) both; }
-  @keyframes swap-in { from { opacity: 0; transform: translateY(6px); } }
-  .title-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
-  .eq { display: flex; gap: 2.5px; align-items: flex-end; height: 11px; flex: 0 0 auto; }
-  .eq i {
-    width: 3px;
+  /* live equalizer chip over the artwork */
+  .eq-chip {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    display: flex;
+    gap: 2.5px;
+    align-items: flex-end;
+    height: 11px;
+    padding: 3px 4px 3px;
+    box-sizing: content-box;
+    border-radius: 7px;
+    background: rgba(7, 8, 13, 0.62);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transition: opacity 220ms ease, transform 260ms var(--spring);
+  }
+  .eq-chip i {
+    width: 2.5px;
     height: 4px;
     border-radius: 2px;
     background: linear-gradient(180deg, var(--b), var(--a));
     animation: eqb 1.05s ease-in-out infinite;
   }
-  .eq i:nth-child(2) { animation-delay: 0.28s; }
-  .eq i:nth-child(3) { animation-delay: 0.52s; }
+  .eq-chip i:nth-child(2) { animation-delay: 0.28s; }
+  .eq-chip i:nth-child(3) { animation-delay: 0.52s; }
   @keyframes eqb { 0%, 100% { height: 4px; } 50% { height: 11px; } }
-  .eq.paused i { animation-play-state: paused; opacity: 0.45; }
-  .track { font-weight: 650; font-size: 0.88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eq-chip.paused { opacity: 0; transform: scale(0.6); }
+
+  .np-meta { flex: 1; min-width: 0; }
+  .np-meta.swap { animation: swap-in 280ms var(--spring) both; }
+  @keyframes swap-in { from { opacity: 0; transform: translateY(6px); } }
+  .track {
+    font-weight: 650;
+    font-size: 0.88em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
   .artist { color: var(--dim); font-size: 0.76em; margin-top: 2.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 9px; }
@@ -256,12 +279,10 @@
           <div class="art" id="art">
             <span class="fallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.4" /></svg></span>
             <img id="art-img" alt="" hidden />
+            <span class="eq-chip paused" id="eq"><i></i><i></i><i></i></span>
           </div>
           <div class="np-meta" id="np-meta">
-            <div class="title-row">
-              <div class="eq" id="eq"><i></i><i></i><i></i></div>
-              <div class="track" id="track"></div>
-            </div>
+            <div class="track" id="track"></div>
             <div class="artist" id="artist"></div>
           </div>
         </div>
