@@ -1,0 +1,9 @@
+﻿version: 2.16.3
+releaseDate: '2026-08-13T00:00:00Z'
+files:
+  - url: KlyroSC-2.16.3.AppImage
+    sha512: placeholder
+    size: 1000
+  - url: klyrosc_2.16.3_amd64.deb
+    sha512: placeholder
+    size: 1000
