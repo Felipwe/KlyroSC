@@ -28,6 +28,7 @@ import {
 } from '@renderer/components/overlays'
 import { LoginPrompt } from '@renderer/components/LoginPrompt'
 import { ChangelogCard } from '@renderer/components/ChangelogCard'
+import { FeedbackModal } from '@renderer/components/FeedbackModal'
 import { BootSplash } from '@renderer/components/BootSplash'
 import { ChatPanel } from '@renderer/components/ChatPanel'
 import { JamChatPanel } from '@renderer/components/JamChatPanel'
@@ -96,6 +97,7 @@ export default function App(): JSX.Element {
   const [splash, setSplash] = useState<'show' | 'leaving' | 'gone'>('show')
   const [changelogVersion, setChangelogVersion] = useState<string | null>(null)
   const [maintenance, setMaintenance] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
   const route = useNav((state) => state.route)
   const miniMode = useUi((state) => state.miniMode)
   const appearance = useSettings((state) => state.settings.appearance)
@@ -133,7 +135,11 @@ export default function App(): JSX.Element {
       } catch (error) {
         reportError('boot', error)
       }
-      if (!cancelled) setBooted(true)
+      if (!cancelled) {
+        setBooted(true)
+        // show feedback after a normal boot when there's no changelog to show
+        if (!changelogVersion) setShowFeedback(true)
+      }
     }
     void boot()
 
@@ -238,9 +244,13 @@ export default function App(): JSX.Element {
           onClose={() => {
             setChangelogVersion(null)
             void useSettings.getState().update({ system: { lastSeenVersion: changelogVersion } })
+            // show feedback after changelog closes
+            setShowFeedback(true)
           }}
         />
       )}
+      {/* show feedback when booted and not showing changelog */}
+      {!changelogVersion && showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
       <ContextMenuHost />
       <ModalHost />
       <AddToPlaylistHost />
